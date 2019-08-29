@@ -10,8 +10,7 @@ interface IGuard {
 
     function confirmWithdraw() external;
 
-    // function punish(bytes calldata _punishRequest) external;
-    function punish(address _indemnitor, address _indemnitee, uint _amount) external;
+    function punish(bytes calldata _punishRequest) external;
 
     function subscribe(uint _amount) external;
 

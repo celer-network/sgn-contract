@@ -81,7 +81,15 @@ contract GuardMock is IGuard {
         );
     }
 
-    function punish (address _indemnitor, address _indemnitee, uint _amount) external {
+    function punish(bytes calldata _punishRequest) external {
+        address mockIndemnitor = 0xE0B6b1E22182ae2b8382BAC06F5392dAd89EBf04;
+        address mockIndemnitee = 0xF0D9FcB4FefdBd3e7929374b4632f8AD511BD7e3;
+        uint mockAmount = 100;
+
+        mockPunish(mockIndemnitor, mockIndemnitee, mockAmount);
+    }
+
+    function mockPunish(address _indemnitor, address _indemnitee, uint _amount) public {
          _updateStake(
             _indemnitor,
             _indemnitor,
