@@ -32,7 +32,8 @@ contract GuardMock is IGuard {
 
     IERC20 public celerToken;
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
-    mapping (address => ValidatorCandidate) private candidateProfiles;
+    mapping (address => ValidatorCandidate) public candidateProfiles;
+    // struct Delegator includes a mapping and therefore delegatorProfiles can't be public
     mapping (address => Delegator) private delegatorProfiles;
     // subscription fee per block
     uint public feePerBlock;
