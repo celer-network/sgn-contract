@@ -1,6 +1,8 @@
 pragma solidity ^0.5.0;
 
 interface IGuard {
+    enum ValidatorChangeType { Add, Removal, UpdateInfo }
+
     // functions
     function stake(uint _amount, address _candidate) external;
 
@@ -10,20 +12,21 @@ interface IGuard {
 
     function confirmWithdraw() external;
 
-    function punish(bytes calldata _punishRequest) external;
+    // TODO
+    // function punish(bytes calldata _punishRequest) external;
 
     function subscribe(uint _amount) external;
 
     // events
-    event Stake(address delegator, address candidate, uint newStake, uint totalStake);
+    event Stake(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
 
-    event ValidatorUpdate(address ethAddr, bytes sidechainAddr, bool added);
+    event ValidatorChange(address indexed ethAddr, bytes indexed sidechainAddr, ValidatorChangeType changeType);
 
-    event IntendWithdraw(address delegator, address candidate, uint amount);
+    event IntendWithdraw(address indexed delegator, address indexed candidate, uint amount, uint unlockTime);
 
-    event ConfirmWithdraw(address delegator, address candidate, uint amount);
+    event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
-    event Punish(address indemnitor, address indemnitee, uint amount);
+    event Punish(address indexed indemnitor, address indexed indemnitee, uint amount);
 
-    event Subscription(address consumer, uint amount, uint subscriptionExpiration);
+    event Subscription(address indexed consumer, uint amount, uint subscriptionExpiration);
 }
