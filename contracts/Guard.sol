@@ -40,6 +40,11 @@ contract Guard is IGuard {
     // consumer subscription
     mapping (address => uint) public subscriptionExpiration;
 
+    modifier nonNullAddr(address _addr) {
+        require(_addr != address(0), "0 address");
+        _;
+    }
+
     constructor(
         address _celerTokenAddress,
         uint _feePerBlock,
@@ -52,8 +57,7 @@ contract Guard is IGuard {
         withdrawTimeout = _withdrawTimeout;
     }
 
-    function stake(uint _amount, address _candidate) external {
-        require(_candidate != address(0), "Validator candidate is 0");
+    function stake(uint _amount, address _candidate) external nonNullAddr(_candidate) {
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
 
         address msgSender = msg.sender;
@@ -106,9 +110,8 @@ contract Guard is IGuard {
         validatorSet[minStakeIndex] = msgSender;
     }
 
-    function intendWithdraw(uint _amount, address _candidate) external {
+    function intendWithdraw(uint _amount, address _candidate) external nonNullAddr(_candidate) {
         address msgSender = msg.sender;
-        require(_candidate != address(0), "Validator candidate is 0");
 
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
 
@@ -120,9 +123,8 @@ contract Guard is IGuard {
         emit IntendWithdraw(msgSender, _candidate, _amount, withdrawIntent.unlockTime);
     }
 
-    function confirmWithdraw(address _candidate) external {
+    function confirmWithdraw(address _candidate) external nonNullAddr(_candidate) {
         address msgSender = msg.sender;
-        require(_candidate != address(0), "Validator candidate is 0");
 
         Delegator storage delegator = candidateProfiles[_candidate].delegatorProfiles[msgSender];
 
@@ -166,6 +168,20 @@ contract Guard is IGuard {
         // think about punish protobuf message
         // sidechain claims which delegators of a validator will be punished by what amount
     // }
+
+    function isValidator(address _addr) public view returns (bool) {
+        if (_addr == address(0)) {
+            return false;
+        }
+
+        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] == _addr) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 
 

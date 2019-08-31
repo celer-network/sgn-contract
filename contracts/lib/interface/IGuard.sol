@@ -17,6 +17,8 @@ interface IGuard {
 
     function subscribe(uint _amount) external;
 
+    function isValidator(address _addr) external view returns (bool);
+
     // events
     event Stake(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
 

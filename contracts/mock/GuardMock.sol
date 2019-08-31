@@ -9,130 +9,151 @@ contract GuardMock is IGuard {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    enum Operation { Stake, Withdraw }
-
-    struct ValidatorCandidate {
-        uint stakes;
-        bytes sidechainAddr;
-    }
-
     struct WithdrawIntent {
-        address candidate;
         uint amount;
+        uint unlockTime;
     }
 
     struct Delegator {
-        // from eth address of supported validator candidate to token amount delegator staked
-        mapping (address => uint) stakeMap;
-        // this is for mock purpose
-        WithdrawIntent withdrawIntent;
+        uint lockedStake;
+        WithdrawIntent[] withdrawIntents;
+        uint nextWithdrawIntent;
+    }
+
+    struct ValidatorCandidate {
+        bytes sidechainAddr;
+
+        uint totalLockedStake;
+        // TODO: do we need address[] delegators?
+        mapping (address => Delegator) delegatorProfiles;
     }
 
     uint public constant VALIDATOR_SET_MAX_SIZE = 11;
 
     IERC20 public celerToken;
-    address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
-    mapping (address => ValidatorCandidate) public candidateProfiles;
-    // struct Delegator includes a mapping and therefore delegatorProfiles can't be public
-    mapping (address => Delegator) private delegatorProfiles;
-    // subscription fee per block
     uint public feePerBlock;
+    uint public withdrawTimeout;
+    address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
+    // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
+    mapping (address => ValidatorCandidate) private candidateProfiles;
+    // subscription fee per block
     // consumer subscription
     mapping (address => uint) public subscriptionExpiration;
 
     constructor() public {
         feePerBlock = 10;
+        // no withdrawTimeout for mock(test) purpose
+        withdrawTimeout = 0;
     }
 
     function stake(uint _amount, address _candidate) external {
-        address msgSender = msg.sender;
-        _updateStake(msgSender, _candidate, _amount, Operation.Stake);
+        require(_candidate != address(0), "Validator candidate is 0");
+        ValidatorCandidate storage candidate = candidateProfiles[_candidate];
 
-        emit Stake(msgSender, _candidate, _amount, candidateProfiles[_candidate].stakes);
+        address msgSender = msg.sender;
+        
+        candidate.delegatorProfiles[msgSender].lockedStake =
+            candidate.delegatorProfiles[msgSender].lockedStake.add(_amount);
+        candidate.totalLockedStake =
+            candidate.totalLockedStake.add(_amount);
+
+        emit Stake(msgSender, _candidate, _amount, candidate.totalLockedStake);
     }
 
     function claimValidator(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
+        
         candidateProfiles[msgSender].sidechainAddr = _sidechainAddr;
 
-        emit ValidatorUpdate(msgSender, _sidechainAddr, true);
+        uint minStakeIndex = 0;
+        uint minStake = candidateProfiles[validatorSet[0]].totalLockedStake;
+        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] == msgSender) {
+                // if the claimer is already in validator set, we only need to update its profile
+                emit ValidatorChange(msgSender, _sidechainAddr, ValidatorChangeType.UpdateInfo);
+                return;
+            } else {
+                if (candidateProfiles[validatorSet[i]].totalLockedStake < minStake) {
+                    minStakeIndex = i;
+                    minStake = candidateProfiles[validatorSet[i]].totalLockedStake;
+                }
+            }
+        }
+
+        require(candidateProfiles[msgSender].totalLockedStake > minStake, "Not enough stake");
+
+        address removedValidator = validatorSet[minStakeIndex];
+        if (removedValidator != address(0)) {
+            emit ValidatorChange(
+                removedValidator,
+                candidateProfiles[removedValidator].sidechainAddr,
+                ValidatorChangeType.Removal
+            );
+        }
+        emit ValidatorChange(msgSender, _sidechainAddr, ValidatorChangeType.Add);
+        validatorSet[minStakeIndex] = msgSender;
     }
 
     function intendWithdraw(uint _amount, address _candidate) external {
         address msgSender = msg.sender;
-        delegatorProfiles[msgSender].withdrawIntent.candidate = _candidate;
-        delegatorProfiles[msgSender].withdrawIntent.amount = _amount;
+        require(_candidate != address(0), "Validator candidate is 0");
 
-        emit IntendWithdraw(msgSender, _candidate, _amount);
+        ValidatorCandidate storage candidate = candidateProfiles[_candidate];
+
+        WithdrawIntent memory withdrawIntent;
+        withdrawIntent.amount = _amount;
+        withdrawIntent.unlockTime = block.timestamp.add(withdrawTimeout);
+        candidate.delegatorProfiles[msgSender].withdrawIntents.push(withdrawIntent);
+
+        emit IntendWithdraw(msgSender, _candidate, _amount, withdrawIntent.unlockTime);
     }
 
-    function confirmWithdraw() external {
+    function confirmWithdraw(address _candidate) external {
         address msgSender = msg.sender;
-        _updateStake(
-            msgSender,
-            delegatorProfiles[msgSender].withdrawIntent.candidate,
-            delegatorProfiles[msgSender].withdrawIntent.amount,
-            Operation.Withdraw
-        );
+        require(_candidate != address(0), "Validator candidate is 0");
 
-        emit ConfirmWithdraw(
-            msgSender,
-            delegatorProfiles[msgSender].withdrawIntent.candidate,
-            delegatorProfiles[msgSender].withdrawIntent.amount
-        );
-    }
+        Delegator storage delegator = candidateProfiles[_candidate].delegatorProfiles[msgSender];
 
-    function punish(bytes calldata _punishRequest) external {
-        address mockIndemnitor = 0xE0B6b1E22182ae2b8382BAC06F5392dAd89EBf04;
-        address mockIndemnitee = 0xF0D9FcB4FefdBd3e7929374b4632f8AD511BD7e3;
-        uint mockAmount = 100;
+        uint intentLen = delegator.withdrawIntents.length;
+        uint ts = block.timestamp;
+        uint withdrawAmount = 0;
+        for (uint i = delegator.nextWithdrawIntent; i < intentLen; i++) {
+            if (ts > delegator.withdrawIntents[i].unlockTime) {
+                withdrawAmount = withdrawAmount.add(delegator.withdrawIntents[i].amount);
+            } else {
+                delegator.nextWithdrawIntent = i;
+                break;
+            }
+        }
 
-        mockPunish(mockIndemnitor, mockIndemnitee, mockAmount);
-    }
-
-    function mockPunish(address _indemnitor, address _indemnitee, uint _amount) public {
-         _updateStake(
-            _indemnitor,
-            _indemnitor,
-            _amount,
-            Operation.Withdraw
-        );
-
-        // transfer to _indemnitee
-
-        emit Punish(_indemnitor, _indemnitee, _amount);
+        emit ConfirmWithdraw(msgSender, _candidate, withdrawAmount);
     }
 
     function subscribe(uint _amount) external {
         address msgSender = msg.sender;
-        uint delta = _amount / feePerBlock;
+        uint delta = _amount.div(feePerBlock);
 
         if (subscriptionExpiration[msgSender] < block.number) {
-            subscriptionExpiration[msgSender] = block.number + delta;
+            subscriptionExpiration[msgSender] = block.number.add(delta);
         }
         else {
-            subscriptionExpiration[msgSender] += delta;
+            subscriptionExpiration[msgSender] = subscriptionExpiration[msgSender].add(delta);
         }
 
         emit Subscription(msgSender, _amount, subscriptionExpiration[msgSender]);
     }
 
-    function _updateStake(
-        address _delegator,
-        address _candidate,
-        uint _amount,
-        Operation _op
-    )
-        private
-    {
-        if (_op == Operation.Stake) {
-            delegatorProfiles[_delegator].stakeMap[_candidate] += _amount;
-            candidateProfiles[_candidate].stakes += _amount;
-        } else if (_op == Operation.Withdraw) {
-            delegatorProfiles[_delegator].stakeMap[_candidate] -= _amount;
-            candidateProfiles[_candidate].stakes -= _amount;
-        } else {
-            revert("Invalid operation");
+    function isValidator(address _addr) public view returns (bool) {
+        if (_addr == address(0)) {
+            return false;
         }
+
+        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] == _addr) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
