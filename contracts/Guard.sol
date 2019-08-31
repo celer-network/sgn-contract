@@ -31,12 +31,13 @@ contract Guard is IGuard {
     uint public constant VALIDATOR_SET_MAX_SIZE = 11;
 
     IERC20 public celerToken;
+    // subscription fee per block
     uint public feePerBlock;
     uint public withdrawTimeout;
+    uint public minSelfStake
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
-    // subscription fee per block
     // consumer subscription
     mapping (address => uint) public subscriptionExpiration;
 
