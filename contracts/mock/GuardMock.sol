@@ -48,7 +48,7 @@ contract GuardMock is IGuard {
         withdrawTimeout = 0;
     }
 
-    function initializeCandidate(uint _minSelfStake, bytes _sidechainAddr) external {
+    function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
 
         candidate.initialized = true;
@@ -73,29 +73,22 @@ contract GuardMock is IGuard {
         emit Delegate(msgSender, _candidate, _amount, candidate.totalLockedStake);
     }
 
-    function claimValidator(bytes calldata _sidechainAddr) external {
+    function claimValidator() external {
         address msgSender = msg.sender;
-        require(candidateProfiles[msgSender].initialized, "Candidate is not initialized");
-        
-        candidateProfiles[msgSender].sidechainAddr = _sidechainAddr;
+        ValidatorCandidate storage candidate = candidateProfiles[msgSender];
+        require(candidate.initialized, "Candidate is not initialized");
 
         uint minStakeIndex = 0;
         uint minStake = candidateProfiles[validatorSet[0]].totalLockedStake;
         for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
-            if (validatorSet[i] == msgSender) {
-                // if the claimer is already in validator set, we only need to update its profile
-                emit ValidatorChange(msgSender, _sidechainAddr, ValidatorChangeType.UpdateInfo);
-                return;
-            } else {
-                if (candidateProfiles[validatorSet[i]].totalLockedStake < minStake) {
-                    minStakeIndex = i;
-                    minStake = candidateProfiles[validatorSet[i]].totalLockedStake;
-                }
+            require(validatorSet[i] != msgSender, "Already in validator set");
+            if (candidateProfiles[validatorSet[i]].totalLockedStake < minStake) {
+                minStakeIndex = i;
+                minStake = candidateProfiles[validatorSet[i]].totalLockedStake;
             }
         }
 
-        require(candidateProfiles[msgSender].totalLockedStake > minStake, "Not enough stake");
-
+        require(candidate.totalLockedStake > minStake, "Not enough stake");
         address removedValidator = validatorSet[minStakeIndex];
         if (removedValidator != address(0)) {
             emit ValidatorChange(
@@ -104,7 +97,7 @@ contract GuardMock is IGuard {
                 ValidatorChangeType.Removal
             );
         }
-        emit ValidatorChange(msgSender, _sidechainAddr, ValidatorChangeType.Add);
+        emit ValidatorChange(msgSender, candidate.sidechainAddr, ValidatorChangeType.Add);
         validatorSet[minStakeIndex] = msgSender;
     }
 
