@@ -4,6 +4,8 @@ interface IGuard {
     enum ValidatorChangeType { Add, Removal, UpdateInfo }
 
     // functions
+    function initializeCandidate(uint _minSelfStake, bytes _sidechainAddr) external;
+
     function delegate(uint _amount, address _candidate) external;
 
     function claimValidator(bytes calldata _sidechainAddr) external;
@@ -20,7 +22,9 @@ interface IGuard {
     function isValidator(address _addr) external view returns (bool);
 
     // events
-    event Stake(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
+    event InitializeCandidate(address candidate, uint minSelfStake, bytes sidechainAddr);
+
+    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
 
     event ValidatorChange(address indexed ethAddr, bytes indexed sidechainAddr, ValidatorChangeType changeType);
 

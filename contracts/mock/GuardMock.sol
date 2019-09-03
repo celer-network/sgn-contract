@@ -21,6 +21,8 @@ contract GuardMock is IGuard {
     }
 
     struct ValidatorCandidate {
+        bool initialized;
+        uint minSelfStake;
         bytes sidechainAddr;
 
         uint totalLockedStake;
@@ -46,9 +48,20 @@ contract GuardMock is IGuard {
         withdrawTimeout = 0;
     }
 
+    function initializeCandidate(uint _minSelfStake, bytes _sidechainAddr) external {
+        ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+
+        candidate.initialized = true;
+        candidate.minSelfStake = _minSelfStake;
+        candidate.sidechainAddr = _sidechainAddr;
+
+        emit InitializeCandidate(msg.sender, _minSelfStake, _sidechainAddr);
+    }
+
     function delegate(uint _amount, address _candidate) external {
         require(_candidate != address(0), "Validator candidate is 0");
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
+        require(candidate.initialized, "Candidate is not initialized");
 
         address msgSender = msg.sender;
         
@@ -57,11 +70,12 @@ contract GuardMock is IGuard {
         candidate.totalLockedStake =
             candidate.totalLockedStake.add(_amount);
 
-        emit Stake(msgSender, _candidate, _amount, candidate.totalLockedStake);
+        emit Delegate(msgSender, _candidate, _amount, candidate.totalLockedStake);
     }
 
     function claimValidator(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
+        require(candidateProfiles[msgSender].initialized, "Candidate is not initialized");
         
         candidateProfiles[msgSender].sidechainAddr = _sidechainAddr;
 
