@@ -4,7 +4,7 @@ interface IGuard {
     enum ValidatorChangeType { Add, Removal, UpdateInfo }
 
     // functions
-    function stake(uint _amount, address _candidate) external;
+    function delegate(uint _amount, address _candidate) external;
 
     function claimValidator(bytes calldata _sidechainAddr) external;
 

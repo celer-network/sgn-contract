@@ -46,7 +46,7 @@ contract GuardMock is IGuard {
         withdrawTimeout = 0;
     }
 
-    function stake(uint _amount, address _candidate) external {
+    function delegate(uint _amount, address _candidate) external {
         require(_candidate != address(0), "Validator candidate is 0");
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
 

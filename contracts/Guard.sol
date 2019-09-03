@@ -58,7 +58,7 @@ contract Guard is IGuard {
         withdrawTimeout = _withdrawTimeout;
     }
 
-    function stake(uint _amount, address _candidate) external nonNullAddr(_candidate) {
+    function delegate(uint _amount, address _candidate) external nonNullAddr(_candidate) {
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
 
         address msgSender = msg.sender;
