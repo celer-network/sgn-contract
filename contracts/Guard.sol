@@ -9,6 +9,8 @@ contract Guard is IGuard {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
+    enum MathOperation { Add, Sub }
+
     struct WithdrawIntent {
         uint amount;
         uint unlockTime;
@@ -84,15 +86,12 @@ contract Guard is IGuard {
         emit InitializeCandidate(msg.sender, _minSelfStake, _sidechainAddr);
     }
 
-    function delegate(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
-        ValidatorCandidate storage candidate = candidateProfiles[_candidate];
+    function delegate(uint _amount, address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, "Candidate is not initialized");
 
         address msgSender = msg.sender;
-        candidate.delegatorProfiles[msgSender].lockedStake =
-            candidate.delegatorProfiles[msgSender].lockedStake.add(_amount);
-        candidate.totalLockedStake =
-            candidate.totalLockedStake.add(_amount);
+        _updateLockedStake(candidate, msgSender, _amount, MathOperation.Add);
 
         celerToken.safeTransferFrom(
             msgSender,
@@ -100,7 +99,7 @@ contract Guard is IGuard {
             _amount
         );
 
-        emit Delegate(msgSender, _candidate, _amount, candidate.totalLockedStake);
+        emit Delegate(msgSender, _candidateAddr, _amount, candidate.totalLockedStake);
     }
 
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
@@ -141,19 +140,18 @@ contract Guard is IGuard {
         validatorSet[minStakeIndex] = msgSender;
     }
 
-    function intendWithdraw(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
+    function intendWithdraw(uint _amount, address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
         address msgSender = msg.sender;
-        ValidatorCandidate storage candidate = candidateProfiles[_candidate];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
-        candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
-        delegator.lockedStake = delegator.lockedStake.sub(_amount);
+        _updateLockedStake(candidate, msgSender, _amount, MathOperation.Sub);
 
         // if validator withdraws its self stake
-        if (_candidate == msgSender && isValidator(_candidate)) {
+        if (_candidateAddr == msgSender && isValidator(_candidateAddr)) {
             if (delegator.lockedStake < candidate.minSelfStake) {
-                validatorSet[_getValidatorIdx(_candidate)] = address(0);
-                emit ValidatorChange(_candidate, ValidatorChangeType.Removal);
+                validatorSet[_getValidatorIdx(_candidateAddr)] = address(0);
+                emit ValidatorChange(_candidateAddr, ValidatorChangeType.Removal);
             }
         }
 
@@ -163,16 +161,16 @@ contract Guard is IGuard {
         delegator.withdrawIntents.push(withdrawIntent);
         emit IntendWithdraw(
             msgSender,
-            _candidate,
+            _candidateAddr,
             _amount,
             withdrawIntent.unlockTime,
             candidate.totalLockedStake
         );
     }
 
-    function confirmWithdraw(address _candidate) external onlyNonNullAddr(_candidate) {
+    function confirmWithdraw(address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
         address msgSender = msg.sender;
-        Delegator storage delegator = candidateProfiles[_candidate].delegatorProfiles[msgSender];
+        Delegator storage delegator = candidateProfiles[_candidateAddr].delegatorProfiles[msgSender];
 
         uint intentLen = delegator.withdrawIntents.length;
         uint ts = block.timestamp;
@@ -187,7 +185,7 @@ contract Guard is IGuard {
         }
         celerToken.safeTransfer(msgSender, withdrawAmount);
 
-        emit ConfirmWithdraw(msgSender, _candidate, withdrawAmount);
+        emit ConfirmWithdraw(msgSender, _candidateAddr, withdrawAmount);
     }
 
     function subscribe(uint _amount) external {
@@ -253,6 +251,27 @@ contract Guard is IGuard {
         }
 
         return minStake;
+    }
+
+    function _updateLockedStake(
+        ValidatorCandidate _candidate,
+        address _delegatorAddr,
+        uint _amount,
+        MathOperation _op
+    )
+        private
+    {
+        if (_op == MathOperation.Add) {
+            _candidate.delegatorProfiles[_delegatorAddr].lockedStake =
+                _candidate.delegatorProfiles[_delegatorAddr].lockedStake.add(_amount);
+            _candidate.totalLockedStake = candidate.totalLockedStake.add(_amount);
+        } else if (_op == MathOperation.Sub) {
+            _candidate.delegatorProfiles[_delegatorAddr].lockedStake =
+                _candidate.delegatorProfiles[_delegatorAddr].lockedStake.sub(_amount);
+            _candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
+        } else {
+            assert(false);
+        }
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
