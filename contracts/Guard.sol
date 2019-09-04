@@ -37,6 +37,9 @@ contract Guard is IGuard {
     uint public feePerBlock;
     uint public withdrawTimeout;
     uint public minValidatorNum;
+    // used for bootstrap: there should be enough time for delegating and
+    // claim the initial validators
+    uint public sidechainGoLive;
 
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
@@ -49,9 +52,10 @@ contract Guard is IGuard {
         _;
     }
 
-    // used before checking the signatures of validators
-    modifier onlyValidValidatorSet() {
-        require(getValidatorNum() >= minValidatorNum);
+    // check this before sidechain's operation
+    modifier onlyValidSidechain() {
+        require(getValidatorNum() >= minValidatorNum, "too few validators");
+        require(block.number >= sidechainGoLive, "sidechain is not live");
         _;
     }
 
@@ -181,7 +185,7 @@ contract Guard is IGuard {
     }
 
     // TODO
-    // function punish(bytes calldata _punishRequest) external onlyValidValidatorSet {
+    // function punish(bytes calldata _punishRequest) external onlyValidSidechain {
         // think about punish protobuf message
         // sidechain claims which delegators of a validator will be punished by what amount
     // }
