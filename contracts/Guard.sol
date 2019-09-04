@@ -157,7 +157,7 @@ contract Guard is IGuard {
 
         // candidate withdraws its self stake
         if (_candidate == msgSender && isValidator(_candidate)) {
-            if (candidate.delegatorProfiles[msgSender].lockedStake < minSelfStake) {
+            if (candidate.delegatorProfiles[msgSender].lockedStake < candidate.minSelfStake) {
                 validatorSet[_getValidatorIdx(_candidate)] = address(0);
                 emit ValidatorChange(_candidate, candidate.sidechainAddr, ValidatorChangeType.Removal);
             }
