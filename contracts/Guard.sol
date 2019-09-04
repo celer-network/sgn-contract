@@ -150,11 +150,23 @@ contract Guard is IGuard {
 
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
 
+        candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
+        candidate.delegatorProfiles[msgSender].lockedStake =
+            candidate.delegatorProfiles[msgSender].lockedStake.sub(_amount);
+        emit LockedStakeUpdate(_candidate, candidate.sidechainAddr, candidate.totalLockedStake);
+
+        // candidate withdraws its self stake
+        if (_candidate == msgSender && isValidator(_candidate)) {
+            if (candidate.delegatorProfiles[msgSender].lockedStake < minSelfStake) {
+                validatorSet[_getValidatorIdx(_candidate)] = address(0);
+                emit ValidatorChange(_candidate, candidate.sidechainAddr, ValidatorChangeType.Removal);
+            }
+        }
+
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
         withdrawIntent.unlockTime = block.timestamp.add(withdrawTimeout);
         candidate.delegatorProfiles[msgSender].withdrawIntents.push(withdrawIntent);
-
         emit IntendWithdraw(msgSender, _candidate, _amount, withdrawIntent.unlockTime);
     }
 
@@ -226,6 +238,16 @@ contract Guard is IGuard {
             }
         }
         return num;
+    }
+
+    function _getValidatorIdx(address _addr) private view returns (uint) {
+        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] == _addr) {
+                return i;
+            }
+        }
+
+        revert("no such a validator");
     }
 
 
