@@ -36,28 +36,37 @@ contract Guard is IGuard {
     // subscription fee per block
     uint public feePerBlock;
     uint public withdrawTimeout;
-    uint public minSelfStake;
+    uint public minValidatorNum;
+
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
     // consumer subscription
     mapping (address => uint) public subscriptionExpiration;
 
-    modifier nonNullAddr(address _addr) {
+    modifier onlyNonNullAddr(address _addr) {
         require(_addr != address(0), "0 address");
+        _;
+    }
+
+    // used before checking the signatures of validators
+    modifier onlyValidValidatorSet() {
+        require(getValidatorNum() >= minValidatorNum);
         _;
     }
 
     constructor(
         address _celerTokenAddress,
         uint _feePerBlock,
-        uint _withdrawTimeout
+        uint _withdrawTimeout,
+        uint _minValidatorNum
     )
         public
     {
         celerToken = IERC20(_celerTokenAddress);
         feePerBlock = _feePerBlock;
         withdrawTimeout = _withdrawTimeout;
+        minValidatorNum = _minValidatorNum;
     }
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
@@ -70,7 +79,7 @@ contract Guard is IGuard {
         emit InitializeCandidate(msg.sender, _minSelfStake, _sidechainAddr);
     }
 
-    function delegate(uint _amount, address _candidate) external nonNullAddr(_candidate) {
+    function delegate(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
         require(candidate.initialized, "Candidate is not initialized");
 
@@ -118,7 +127,7 @@ contract Guard is IGuard {
         validatorSet[minStakeIndex] = msgSender;
     }
 
-    function intendWithdraw(uint _amount, address _candidate) external nonNullAddr(_candidate) {
+    function intendWithdraw(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
         address msgSender = msg.sender;
 
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
@@ -131,7 +140,7 @@ contract Guard is IGuard {
         emit IntendWithdraw(msgSender, _candidate, _amount, withdrawIntent.unlockTime);
     }
 
-    function confirmWithdraw(address _candidate) external nonNullAddr(_candidate) {
+    function confirmWithdraw(address _candidate) external onlyNonNullAddr(_candidate) {
         address msgSender = msg.sender;
 
         Delegator storage delegator = candidateProfiles[_candidate].delegatorProfiles[msgSender];
@@ -172,7 +181,7 @@ contract Guard is IGuard {
     }
 
     // TODO
-    // function punish(bytes calldata _punishRequest) external {
+    // function punish(bytes calldata _punishRequest) external onlyValidValidatorSet {
         // think about punish protobuf message
         // sidechain claims which delegators of a validator will be punished by what amount
     // }
@@ -189,6 +198,16 @@ contract Guard is IGuard {
         }
 
         return false;
+    }
+
+    function getValidatorNum() public view returns (uint) {
+        uint num = 0;
+        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] != address(0)) {
+                num++;
+            }
+        }
+        return num;
     }
 
 

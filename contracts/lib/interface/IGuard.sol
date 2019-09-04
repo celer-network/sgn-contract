@@ -21,6 +21,8 @@ interface IGuard {
 
     function isValidator(address _addr) external view returns (bool);
 
+    function getValidatorNum() external view returns (uint);
+
     // events
     event InitializeCandidate(address candidate, uint minSelfStake, bytes sidechainAddr);
 

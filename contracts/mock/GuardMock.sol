@@ -163,4 +163,14 @@ contract GuardMock is IGuard {
 
         return false;
     }
+
+    function getValidatorNum() public view returns (uint) {
+        uint num = 0;
+        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] != address(0)) {
+                num++;
+            }
+        }
+        return num;
+    }
 }
