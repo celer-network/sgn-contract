@@ -33,14 +33,31 @@ contract GuardMock is IGuard {
     uint public constant VALIDATOR_SET_MAX_SIZE = 11;
 
     IERC20 public celerToken;
+    // subscription fee per block
     uint public feePerBlock;
     uint public withdrawTimeout;
+    uint public minValidatorNum;
+    // used for bootstrap: there should be enough time for delegating and
+    // claim the initial validators
+    uint public sidechainGoLive;
+
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
-    // subscription fee per block
     // consumer subscription
     mapping (address => uint) public subscriptionExpiration;
+
+    modifier onlyNonNullAddr(address _addr) {
+        require(_addr != address(0), "0 address");
+        _;
+    }
+
+    // check this before sidechain's operation
+    modifier onlyValidSidechain() {
+        require(getValidatorNum() >= minValidatorNum, "too few validators");
+        require(block.number >= sidechainGoLive, "sidechain is not live");
+        _;
+    }
 
     constructor() public {
         feePerBlock = 10;
@@ -58,8 +75,7 @@ contract GuardMock is IGuard {
         emit InitializeCandidate(msg.sender, _minSelfStake, _sidechainAddr);
     }
 
-    function delegate(uint _amount, address _candidate) external {
-        require(_candidate != address(0), "Validator candidate is 0");
+    function delegate(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
         require(candidate.initialized, "Candidate is not initialized");
 
@@ -91,33 +107,44 @@ contract GuardMock is IGuard {
         require(candidate.totalLockedStake > minStake, "Not enough stake");
         address removedValidator = validatorSet[minStakeIndex];
         if (removedValidator != address(0)) {
-            emit ValidatorChange(
-                removedValidator,
-                candidateProfiles[removedValidator].sidechainAddr,
-                ValidatorChangeType.Removal
-            );
+            emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
         }
-        emit ValidatorChange(msgSender, candidate.sidechainAddr, ValidatorChangeType.Add);
+        emit ValidatorChange(msgSender, ValidatorChangeType.Add);
         validatorSet[minStakeIndex] = msgSender;
     }
 
-    function intendWithdraw(uint _amount, address _candidate) external {
+    function intendWithdraw(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
         address msgSender = msg.sender;
-        require(_candidate != address(0), "Validator candidate is 0");
 
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
+
+        candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
+        candidate.delegatorProfiles[msgSender].lockedStake =
+            candidate.delegatorProfiles[msgSender].lockedStake.sub(_amount);
+
+        // candidate withdraws its self stake
+        if (_candidate == msgSender && isValidator(_candidate)) {
+            if (candidate.delegatorProfiles[msgSender].lockedStake < candidate.minSelfStake) {
+                validatorSet[_getValidatorIdx(_candidate)] = address(0);
+                emit ValidatorChange(_candidate, ValidatorChangeType.Removal);
+            }
+        }
 
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
         withdrawIntent.unlockTime = block.timestamp.add(withdrawTimeout);
         candidate.delegatorProfiles[msgSender].withdrawIntents.push(withdrawIntent);
-
-        emit IntendWithdraw(msgSender, _candidate, _amount, withdrawIntent.unlockTime);
+        emit IntendWithdraw(
+            msgSender,
+            _candidate,
+            _amount,
+            withdrawIntent.unlockTime,
+            candidate.totalLockedStake
+        );
     }
 
-    function confirmWithdraw(address _candidate) external {
+    function confirmWithdraw(address _candidate) external onlyNonNullAddr(_candidate) {
         address msgSender = msg.sender;
-        require(_candidate != address(0), "Validator candidate is 0");
 
         Delegator storage delegator = candidateProfiles[_candidate].delegatorProfiles[msgSender];
 
@@ -172,5 +199,15 @@ contract GuardMock is IGuard {
             }
         }
         return num;
+    }
+
+    function _getValidatorIdx(address _addr) private view returns (uint) {
+        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] == _addr) {
+                return i;
+            }
+        }
+
+        revert("no such a validator");
     }
 }

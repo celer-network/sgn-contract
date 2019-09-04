@@ -135,13 +135,9 @@ contract Guard is IGuard {
         require(candidate.totalLockedStake > minStake, "Not enough stake");
         address removedValidator = validatorSet[minStakeIndex];
         if (removedValidator != address(0)) {
-            emit ValidatorChange(
-                removedValidator,
-                candidateProfiles[removedValidator].sidechainAddr,
-                ValidatorChangeType.Removal
-            );
+            emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
         }
-        emit ValidatorChange(msgSender, candidate.sidechainAddr, ValidatorChangeType.Add);
+        emit ValidatorChange(msgSender, ValidatorChangeType.Add);
         validatorSet[minStakeIndex] = msgSender;
     }
 
@@ -153,13 +149,12 @@ contract Guard is IGuard {
         candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
         candidate.delegatorProfiles[msgSender].lockedStake =
             candidate.delegatorProfiles[msgSender].lockedStake.sub(_amount);
-        emit LockedStakeUpdate(_candidate, candidate.sidechainAddr, candidate.totalLockedStake);
 
         // candidate withdraws its self stake
         if (_candidate == msgSender && isValidator(_candidate)) {
             if (candidate.delegatorProfiles[msgSender].lockedStake < candidate.minSelfStake) {
                 validatorSet[_getValidatorIdx(_candidate)] = address(0);
-                emit ValidatorChange(_candidate, candidate.sidechainAddr, ValidatorChangeType.Removal);
+                emit ValidatorChange(_candidate, ValidatorChangeType.Removal);
             }
         }
 
@@ -167,7 +162,13 @@ contract Guard is IGuard {
         withdrawIntent.amount = _amount;
         withdrawIntent.unlockTime = block.timestamp.add(withdrawTimeout);
         candidate.delegatorProfiles[msgSender].withdrawIntents.push(withdrawIntent);
-        emit IntendWithdraw(msgSender, _candidate, _amount, withdrawIntent.unlockTime);
+        emit IntendWithdraw(
+            msgSender,
+            _candidate,
+            _amount,
+            withdrawIntent.unlockTime,
+            candidate.totalLockedStake
+        );
     }
 
     function confirmWithdraw(address _candidate) external onlyNonNullAddr(_candidate) {

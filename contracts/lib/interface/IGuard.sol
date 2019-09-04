@@ -28,15 +28,13 @@ interface IGuard {
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
-    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
+    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalLockedStake);
 
     event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
-    event ValidatorChange(address indexed ethAddr, bytes indexed sidechainAddr, ValidatorChangeType changeType);
-
-    event LockedStakeUpdate(address indexed candidate, bytes indexed sidechainAddr, uint totalStake);
+    event ValidatorChange(address indexed ethAddr, ValidatorChangeType changeType);
     
-    event IntendWithdraw(address indexed delegator, address indexed candidate, uint amount, uint unlockTime);
+    event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint unlockTime, uint totalLockedStake);
 
     event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
