@@ -143,14 +143,13 @@ contract Guard is IGuard {
 
     function intendWithdraw(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
         address msgSender = msg.sender;
-
         ValidatorCandidate storage candidate = candidateProfiles[_candidate];
 
         candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
         candidate.delegatorProfiles[msgSender].lockedStake =
             candidate.delegatorProfiles[msgSender].lockedStake.sub(_amount);
 
-        // candidate withdraws its self stake
+        // if validator withdraws its self stake
         if (_candidate == msgSender && isValidator(_candidate)) {
             if (candidate.delegatorProfiles[msgSender].lockedStake < candidate.minSelfStake) {
                 validatorSet[_getValidatorIdx(_candidate)] = address(0);
@@ -173,7 +172,6 @@ contract Guard is IGuard {
 
     function confirmWithdraw(address _candidate) external onlyNonNullAddr(_candidate) {
         address msgSender = msg.sender;
-
         Delegator storage delegator = candidateProfiles[_candidate].delegatorProfiles[msgSender];
 
         uint intentLen = delegator.withdrawIntents.length;
