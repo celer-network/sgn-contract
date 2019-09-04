@@ -1,12 +1,14 @@
 pragma solidity ^0.5.0;
 
 interface IGuard {
-    enum ValidatorChangeType { Add, Removal, UpdateInfo }
+    enum ValidatorChangeType { Add, Removal }
 
     // functions
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;
 
     function delegate(uint _amount, address _candidate) external;
+
+    function updateSidechainAddr(bytes calldata _sidechainAddr) external;
 
     function claimValidator() external;
 
@@ -24,9 +26,11 @@ interface IGuard {
     function getValidatorNum() external view returns (uint);
 
     // events
-    event InitializeCandidate(address candidate, uint minSelfStake, bytes sidechainAddr);
+    event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
+
+    event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
     event ValidatorChange(address indexed ethAddr, bytes indexed sidechainAddr, ValidatorChangeType changeType);
 

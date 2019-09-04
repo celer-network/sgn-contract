@@ -75,6 +75,7 @@ contract Guard is IGuard {
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+        require(!candidate.initialized, "Candidate is initialized");
 
         candidate.initialized = true;
         candidate.minSelfStake = _minSelfStake;
@@ -101,6 +102,20 @@ contract Guard is IGuard {
 
         emit Delegate(msgSender, _candidate, _amount, candidate.totalLockedStake);
     }
+
+    function updateSidechainAddr(bytes calldata _sidechainAddr) external {
+        address msgSender = msg.sender;
+        require(!isValidator(msgSender), "msg.sender is validator");
+        ValidatorCandidate storage candidate = candidateProfiles[msgSender];
+        require(candidate.initialized, "Candidate is not initialized");
+        
+        bytes memory oldSidechainAddr = candidate.sidechainAddr;
+        candidate.sidechainAddr = _sidechainAddr;
+
+        emit UpdateSidechainAddr(msgSender, oldSidechainAddr, _sidechainAddr);
+    }
+
+    // TODO: function updateMinSelfStake - unlock all stakes when candidate updates this field?
 
     function claimValidator() external {
         address msgSender = msg.sender;
