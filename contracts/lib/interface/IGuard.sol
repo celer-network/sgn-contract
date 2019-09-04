@@ -25,6 +25,8 @@ interface IGuard {
 
     function getValidatorNum() external view returns (uint);
 
+    function getMinStake() external view returns (uint);
+
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 

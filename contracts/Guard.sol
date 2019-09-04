@@ -124,7 +124,7 @@ contract Guard is IGuard {
 
         uint minStakeIndex = 0;
         uint minStake = candidateProfiles[validatorSet[0]].totalLockedStake;
-        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+        for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
             require(validatorSet[i] != msgSender, "Already in validator set");
             if (candidateProfiles[validatorSet[i]].totalLockedStake < minStake) {
                 minStakeIndex = i;
@@ -237,6 +237,22 @@ contract Guard is IGuard {
             }
         }
         return num;
+    }
+
+    function getMinStake() public view returns (uint) {
+        uint minStake = candidateProfiles[validatorSet[0]].totalLockedStake;
+
+        for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (minStake == 0) {
+                break;
+            }
+
+            if (candidateProfiles[validatorSet[i]].totalLockedStake < minStake) {
+                minStake = candidateProfiles[validatorSet[i]].totalLockedStake;
+            }
+        }
+
+        return minStake;
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
