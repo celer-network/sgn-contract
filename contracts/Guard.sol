@@ -254,7 +254,7 @@ contract Guard is IGuard {
     }
 
     function _updateLockedStake(
-        ValidatorCandidate _candidate,
+        ValidatorCandidate storage _candidate,
         address _delegatorAddr,
         uint _amount,
         MathOperation _op
@@ -264,11 +264,11 @@ contract Guard is IGuard {
         if (_op == MathOperation.Add) {
             _candidate.delegatorProfiles[_delegatorAddr].lockedStake =
                 _candidate.delegatorProfiles[_delegatorAddr].lockedStake.add(_amount);
-            _candidate.totalLockedStake = candidate.totalLockedStake.add(_amount);
+            _candidate.totalLockedStake = _candidate.totalLockedStake.add(_amount);
         } else if (_op == MathOperation.Sub) {
             _candidate.delegatorProfiles[_delegatorAddr].lockedStake =
                 _candidate.delegatorProfiles[_delegatorAddr].lockedStake.sub(_amount);
-            _candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
+            _candidate.totalLockedStake = _candidate.totalLockedStake.sub(_amount);
         } else {
             assert(false);
         }
