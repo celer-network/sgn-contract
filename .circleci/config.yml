@@ -1,0 +1,57 @@
+version: 2
+
+# try to checkout pr merge if it exists, no op if not a pr build
+checkout_pr_merge: &checkout_pr_merge
+  run:
+    name: try to checkout pr merge
+    command: git fetch origin "+refs/pull/${CIRCLE_PULL_REQUEST##*/}/merge" && git checkout -qf FETCH_HEAD || echo "not pr build"
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:10.15.3
+    steps:
+      - checkout
+      - <<: *checkout_pr_merge
+      - restore_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: install node_modules if not exists
+          environment:
+            GANACHE_VER: 6.4.2
+            TRUFFLE_VER: 5.0.14
+          command: |
+            if [ ! -d "node_modules" ]; then
+              npm install --no-save
+              npm install ganache-cli@$GANACHE_VER truffle@$TRUFFLE_VER --no-save
+            fi
+      - run:
+          name: fetch abigen binary if not exists
+          environment:
+            GETH_TOOL_VER: geth-alltools-linux-amd64-1.9.3-cfbb969d
+            GETH_VER_LOG: node_modules/geth_tool_ver.log
+          command: |
+            if [ ! -f "$GETH_VER_LOG" ] || [ $GETH_TOOL_VER != $(cat $GETH_VER_LOG) ]; then
+              echo "Fetching $GETH_TOOL_VER ..."
+              echo $GETH_TOOL_VER > $GETH_VER_LOG
+              curl -sL https://gethstore.blob.core.windows.net/builds/$GETH_TOOL_VER.tar.gz | tar -xz -C node_modules/.bin --strip 1 $GETH_TOOL_VER/abigen
+            fi
+      - run:
+          name: run truffle test
+          command: |
+            node_modules/.bin/truffle compile
+            # node_modules/.bin/ganache-cli -l 8000000 2> /dev/null 1> /dev/null &
+            # GANACHE_PID=$!
+            # node_modules/.bin/truffle test
+            # kill -9 $GANACHE_PID
+            # git checkout -- gas_used_logs/  # discard changes generated during ci tests in gas_used_logs/
+      # - run:
+      #     name: update genfiles and sync go bindings if PR
+      #     command: |
+      #       if [ -n "${CIRCLE_PULL_REQUEST##*/}" ]; then
+      #         bash ./gen_and_push.sh "${CIRCLE_PULL_REQUEST##*/}" "$CIRCLE_BRANCH"
+      #       fi
+      - save_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - "node_modules"

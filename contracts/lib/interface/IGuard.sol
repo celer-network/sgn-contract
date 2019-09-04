@@ -1,29 +1,46 @@
 pragma solidity ^0.5.0;
 
 interface IGuard {
-    // functions
-    function stake(uint _amount, address _candidate) external;
+    enum ValidatorChangeType { Add, Removal }
 
-    function claimValidator(bytes calldata _sidechainAddr) external;
+    // functions
+    function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;
+
+    function delegate(uint _amount, address _candidate) external;
+
+    function updateSidechainAddr(bytes calldata _sidechainAddr) external;
+
+    function claimValidator() external;
 
     function intendWithdraw(uint _amount, address _candidate) external;
 
     function confirmWithdraw() external;
 
-    function punish(bytes calldata _punishRequest) external;
+    // TODO
+    // function punish(bytes calldata _punishRequest) external;
 
     function subscribe(uint _amount) external;
 
+    function isValidator(address _addr) external view returns (bool);
+
+    function getValidatorNum() external view returns (uint);
+
+    function getMinStake() external view returns (uint);
+
     // events
-    event Stake(address delegator, address candidate, uint newStake, uint totalStake);
+    event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
-    event ValidatorUpdate(address ethAddr, bytes sidechainAddr, bool added);
+    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalLockedStake);
 
-    event IntendWithdraw(address delegator, address candidate, uint amount);
+    event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
-    event ConfirmWithdraw(address delegator, address candidate, uint amount);
+    event ValidatorChange(address indexed ethAddr, ValidatorChangeType changeType);
+    
+    event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint unlockTime, uint totalLockedStake);
 
-    event Punish(address indemnitor, address indemnitee, uint amount);
+    event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
-    event Subscription(address consumer, uint amount, uint subscriptionExpiration);
+    event Punish(address indexed indemnitor, address indexed indemnitee, uint amount);
+
+    event Subscription(address indexed consumer, uint amount, uint subscriptionExpiration);
 }
