@@ -88,7 +88,6 @@ contract Guard is IGuard {
         require(candidate.initialized, "Candidate is not initialized");
 
         address msgSender = msg.sender;
-        
         candidate.delegatorProfiles[msgSender].lockedStake =
             candidate.delegatorProfiles[msgSender].lockedStake.add(_amount);
         candidate.totalLockedStake =
