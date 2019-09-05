@@ -27,6 +27,10 @@ interface IGuard {
 
     function getMinStake() external view returns (uint);
 
+    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, bool);
+
+    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint[] memory, uint[] memory, uint);
+
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
