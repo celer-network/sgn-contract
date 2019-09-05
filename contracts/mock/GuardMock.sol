@@ -217,47 +217,43 @@ contract GuardMock is IGuard {
         return minStake;
     }
 
-    function getCandidateInfo(
-        address _candidateAddr
+    function getCandidateInfo(address _candidateAddr) public view returns (
+        bool initialized,
+        uint minSelfStake,
+        bytes memory sidechainAddr,
+        uint totalLockedStake,
+        bool isVldt
     )
-        public
-        view
-        returns (bool, uint, bytes memory, uint, bool)
     {
         ValidatorCandidate storage c = candidateProfiles[_candidateAddr];
-        return (
-            c.initialized,
-            c.minSelfStake,
-            c.sidechainAddr,
-            c.totalLockedStake,
-            isValidator(_candidateAddr)
-        );
+
+        initialized = c.initialized;
+        minSelfStake = c.minSelfStake;
+        sidechainAddr = c.sidechainAddr;
+        totalLockedStake = c.totalLockedStake;
+        isVldt = isValidator(_candidateAddr);
     }
 
-    function getDelegatorInfo(
-        address _candidateAddr,
-        address _delegatorAddr
+    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) public view
+        returns (
+        uint lockedStake,
+        uint[] memory intentAmounts,
+        uint[] memory intentUnlockTimes,
+        uint nextWithdrawIntent
     )
-        public
-        view
-        returns (uint, uint[] memory, uint[] memory, uint)
     {
         Delegator storage d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
 
         uint len = d.withdrawIntents.length;
-        uint[] memory intentAmounts = new uint[](len);
-        uint[] memory intentUnlockTimes = new uint[](len);
+        intentAmounts = new uint[](len);
+        intentUnlockTimes = new uint[](len);
         for (uint i = 0; i < d.withdrawIntents.length; i++) {
             intentAmounts[i] = d.withdrawIntents[i].amount;
             intentUnlockTimes[i] = d.withdrawIntents[i].unlockTime;
         }
 
-        return (
-            d.lockedStake,
-            intentAmounts,
-            intentUnlockTimes,
-            d.nextWithdrawIntent
-        );
+        lockedStake = d.lockedStake;
+        nextWithdrawIntent = d.nextWithdrawIntent;
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
