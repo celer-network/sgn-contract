@@ -61,14 +61,7 @@ contract GuardMock is IGuard {
         _;
     }
 
-    constructor(
-        address _celerTokenAddress,
-        uint _feePerBlock,
-        uint _withdrawTimeout,
-        uint _minValidatorNum
-    )
-        public
-    {
+    constructor() public {
         // celerToken = IERC20(_celerTokenAddress);
         feePerBlock = 10;
         // no withdrawTimeout for mock(test) purpose
