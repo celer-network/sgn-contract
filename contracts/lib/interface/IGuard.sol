@@ -34,7 +34,7 @@ interface IGuard {
 
     event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
-    event ValidatorChange(address indexed ethAddr, ValidatorChangeType changeType);
+    event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);
     
     event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint unlockTime, uint totalLockedStake);
 
