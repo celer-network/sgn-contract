@@ -40,6 +40,7 @@ jobs:
           name: run truffle test
           command: |
             node_modules/.bin/truffle compile
+            node_modules/.bin/truffle migrate
             # node_modules/.bin/ganache-cli -l 8000000 2> /dev/null 1> /dev/null &
             # GANACHE_PID=$!
             # node_modules/.bin/truffle test
