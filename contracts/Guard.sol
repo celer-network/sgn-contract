@@ -253,6 +253,45 @@ contract Guard is IGuard {
         return minStake;
     }
 
+    function getCandidateInfo(address _candidateAddr) public view returns (
+        bool initialized,
+        uint minSelfStake,
+        bytes memory sidechainAddr,
+        uint totalLockedStake,
+        bool isVldt
+    )
+    {
+        ValidatorCandidate storage c = candidateProfiles[_candidateAddr];
+
+        initialized = c.initialized;
+        minSelfStake = c.minSelfStake;
+        sidechainAddr = c.sidechainAddr;
+        totalLockedStake = c.totalLockedStake;
+        isVldt = isValidator(_candidateAddr);
+    }
+
+    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) public view
+        returns (
+        uint lockedStake,
+        uint[] memory intentAmounts,
+        uint[] memory intentUnlockTimes,
+        uint nextWithdrawIntent
+    )
+    {
+        Delegator storage d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
+
+        uint len = d.withdrawIntents.length;
+        intentAmounts = new uint[](len);
+        intentUnlockTimes = new uint[](len);
+        for (uint i = 0; i < d.withdrawIntents.length; i++) {
+            intentAmounts[i] = d.withdrawIntents[i].amount;
+            intentUnlockTimes[i] = d.withdrawIntents[i].unlockTime;
+        }
+
+        lockedStake = d.lockedStake;
+        nextWithdrawIntent = d.nextWithdrawIntent;
+    }
+
     function _updateLockedStake(
         ValidatorCandidate storage _candidate,
         address _delegatorAddr,

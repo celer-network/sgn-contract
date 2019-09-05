@@ -27,6 +27,10 @@ interface IGuard {
 
     function getMinStake() external view returns (uint);
 
+    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, bool);
+
+    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint[] memory, uint[] memory, uint);
+
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
@@ -34,7 +38,7 @@ interface IGuard {
 
     event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
-    event ValidatorChange(address indexed ethAddr, ValidatorChangeType changeType);
+    event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);
     
     event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint unlockTime, uint totalLockedStake);
 
