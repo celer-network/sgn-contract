@@ -9,6 +9,8 @@ contract GuardMock is IGuard {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
+    enum MathOperation { Add, Sub }
+
     struct WithdrawIntent {
         uint amount;
         uint unlockTime;
@@ -59,14 +61,24 @@ contract GuardMock is IGuard {
         _;
     }
 
-    constructor() public {
+    constructor(
+        address _celerTokenAddress,
+        uint _feePerBlock,
+        uint _withdrawTimeout,
+        uint _minValidatorNum
+    )
+        public
+    {
+        // celerToken = IERC20(_celerTokenAddress);
         feePerBlock = 10;
         // no withdrawTimeout for mock(test) purpose
         withdrawTimeout = 0;
+        minValidatorNum = 0;
     }
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+        require(!candidate.initialized, "Candidate is initialized");
 
         candidate.initialized = true;
         candidate.minSelfStake = _minSelfStake;
@@ -75,19 +87,35 @@ contract GuardMock is IGuard {
         emit InitializeCandidate(msg.sender, _minSelfStake, _sidechainAddr);
     }
 
-    function delegate(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
-        ValidatorCandidate storage candidate = candidateProfiles[_candidate];
+    function delegate(uint _amount, address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, "Candidate is not initialized");
 
         address msgSender = msg.sender;
-        
-        candidate.delegatorProfiles[msgSender].lockedStake =
-            candidate.delegatorProfiles[msgSender].lockedStake.add(_amount);
-        candidate.totalLockedStake =
-            candidate.totalLockedStake.add(_amount);
+        _updateLockedStake(candidate, msgSender, _amount, MathOperation.Add);
 
-        emit Delegate(msgSender, _candidate, _amount, candidate.totalLockedStake);
+        // celerToken.safeTransferFrom(
+        //     msgSender,
+        //     address(this),
+        //     _amount
+        // );
+
+        emit Delegate(msgSender, _candidateAddr, _amount, candidate.totalLockedStake);
     }
+
+    function updateSidechainAddr(bytes calldata _sidechainAddr) external {
+        address msgSender = msg.sender;
+        require(!isValidator(msgSender), "msg.sender is validator");
+        ValidatorCandidate storage candidate = candidateProfiles[msgSender];
+        require(candidate.initialized, "Candidate is not initialized");
+        
+        bytes memory oldSidechainAddr = candidate.sidechainAddr;
+        candidate.sidechainAddr = _sidechainAddr;
+
+        emit UpdateSidechainAddr(msgSender, oldSidechainAddr, _sidechainAddr);
+    }
+
+    // TODO: function updateMinSelfStake - unlock all stakes when candidate updates this field?
 
     function claimValidator() external {
         address msgSender = msg.sender;
@@ -96,7 +124,7 @@ contract GuardMock is IGuard {
 
         uint minStakeIndex = 0;
         uint minStake = candidateProfiles[validatorSet[0]].totalLockedStake;
-        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+        for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
             require(validatorSet[i] != msgSender, "Already in validator set");
             if (candidateProfiles[validatorSet[i]].totalLockedStake < minStake) {
                 minStakeIndex = i;
@@ -113,40 +141,37 @@ contract GuardMock is IGuard {
         validatorSet[minStakeIndex] = msgSender;
     }
 
-    function intendWithdraw(uint _amount, address _candidate) external onlyNonNullAddr(_candidate) {
+    function intendWithdraw(uint _amount, address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
         address msgSender = msg.sender;
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
+        Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
-        ValidatorCandidate storage candidate = candidateProfiles[_candidate];
+        _updateLockedStake(candidate, msgSender, _amount, MathOperation.Sub);
 
-        candidate.totalLockedStake = candidate.totalLockedStake.sub(_amount);
-        candidate.delegatorProfiles[msgSender].lockedStake =
-            candidate.delegatorProfiles[msgSender].lockedStake.sub(_amount);
-
-        // candidate withdraws its self stake
-        if (_candidate == msgSender && isValidator(_candidate)) {
-            if (candidate.delegatorProfiles[msgSender].lockedStake < candidate.minSelfStake) {
-                validatorSet[_getValidatorIdx(_candidate)] = address(0);
-                emit ValidatorChange(_candidate, ValidatorChangeType.Removal);
+        // if validator withdraws its self stake
+        if (_candidateAddr == msgSender && isValidator(_candidateAddr)) {
+            if (delegator.lockedStake < candidate.minSelfStake) {
+                validatorSet[_getValidatorIdx(_candidateAddr)] = address(0);
+                emit ValidatorChange(_candidateAddr, ValidatorChangeType.Removal);
             }
         }
 
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
         withdrawIntent.unlockTime = block.timestamp.add(withdrawTimeout);
-        candidate.delegatorProfiles[msgSender].withdrawIntents.push(withdrawIntent);
+        delegator.withdrawIntents.push(withdrawIntent);
         emit IntendWithdraw(
             msgSender,
-            _candidate,
+            _candidateAddr,
             _amount,
             withdrawIntent.unlockTime,
             candidate.totalLockedStake
         );
     }
 
-    function confirmWithdraw(address _candidate) external onlyNonNullAddr(_candidate) {
+    function confirmWithdraw(address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
         address msgSender = msg.sender;
-
-        Delegator storage delegator = candidateProfiles[_candidate].delegatorProfiles[msgSender];
+        Delegator storage delegator = candidateProfiles[_candidateAddr].delegatorProfiles[msgSender];
 
         uint intentLen = delegator.withdrawIntents.length;
         uint ts = block.timestamp;
@@ -159,8 +184,9 @@ contract GuardMock is IGuard {
                 break;
             }
         }
+        // celerToken.safeTransfer(msgSender, withdrawAmount);
 
-        emit ConfirmWithdraw(msgSender, _candidate, withdrawAmount);
+        emit ConfirmWithdraw(msgSender, _candidateAddr, withdrawAmount);
     }
 
     function subscribe(uint _amount) external {
@@ -173,9 +199,20 @@ contract GuardMock is IGuard {
         else {
             subscriptionExpiration[msgSender] = subscriptionExpiration[msgSender].add(delta);
         }
+        // celerToken.safeTransferFrom(
+        //     msgSender,
+        //     address(this),
+        //     _amount
+        // );
 
         emit Subscription(msgSender, _amount, subscriptionExpiration[msgSender]);
     }
+
+    // TODO
+    // function punish(bytes calldata _punishRequest) external onlyValidSidechain {
+        // think about punish protobuf message
+        // sidechain claims which delegators of a validator will be punished by what amount
+    // }
 
     function isValidator(address _addr) public view returns (bool) {
         if (_addr == address(0)) {
@@ -254,6 +291,27 @@ contract GuardMock is IGuard {
 
         lockedStake = d.lockedStake;
         nextWithdrawIntent = d.nextWithdrawIntent;
+    }
+
+    function _updateLockedStake(
+        ValidatorCandidate storage _candidate,
+        address _delegatorAddr,
+        uint _amount,
+        MathOperation _op
+    )
+        private
+    {
+        if (_op == MathOperation.Add) {
+            _candidate.delegatorProfiles[_delegatorAddr].lockedStake =
+                _candidate.delegatorProfiles[_delegatorAddr].lockedStake.add(_amount);
+            _candidate.totalLockedStake = _candidate.totalLockedStake.add(_amount);
+        } else if (_op == MathOperation.Sub) {
+            _candidate.delegatorProfiles[_delegatorAddr].lockedStake =
+                _candidate.delegatorProfiles[_delegatorAddr].lockedStake.sub(_amount);
+            _candidate.totalLockedStake = _candidate.totalLockedStake.sub(_amount);
+        } else {
+            assert(false);
+        }
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
