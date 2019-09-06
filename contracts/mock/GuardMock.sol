@@ -80,7 +80,7 @@ contract GuardMock is IGuard {
         emit InitializeCandidate(msg.sender, _minSelfStake, _sidechainAddr);
     }
 
-    function delegate(uint _amount, address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
+    function delegate(address _candidateAddr, uint _amount) external onlyNonNullAddr(_candidateAddr) {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, "Candidate is not initialized");
 
@@ -134,7 +134,7 @@ contract GuardMock is IGuard {
         validatorSet[minStakeIndex] = msgSender;
     }
 
-    function intendWithdraw(uint _amount, address _candidateAddr) external onlyNonNullAddr(_candidateAddr) {
+    function intendWithdraw(address _candidateAddr, uint _amount) external onlyNonNullAddr(_candidateAddr) {
         address msgSender = msg.sender;
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];

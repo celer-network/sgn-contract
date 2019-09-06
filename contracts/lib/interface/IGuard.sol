@@ -6,13 +6,13 @@ interface IGuard {
     // functions
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;
 
-    function delegate(uint _amount, address _candidate) external;
+    function delegate(address _candidate, uint _amount) external;
 
     function updateSidechainAddr(bytes calldata _sidechainAddr) external;
 
     function claimValidator() external;
 
-    function intendWithdraw(uint _amount, address _candidate) external;
+    function intendWithdraw(address _candidate, uint _amount) external;
 
     function confirmWithdraw(address _candidateAddr) external;
 
