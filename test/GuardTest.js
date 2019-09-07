@@ -34,7 +34,7 @@ contract("Guard tests", async accounts => {
         }
     });
 
-    it("should fail to delegate an uninitialized Candidate", async () => {
+    it("should fail to delegate to an uninitialized candidate", async () => {
         await celerToken.approve(instance.address, 100);
 
         try {
@@ -68,7 +68,7 @@ contract("Guard tests", async accounts => {
         assert.equal(args.sidechainAddr, sha3(sidechainAddr));
     });
 
-    describe("after initializing a candidate", async () => {
+    describe("after candidate finishes initialization", async () => {
         const candidate = accounts[1];
         const sidechainAddr = sha3(candidate);
 
@@ -98,7 +98,7 @@ contract("Guard tests", async accounts => {
             assert.fail("should have thrown before");
         });
 
-        it("should update sidechain address successfully", async () => {
+        it("should update sidechain address by candidate successfully", async () => {
             const newSidechainAddr = sha3(candidate + "new");
             const tx = await instance.updateSidechainAddr(newSidechainAddr, {
                 from: candidate
@@ -111,7 +111,7 @@ contract("Guard tests", async accounts => {
             assert.equal(args.newSidechainAddr, sha3(newSidechainAddr));
         });
 
-        it("should delegate successfully", async () => {
+        it("should delegate to candidate by a delegator successfully", async () => {
             await celerToken.approve(instance.address, 100);
 
             const tx = await instance.delegate(candidate, 100);
@@ -124,13 +124,29 @@ contract("Guard tests", async accounts => {
             assert.equal(args.totalLockedStake, 100);
         });
 
-        describe("after delegate to candidate", async () => {
+        it("should fail to claim validator before self delegating minSelfStake", async () => {
+            try {
+                await instance.claimValidator({
+                    from: candidate
+                });
+            } catch (error) {
+                assert.isAbove(
+                    error.message.search("Not enough self stake"),
+                    -1
+                );
+                return;
+            }
+
+            assert.fail("should have thrown before");
+        });
+
+        describe("after delegator delegates to the candidate", async () => {
             beforeEach(async () => {
                 await celerToken.approve(instance.address, 100);
                 await instance.delegate(candidate, 100);
             });
 
-            it("should intendWithdraw successfully", async () => {
+            it("should intendWithdraw by delegator successfully", async () => {
                 const tx = await instance.intendWithdraw(candidate, 50);
                 const block = await web3.eth.getBlock("latest");
                 const { event, args } = tx.logs[0];
@@ -176,23 +192,7 @@ contract("Guard tests", async accounts => {
             });
         });
 
-        it("should fail to claim validator before self delegating minSelfStake", async () => {
-            try {
-                await instance.claimValidator({
-                    from: candidate
-                });
-            } catch (error) {
-                assert.isAbove(
-                    error.message.search("Not enough self stake"),
-                    -1
-                );
-                return;
-            }
-
-            assert.fail("should have thrown before");
-        });
-
-        describe("after self delegating minSelfStake", async () => {
+        describe("after candidate self delegates minSelfStake", async () => {
             beforeEach(async () => {
                 await celerToken.approve(instance.address, 100, {
                     from: candidate
@@ -213,7 +213,31 @@ contract("Guard tests", async accounts => {
                 assert.equal(args.changeType, ValidatorAdd);
             });
 
-            // TODO: after withdraw self stake, it should become a non-validator
+            describe("after candidate claim validator", async () => {
+                beforeEach(async () => {
+                    await instance.claimValidator({
+                        from: candidate
+                    });
+                });
+
+                it("should remove the validator after the validator withdraws under minSelfStake", async () => {
+                    const tx = await instance.intendWithdraw(candidate, 50, {
+                        from: candidate
+                    });
+                    const block = await web3.eth.getBlock("latest");
+
+                    assert.equal(tx.logs[0].event, "ValidatorChange");
+                    assert.equal(tx.logs[0].args.ethAddr, candidate);
+                    assert.equal(tx.logs[0].args.changeType, ValidatorRemoval);
+
+                    assert.equal(tx.logs[1].event, "IntendWithdraw");
+                    assert.equal(tx.logs[1].args.delegator, candidate);
+                    assert.equal(tx.logs[1].args.candidate, candidate);
+                    assert.equal(tx.logs[1].args.withdrawAmount, 50);
+                    assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + WITHDRAW_TIMEOUT);
+                    assert.equal(tx.logs[1].args.totalLockedStake, 50);
+                });
+            });
         });
     });
 });
