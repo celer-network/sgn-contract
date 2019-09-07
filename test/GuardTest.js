@@ -78,7 +78,7 @@ contract("SGN Guard contract", async accounts => {
             });
         });
 
-        it("should fail to initialize candidate twice", async () => {
+        it("should fail to initialize the same candidate twice", async () => {
             await celerToken.approve(instance.address, 100, {
                 from: candidate
             });
@@ -220,7 +220,7 @@ contract("SGN Guard contract", async accounts => {
                     });
                 });
 
-                it("should remove the validator after the validator withdraws under minSelfStake", async () => {
+                it("should remove the validator after the validator intendWithdraw to an amount under minSelfStake", async () => {
                     const tx = await instance.intendWithdraw(candidate, 50, {
                         from: candidate
                     });
