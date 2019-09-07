@@ -328,8 +328,7 @@ contract Guard is IGuard {
     }
 
 
-
-    /******************** old function records ********************/
+    /********************* old function records *********************/
     // function punish(
     //     uint _cpNumber,
     //     bytes calldata _blockNumber,
