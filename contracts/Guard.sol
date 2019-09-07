@@ -120,6 +120,10 @@ contract Guard is IGuard {
         address msgSender = msg.sender;
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, "Candidate is not initialized");
+        require(
+            candidate.delegatorProfiles[msgSender].lockedStake >= candidate.minSelfStake,
+            "Not enough self stake"
+        );
 
         uint minStakeIndex = 0;
         uint minStake = candidateProfiles[validatorSet[0]].totalLockedStake;
@@ -131,7 +135,7 @@ contract Guard is IGuard {
             }
         }
 
-        require(candidate.totalLockedStake > minStake, "Not enough stake");
+        require(candidate.totalLockedStake > minStake, "Not enough total stake");
         address removedValidator = validatorSet[minStakeIndex];
         if (removedValidator != address(0)) {
             emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);

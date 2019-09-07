@@ -125,7 +125,7 @@ contract GuardMock is IGuard {
             }
         }
 
-        require(candidate.totalLockedStake > minStake, "Not enough stake");
+        require(candidate.totalLockedStake > minStake, "Not enough total stake");
         address removedValidator = validatorSet[minStakeIndex];
         if (removedValidator != address(0)) {
             emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
