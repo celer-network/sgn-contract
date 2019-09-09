@@ -30,6 +30,9 @@ contract Guard is IGuard {
         uint totalLockedStake;
         // TODO: do we need address[] delegators?
         mapping (address => Delegator) delegatorProfiles;
+        // TODO: add status (locked, unlocking, unlocked) and unlockTime to enable 
+        // "The staking pool will be unlocked if the validator's self-delegated stake falls below this limit."
+        // in the specs. Namely delegators are free to directly withdraw when candidate is unlocked.
     }
 
     uint public constant VALIDATOR_SET_MAX_SIZE = 11;
