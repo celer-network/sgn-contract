@@ -8,7 +8,7 @@ const ERC20ExampleToken = artifacts.require("ERC20ExampleToken");
 
 const FEE_PER_BLOCK = 10;
 const ONE_DAY = 3600 * 24;
-const WITHDRAW_TIMEOUT = 21 * ONE_DAY;
+const UNLOCKING_TIMEOUT = 21 * ONE_DAY;
 const MIN_VALIDATOR_NUM = 4;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
@@ -24,7 +24,7 @@ contract("SGN Guard contract", async accounts => {
         instance = await Guard.new(
             celerToken.address,
             FEE_PER_BLOCK,
-            WITHDRAW_TIMEOUT,
+            UNLOCKING_TIMEOUT,
             MIN_VALIDATOR_NUM
         );
 
@@ -155,7 +155,7 @@ contract("SGN Guard contract", async accounts => {
                 assert.equal(args.delegator, accounts[0]);
                 assert.equal(args.candidate, candidate);
                 assert.equal(args.withdrawAmount, 50);
-                assert.equal(args.unlockTime.toString(), block.timestamp + WITHDRAW_TIMEOUT);
+                assert.equal(args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
                 assert.equal(args.totalLockedStake, 50);
             });
 
@@ -176,7 +176,7 @@ contract("SGN Guard contract", async accounts => {
 
                 describe("after withdrawTimeout", async () => {
                     beforeEach(async () => {
-                        await Timetravel.advanceTime(WITHDRAW_TIMEOUT + 1);
+                        await Timetravel.advanceTime(UNLOCKING_TIMEOUT + 1);
                     })
 
                     it("should confirmWithdraw successfully", async () => {
@@ -234,7 +234,7 @@ contract("SGN Guard contract", async accounts => {
                     assert.equal(tx.logs[1].args.delegator, candidate);
                     assert.equal(tx.logs[1].args.candidate, candidate);
                     assert.equal(tx.logs[1].args.withdrawAmount, 50);
-                    assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + WITHDRAW_TIMEOUT);
+                    assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
                     assert.equal(tx.logs[1].args.totalLockedStake, 50);
                 });
             });
