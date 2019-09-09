@@ -6,16 +6,16 @@ const Timetravel = require("./helper/timetravel")
 const Guard = artifacts.require("Guard");
 const ERC20ExampleToken = artifacts.require("ERC20ExampleToken");
 
+const FEE_PER_BLOCK = 10;
+const ONE_DAY = 3600 * 24;
+const WITHDRAW_TIMEOUT = 21 * ONE_DAY;
+const MIN_VALIDATOR_NUM = 4;
+const VALIDATOR_ADD = 0;
+const VALIDATOR_REMOVAL = 1;
+
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
 contract("SGN Guard contract", async accounts => {
-    const FEE_PER_BLOCK = 10;
-    const ONE_DAY = 3600 * 24;
-    const WITHDRAW_TIMEOUT = 21 * ONE_DAY;
-    const MIN_VALIDATOR_NUM = 4;
-    const VALIDATOR_ADD = 0;
-    const VALIDATOR_REMOVAL = 1;
-
     let celerToken;
     let instance;
 
