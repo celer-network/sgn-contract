@@ -13,8 +13,8 @@ contract("SGN Guard contract", async accounts => {
     const ONE_DAY = 3600 * 24;
     const WITHDRAW_TIMEOUT = 21 * ONE_DAY;
     const MIN_VALIDATOR_NUM = 4;
-    const ValidatorAdd = 0;
-    const ValidatorRemoval = 1;
+    const VALIDATOR_ADD = 0;
+    const VALIDATOR_REMOVAL = 1;
 
     let celerToken;
     let instance;
@@ -210,7 +210,7 @@ contract("SGN Guard contract", async accounts => {
 
                 assert.equal(event, "ValidatorChange");
                 assert.equal(args.ethAddr, candidate);
-                assert.equal(args.changeType, ValidatorAdd);
+                assert.equal(args.changeType, VALIDATOR_ADD);
             });
 
             describe("after candidate claim validator", async () => {
@@ -228,7 +228,7 @@ contract("SGN Guard contract", async accounts => {
 
                     assert.equal(tx.logs[0].event, "ValidatorChange");
                     assert.equal(tx.logs[0].args.ethAddr, candidate);
-                    assert.equal(tx.logs[0].args.changeType, ValidatorRemoval);
+                    assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
 
                     assert.equal(tx.logs[1].event, "IntendWithdraw");
                     assert.equal(tx.logs[1].args.delegator, candidate);
