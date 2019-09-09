@@ -29,7 +29,7 @@ contract("SGN Guard contract", async accounts => {
         );
 
         // give money to all accounts
-        for (let i = 1; i < 10; i++) {
+        for (let i = 1; i < 2; i++) {
             await celerToken.transfer(accounts[i], 1000000);
         }
     });
@@ -121,7 +121,7 @@ contract("SGN Guard contract", async accounts => {
             assert.equal(args.delegator, accounts[0]);
             assert.equal(args.candidate, candidate);
             assert.equal(args.newStake, 100);
-            assert.equal(args.totalLockedStake, 100);
+            assert.equal(args.totalStake, 100);
         });
 
         it("should fail to claim validator before self delegating minSelfStake", async () => {
@@ -146,49 +146,28 @@ contract("SGN Guard contract", async accounts => {
                 await instance.delegate(candidate, 100);
             });
 
-            it("should intendWithdraw by delegator successfully", async () => {
-                const tx = await instance.intendWithdraw(candidate, 50);
-                const block = await web3.eth.getBlock("latest");
+            it("should withdrawFromUnbondedCandidate by delegator successfully", async () => {
+                const tx = await instance.withdrawFromUnbondedCandidate(candidate, 50);
                 const { event, args } = tx.logs[0];
 
-                assert.equal(event, "IntendWithdraw");
+                assert.equal(event, "WithdrawFromUnbondedCandidate");
                 assert.equal(args.delegator, accounts[0]);
                 assert.equal(args.candidate, candidate);
-                assert.equal(args.withdrawAmount, 50);
-                assert.equal(args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
-                assert.equal(args.totalLockedStake, 50);
+                assert.equal(args.amount, 50);
             });
 
-            describe("after a delegator intendWithdraw", async () => {
-                beforeEach(async () => {
+            it("should fail to intendWithdraw for an unbonded candidate", async () => {
+                try {
                     await instance.intendWithdraw(candidate, 50);
-                });
+                } catch (error) {
+                    assert.isAbove(
+                        error.message.search("Candidate status is not Bonded or Unbonding"),
+                        -1
+                    );
+                    return;
+                }
 
-                it("should confirmWithdraw 0 before withdrawTimeout", async () => {
-                    const tx = await instance.confirmWithdraw(candidate);
-                    const { event, args } = tx.logs[0];
-
-                    assert.equal(event, "ConfirmWithdraw");
-                    assert.equal(args.delegator, accounts[0]);
-                    assert.equal(args.candidate, candidate);
-                    assert.equal(args.amount, 0);
-                });
-
-                describe("after withdrawTimeout", async () => {
-                    beforeEach(async () => {
-                        await Timetravel.advanceTime(UNLOCKING_TIMEOUT + 1);
-                    })
-
-                    it("should confirmWithdraw successfully", async () => {
-                        const tx = await instance.confirmWithdraw(candidate);
-                        const { event, args } = tx.logs[0];
-
-                        assert.equal(event, "ConfirmWithdraw");
-                        assert.equal(args.delegator, accounts[0]);
-                        assert.equal(args.candidate, candidate);
-                        assert.equal(args.amount, 50);
-                    });
-                });
+                assert.fail("should have thrown before");
             });
         });
 
@@ -235,7 +214,59 @@ contract("SGN Guard contract", async accounts => {
                     assert.equal(tx.logs[1].args.candidate, candidate);
                     assert.equal(tx.logs[1].args.withdrawAmount, 50);
                     assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
-                    assert.equal(tx.logs[1].args.totalLockedStake, 50);
+                    assert.equal(tx.logs[1].args.totalStake, 50);
+                });
+
+                describe("after delegator delegates to the candidate", async () => {
+                    beforeEach(async () => {
+                        await celerToken.approve(instance.address, 100);
+                        await instance.delegate(candidate, 100);
+                    });
+
+                    it("should intendWithdraw by delegator successfully", async () => {
+                        const tx = await instance.intendWithdraw(candidate, 50);
+                        const block = await web3.eth.getBlock("latest");
+                        const { event, args } = tx.logs[0];
+
+                        assert.equal(event, "IntendWithdraw");
+                        assert.equal(args.delegator, accounts[0]);
+                        assert.equal(args.candidate, candidate);
+                        assert.equal(args.withdrawAmount.toString(), 50);
+                        assert.equal(args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
+                        assert.equal(args.totalStake.toString(), 150);
+                    });
+
+                    describe("after a delegator intendWithdraw", async () => {
+                        beforeEach(async () => {
+                            await instance.intendWithdraw(candidate, 50);
+                        });
+
+                        it("should confirmWithdraw 0 before withdrawTimeout", async () => {
+                            const tx = await instance.confirmWithdraw(candidate);
+                            const { event, args } = tx.logs[0];
+
+                            assert.equal(event, "ConfirmWithdraw");
+                            assert.equal(args.delegator, accounts[0]);
+                            assert.equal(args.candidate, candidate);
+                            assert.equal(args.amount, 0);
+                        });
+
+                        describe("after withdrawTimeout", async () => {
+                            beforeEach(async () => {
+                                await Timetravel.advanceTime(UNLOCKING_TIMEOUT + 1);
+                            })
+
+                            it("should confirmWithdraw successfully", async () => {
+                                const tx = await instance.confirmWithdraw(candidate);
+                                const { event, args } = tx.logs[0];
+
+                                assert.equal(event, "ConfirmWithdraw");
+                                assert.equal(args.delegator, accounts[0]);
+                                assert.equal(args.candidate, candidate);
+                                assert.equal(args.amount, 50);
+                            });
+                        });
+                    });
                 });
             });
         });
