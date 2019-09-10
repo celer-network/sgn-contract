@@ -127,7 +127,7 @@ contract("SGN Guard contract", async accounts => {
             assert.equal(args.totalStake, DELEGATOR_STAKE);
         });
 
-        it("should fail to claim validator before delegating enough stake", async () => {
+        it("should fail to claimValidator before delegating enough stake", async () => {
             const delegation = MIN_TOTAL_STAKE - 1;
             await celerToken.approve(instance.address, delegation);
             await instance.delegate(CANDIDATE, delegation);
@@ -153,7 +153,7 @@ contract("SGN Guard contract", async accounts => {
                 await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
             });
 
-            it("should fail to claim validator before self delegating minSelfStake", async () => {
+            it("should fail to claimValidator before self delegating minSelfStake", async () => {
                 try {
                     await instance.claimValidator({
                         from: CANDIDATE
@@ -203,7 +203,7 @@ contract("SGN Guard contract", async accounts => {
                     });
                 });
 
-                it("should claim validator successfully", async () => {
+                it("should claimValidator successfully", async () => {
                     const tx = await instance.claimValidator({
                         from: CANDIDATE
                     });
@@ -214,7 +214,7 @@ contract("SGN Guard contract", async accounts => {
                     assert.equal(args.changeType, VALIDATOR_ADD);
                 });
 
-                describe("after candidate claim validator", async () => {
+                describe("after candidate claimValidator", async () => {
                     beforeEach(async () => {
                         await instance.claimValidator({
                             from: CANDIDATE
