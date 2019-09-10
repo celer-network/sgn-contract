@@ -12,6 +12,7 @@ const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
 const FEE_PER_BLOCK = 10;
 const MIN_VALIDATOR_NUM = 4;
+const MIN_TOTAL_STAKE = 20;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
@@ -34,7 +35,8 @@ contract("SGN Guard contract", async accounts => {
             celerToken.address,
             FEE_PER_BLOCK,
             UNLOCKING_TIMEOUT,
-            MIN_VALIDATOR_NUM
+            MIN_VALIDATOR_NUM,
+            MIN_TOTAL_STAKE
         );
 
         // give enough money to other accounts
@@ -124,14 +126,14 @@ contract("SGN Guard contract", async accounts => {
             assert.equal(args.totalStake, DELEGATOR_STAKE);
         });
 
-        it("should fail to claim validator before self delegating minSelfStake", async () => {
+        it("should fail to claim validator before any delegation", async () => {
             try {
                 await instance.claimValidator({
                     from: CANDIDATE
                 });
             } catch (error) {
                 assert.isAbove(
-                    error.message.search("Not enough self stake"),
+                    error.message.search("Not enough total stake"),
                     -1
                 );
                 return;
@@ -144,6 +146,22 @@ contract("SGN Guard contract", async accounts => {
             beforeEach(async () => {
                 await celerToken.approve(instance.address, DELEGATOR_STAKE);
                 await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
+            });
+
+            it("should fail to claim validator before self delegating minSelfStake", async () => {
+                try {
+                    await instance.claimValidator({
+                        from: CANDIDATE
+                    });
+                } catch (error) {
+                    assert.isAbove(
+                        error.message.search("Not enough self stake"),
+                        -1
+                    );
+                    return;
+                }
+
+                assert.fail("should have thrown before");
             });
 
             it("should withdrawFromUnbondedCandidate by delegator successfully", async () => {
