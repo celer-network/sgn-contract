@@ -153,7 +153,6 @@ contract Guard is IGuard {
             }
         }
 
-        require(candidate.totalStake > minStake, "Not enough total stake");
         address removedValidator = validatorSet[minStakeIndex];
         if (removedValidator != address(0)) {
             _removeValidator(minStakeIndex);

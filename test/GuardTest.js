@@ -12,19 +12,20 @@ const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
 const FEE_PER_BLOCK = 10;
 const MIN_VALIDATOR_NUM = 4;
-const MIN_TOTAL_STAKE = 20;
+// need to be larger than CANDIDATE_STAKE for test purpose
+const MIN_TOTAL_STAKE = 80;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
 contract("SGN Guard contract", async accounts => {
     const DELEGATOR = accounts[0];
     const DELEGATOR_STAKE = 100;
-    const DELEGATOR_WITHDRAW = 50;
+    const DELEGATOR_WITHDRAW = 80;
     const CANDIDATE = accounts[1];
-    const MIN_SELF_STAKE = 60;
-    const CANDIDATE_STAKE = 200;
+    const MIN_SELF_STAKE = 20;
+    const CANDIDATE_STAKE = 40;
     // CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN < MIN_SELF_STAKE
-    const CANDIDATE_WITHDRAW_UNDER_MIN = 180;
+    const CANDIDATE_WITHDRAW_UNDER_MIN = 30;
 
     let celerToken;
     let instance;
@@ -126,7 +127,11 @@ contract("SGN Guard contract", async accounts => {
             assert.equal(args.totalStake, DELEGATOR_STAKE);
         });
 
-        it("should fail to claim validator before any delegation", async () => {
+        it("should fail to claim validator before delegating enough stake", async () => {
+            const delegation = MIN_TOTAL_STAKE - 1;
+            await celerToken.approve(instance.address, delegation);
+            await instance.delegate(CANDIDATE, delegation);
+
             try {
                 await instance.claimValidator({
                     from: CANDIDATE
@@ -142,7 +147,7 @@ contract("SGN Guard contract", async accounts => {
             assert.fail("should have thrown before");
         });
 
-        describe("after delegator delegates to the candidate", async () => {
+        describe("after delegator delegates enough stake to the candidate", async () => {
             beforeEach(async () => {
                 await celerToken.approve(instance.address, DELEGATOR_STAKE);
                 await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
@@ -174,7 +179,7 @@ contract("SGN Guard contract", async accounts => {
                 assert.equal(args.amount, DELEGATOR_WITHDRAW);
             });
 
-            it("should fail to intendWithdraw for an unbonded candidate", async () => {
+            it("should fail to intendWithdraw from an unbonded candidate", async () => {
                 try {
                     await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
                 } catch (error) {
@@ -187,72 +192,84 @@ contract("SGN Guard contract", async accounts => {
 
                 assert.fail("should have thrown before");
             });
-        });
 
-        describe("after candidate self delegates minSelfStake", async () => {
-            beforeEach(async () => {
-                await celerToken.approve(instance.address, CANDIDATE_STAKE, {
-                    from: CANDIDATE
-                });
-                await instance.delegate(CANDIDATE, CANDIDATE_STAKE, {
-                    from: CANDIDATE
-                });
-            });
-
-            it("should claim validator successfully", async () => {
-                const tx = await instance.claimValidator({
-                    from: CANDIDATE
-                });
-                const { event, args } = tx.logs[0];
-
-                assert.equal(event, "ValidatorChange");
-                assert.equal(args.ethAddr, CANDIDATE);
-                assert.equal(args.changeType, VALIDATOR_ADD);
-            });
-
-            describe("after candidate claim validator", async () => {
+            describe("after candidate self delegates minSelfStake", async () => {
                 beforeEach(async () => {
-                    await instance.claimValidator({
+                    await celerToken.approve(instance.address, CANDIDATE_STAKE, {
+                        from: CANDIDATE
+                    });
+                    await instance.delegate(CANDIDATE, CANDIDATE_STAKE, {
                         from: CANDIDATE
                     });
                 });
 
-                it("should remove the validator after the validator intendWithdraw to an amount under minSelfStake", async () => {
-                    const tx = await instance.intendWithdraw(CANDIDATE, CANDIDATE_WITHDRAW_UNDER_MIN, {
+                it("should claim validator successfully", async () => {
+                    const tx = await instance.claimValidator({
                         from: CANDIDATE
                     });
-                    const block = await web3.eth.getBlock("latest");
+                    const { event, args } = tx.logs[0];
 
-                    assert.equal(tx.logs[0].event, "ValidatorChange");
-                    assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
-                    assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
-
-                    assert.equal(tx.logs[1].event, "IntendWithdraw");
-                    assert.equal(tx.logs[1].args.delegator, CANDIDATE);
-                    assert.equal(tx.logs[1].args.candidate, CANDIDATE);
-                    assert.equal(tx.logs[1].args.withdrawAmount, CANDIDATE_WITHDRAW_UNDER_MIN);
-                    assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
-                    assert.equal(tx.logs[1].args.totalStake, CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN);
+                    assert.equal(event, "ValidatorChange");
+                    assert.equal(args.ethAddr, CANDIDATE);
+                    assert.equal(args.changeType, VALIDATOR_ADD);
                 });
 
-                describe("after delegator delegates to the candidate", async () => {
+                describe("after candidate claim validator", async () => {
                     beforeEach(async () => {
-                        await celerToken.approve(instance.address, DELEGATOR_STAKE);
-                        await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
+                        await instance.claimValidator({
+                            from: CANDIDATE
+                        });
                     });
 
-                    it("should intendWithdraw by delegator successfully", async () => {
-                        const tx = await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
+                    it("should intendWithdraw a small amount by delegator successfully", async () => {
+                        const smallAmount = 5;
+                        const tx = await instance.intendWithdraw(CANDIDATE, smallAmount);
                         const block = await web3.eth.getBlock("latest");
                         const { event, args } = tx.logs[0];
 
                         assert.equal(event, "IntendWithdraw");
                         assert.equal(args.delegator, DELEGATOR);
                         assert.equal(args.candidate, CANDIDATE);
-                        assert.equal(args.withdrawAmount.toString(), DELEGATOR_WITHDRAW);
+                        assert.equal(args.withdrawAmount.toString(), smallAmount);
                         assert.equal(args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
-                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - DELEGATOR_WITHDRAW;
+                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - smallAmount;
                         assert.equal(args.totalStake.toString(), totalStake);
+                    });
+
+                    it("should remove the validator after validator intendWithdraw to an amount under minSelfStake", async () => {
+                        const tx = await instance.intendWithdraw(CANDIDATE, CANDIDATE_WITHDRAW_UNDER_MIN, {
+                            from: CANDIDATE
+                        });
+                        const block = await web3.eth.getBlock("latest");
+
+                        assert.equal(tx.logs[0].event, "ValidatorChange");
+                        assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
+                        assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
+
+                        assert.equal(tx.logs[1].event, "IntendWithdraw");
+                        assert.equal(tx.logs[1].args.delegator, CANDIDATE);
+                        assert.equal(tx.logs[1].args.candidate, CANDIDATE);
+                        assert.equal(tx.logs[1].args.withdrawAmount, CANDIDATE_WITHDRAW_UNDER_MIN);
+                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
+                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN;
+                        assert.equal(tx.logs[1].args.totalStake, totalStake);
+                    });
+
+                    it("should remove the validator after delegator intendWithdraw to an amount under minTotalStake", async () => {
+                        const tx = await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
+                        const block = await web3.eth.getBlock("latest");
+
+                        assert.equal(tx.logs[0].event, "ValidatorChange");
+                        assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
+                        assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
+
+                        assert.equal(tx.logs[1].event, "IntendWithdraw");
+                        assert.equal(tx.logs[1].args.delegator, DELEGATOR);
+                        assert.equal(tx.logs[1].args.candidate, CANDIDATE);
+                        assert.equal(tx.logs[1].args.withdrawAmount, DELEGATOR_WITHDRAW);
+                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
+                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - DELEGATOR_WITHDRAW;
+                        assert.equal(tx.logs[1].args.totalStake, totalStake);
                     });
 
                     describe("after a delegator intendWithdraw", async () => {
