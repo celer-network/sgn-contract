@@ -6,16 +6,25 @@ const Timetravel = require("./helper/timetravel")
 const Guard = artifacts.require("Guard");
 const ERC20ExampleToken = artifacts.require("ERC20ExampleToken");
 
-const FEE_PER_BLOCK = 10;
 const ONE_DAY = 3600 * 24;
 const UNLOCKING_TIMEOUT = 21 * ONE_DAY;
-const MIN_VALIDATOR_NUM = 4;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
+const FEE_PER_BLOCK = 10;
+const MIN_VALIDATOR_NUM = 4;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
 contract("SGN Guard contract", async accounts => {
+    const DELEGATOR = accounts[0];
+    const DELEGATOR_STAKE = 100;
+    const DELEGATOR_WITHDRAW = 50;
+    const CANDIDATE = accounts[1];
+    const MIN_SELF_STAKE = 60;
+    const CANDIDATE_STAKE = 200;
+    // CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN < MIN_SELF_STAKE
+    const CANDIDATE_WITHDRAW_UNDER_MIN = 180;
+
     let celerToken;
     let instance;
 
@@ -28,17 +37,17 @@ contract("SGN Guard contract", async accounts => {
             MIN_VALIDATOR_NUM
         );
 
-        // give money to all accounts
+        // give enough money to other accounts
         for (let i = 1; i < 2; i++) {
             await celerToken.transfer(accounts[i], 1000000);
         }
     });
 
     it("should fail to delegate to an uninitialized candidate", async () => {
-        await celerToken.approve(instance.address, 100);
+        await celerToken.approve(instance.address, DELEGATOR_STAKE);
 
         try {
-            await instance.delegate(accounts[1], 100);
+            await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
         } catch (error) {
             assert.isAbove(
                 error.message.search("Candidate is not initialized"),
@@ -51,41 +60,32 @@ contract("SGN Guard contract", async accounts => {
     });
 
     it("should initialize a candidate successfully", async () => {
-        await celerToken.approve(instance.address, 100, {
-            from: accounts[1]
-        });
-
-        const sidechainAddr = sha3(accounts[1]);
-        const tx = await instance.initializeCandidate(100, sidechainAddr, {
-            from: accounts[1]
+        const sidechainAddr = sha3(CANDIDATE);
+        const tx = await instance.initializeCandidate(MIN_SELF_STAKE, sidechainAddr, {
+            from: CANDIDATE
         });
         const { event, args } = tx.logs[0];
 
         assert.equal(event, "InitializeCandidate");
-        assert.equal(args.candidate, accounts[1]);
-        assert.equal(args.minSelfStake, 100);
+        assert.equal(args.candidate, CANDIDATE);
+        assert.equal(args.minSelfStake, MIN_SELF_STAKE);
         // sidechainAddr is indexed (i.e. hashed)
         assert.equal(args.sidechainAddr, sha3(sidechainAddr));
     });
 
     describe("after candidate finishes initialization", async () => {
-        const candidate = accounts[1];
-        const sidechainAddr = sha3(candidate);
+        const sidechainAddr = sha3(CANDIDATE);
 
         beforeEach(async () => {
-            await instance.initializeCandidate(100, sidechainAddr, {
-                from: candidate
+            await instance.initializeCandidate(MIN_SELF_STAKE, sidechainAddr, {
+                from: CANDIDATE
             });
         });
 
         it("should fail to initialize the same candidate twice", async () => {
-            await celerToken.approve(instance.address, 100, {
-                from: candidate
-            });
-
             try {
-                await instance.initializeCandidate(100, sidechainAddr, {
-                    from: candidate
+                await instance.initializeCandidate(MIN_SELF_STAKE, sidechainAddr, {
+                    from: CANDIDATE
                 });
             } catch (error) {
                 assert.isAbove(
@@ -99,35 +99,35 @@ contract("SGN Guard contract", async accounts => {
         });
 
         it("should update sidechain address by candidate successfully", async () => {
-            const newSidechainAddr = sha3(candidate + "new");
+            const newSidechainAddr = sha3(CANDIDATE + "new");
             const tx = await instance.updateSidechainAddr(newSidechainAddr, {
-                from: candidate
+                from: CANDIDATE
             });
             const { event, args } = tx.logs[0];
 
             assert.equal(event, "UpdateSidechainAddr");
-            assert.equal(args.candidate, candidate);
+            assert.equal(args.candidate, CANDIDATE);
             assert.equal(args.oldSidechainAddr, sha3(sidechainAddr));
             assert.equal(args.newSidechainAddr, sha3(newSidechainAddr));
         });
 
         it("should delegate to candidate by a delegator successfully", async () => {
-            await celerToken.approve(instance.address, 100);
+            await celerToken.approve(instance.address, DELEGATOR_STAKE);
 
-            const tx = await instance.delegate(candidate, 100);
+            const tx = await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
             const { event, args } = tx.logs[0];
 
             assert.equal(event, "Delegate");
-            assert.equal(args.delegator, accounts[0]);
-            assert.equal(args.candidate, candidate);
-            assert.equal(args.newStake, 100);
-            assert.equal(args.totalStake, 100);
+            assert.equal(args.delegator, DELEGATOR);
+            assert.equal(args.candidate, CANDIDATE);
+            assert.equal(args.newStake, DELEGATOR_STAKE);
+            assert.equal(args.totalStake, DELEGATOR_STAKE);
         });
 
         it("should fail to claim validator before self delegating minSelfStake", async () => {
             try {
                 await instance.claimValidator({
-                    from: candidate
+                    from: CANDIDATE
                 });
             } catch (error) {
                 assert.isAbove(
@@ -142,23 +142,23 @@ contract("SGN Guard contract", async accounts => {
 
         describe("after delegator delegates to the candidate", async () => {
             beforeEach(async () => {
-                await celerToken.approve(instance.address, 100);
-                await instance.delegate(candidate, 100);
+                await celerToken.approve(instance.address, DELEGATOR_STAKE);
+                await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
             });
 
             it("should withdrawFromUnbondedCandidate by delegator successfully", async () => {
-                const tx = await instance.withdrawFromUnbondedCandidate(candidate, 50);
+                const tx = await instance.withdrawFromUnbondedCandidate(CANDIDATE, DELEGATOR_WITHDRAW);
                 const { event, args } = tx.logs[0];
 
                 assert.equal(event, "WithdrawFromUnbondedCandidate");
-                assert.equal(args.delegator, accounts[0]);
-                assert.equal(args.candidate, candidate);
-                assert.equal(args.amount, 50);
+                assert.equal(args.delegator, DELEGATOR);
+                assert.equal(args.candidate, CANDIDATE);
+                assert.equal(args.amount, DELEGATOR_WITHDRAW);
             });
 
             it("should fail to intendWithdraw for an unbonded candidate", async () => {
                 try {
-                    await instance.intendWithdraw(candidate, 50);
+                    await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
                 } catch (error) {
                     assert.isAbove(
                         error.message.search("Candidate status is not Bonded or Unbonding"),
@@ -173,81 +173,82 @@ contract("SGN Guard contract", async accounts => {
 
         describe("after candidate self delegates minSelfStake", async () => {
             beforeEach(async () => {
-                await celerToken.approve(instance.address, 100, {
-                    from: candidate
+                await celerToken.approve(instance.address, CANDIDATE_STAKE, {
+                    from: CANDIDATE
                 });
-                await instance.delegate(candidate, 100, {
-                    from: candidate
+                await instance.delegate(CANDIDATE, CANDIDATE_STAKE, {
+                    from: CANDIDATE
                 });
             });
 
             it("should claim validator successfully", async () => {
                 const tx = await instance.claimValidator({
-                    from: candidate
+                    from: CANDIDATE
                 });
                 const { event, args } = tx.logs[0];
 
                 assert.equal(event, "ValidatorChange");
-                assert.equal(args.ethAddr, candidate);
+                assert.equal(args.ethAddr, CANDIDATE);
                 assert.equal(args.changeType, VALIDATOR_ADD);
             });
 
             describe("after candidate claim validator", async () => {
                 beforeEach(async () => {
                     await instance.claimValidator({
-                        from: candidate
+                        from: CANDIDATE
                     });
                 });
 
                 it("should remove the validator after the validator intendWithdraw to an amount under minSelfStake", async () => {
-                    const tx = await instance.intendWithdraw(candidate, 50, {
-                        from: candidate
+                    const tx = await instance.intendWithdraw(CANDIDATE, CANDIDATE_WITHDRAW_UNDER_MIN, {
+                        from: CANDIDATE
                     });
                     const block = await web3.eth.getBlock("latest");
 
                     assert.equal(tx.logs[0].event, "ValidatorChange");
-                    assert.equal(tx.logs[0].args.ethAddr, candidate);
+                    assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
                     assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
 
                     assert.equal(tx.logs[1].event, "IntendWithdraw");
-                    assert.equal(tx.logs[1].args.delegator, candidate);
-                    assert.equal(tx.logs[1].args.candidate, candidate);
-                    assert.equal(tx.logs[1].args.withdrawAmount, 50);
+                    assert.equal(tx.logs[1].args.delegator, CANDIDATE);
+                    assert.equal(tx.logs[1].args.candidate, CANDIDATE);
+                    assert.equal(tx.logs[1].args.withdrawAmount, CANDIDATE_WITHDRAW_UNDER_MIN);
                     assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
-                    assert.equal(tx.logs[1].args.totalStake, 50);
+                    assert.equal(tx.logs[1].args.totalStake, CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN);
                 });
 
                 describe("after delegator delegates to the candidate", async () => {
                     beforeEach(async () => {
-                        await celerToken.approve(instance.address, 100);
-                        await instance.delegate(candidate, 100);
+                        await celerToken.approve(instance.address, DELEGATOR_STAKE);
+                        await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
                     });
 
                     it("should intendWithdraw by delegator successfully", async () => {
-                        const tx = await instance.intendWithdraw(candidate, 50);
+                        const tx = await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
                         const block = await web3.eth.getBlock("latest");
                         const { event, args } = tx.logs[0];
 
                         assert.equal(event, "IntendWithdraw");
-                        assert.equal(args.delegator, accounts[0]);
-                        assert.equal(args.candidate, candidate);
-                        assert.equal(args.withdrawAmount.toString(), 50);
+                        assert.equal(args.delegator, DELEGATOR);
+                        assert.equal(args.candidate, CANDIDATE);
+                        assert.equal(args.withdrawAmount.toString(), DELEGATOR_WITHDRAW);
                         assert.equal(args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
-                        assert.equal(args.totalStake.toString(), 150);
+                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - DELEGATOR_WITHDRAW;
+                        assert.equal(args.totalStake.toString(), totalStake);
                     });
 
                     describe("after a delegator intendWithdraw", async () => {
                         beforeEach(async () => {
-                            await instance.intendWithdraw(candidate, 50);
+                            await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
                         });
 
                         it("should confirmWithdraw 0 before withdrawTimeout", async () => {
-                            const tx = await instance.confirmWithdraw(candidate);
+                            const tx = await instance.confirmWithdraw(CANDIDATE);
                             const { event, args } = tx.logs[0];
 
                             assert.equal(event, "ConfirmWithdraw");
-                            assert.equal(args.delegator, accounts[0]);
-                            assert.equal(args.candidate, candidate);
+                            assert.equal(args.delegator, DELEGATOR);
+                            assert.equal(args.candidate, CANDIDATE);
                             assert.equal(args.amount, 0);
                         });
 
@@ -257,13 +258,13 @@ contract("SGN Guard contract", async accounts => {
                             })
 
                             it("should confirmWithdraw successfully", async () => {
-                                const tx = await instance.confirmWithdraw(candidate);
+                                const tx = await instance.confirmWithdraw(CANDIDATE);
                                 const { event, args } = tx.logs[0];
 
                                 assert.equal(event, "ConfirmWithdraw");
-                                assert.equal(args.delegator, accounts[0]);
-                                assert.equal(args.candidate, candidate);
-                                assert.equal(args.amount, 50);
+                                assert.equal(args.delegator, DELEGATOR);
+                                assert.equal(args.candidate, CANDIDATE);
+                                assert.equal(args.amount, DELEGATOR_WITHDRAW);
                             });
                         });
                     });
