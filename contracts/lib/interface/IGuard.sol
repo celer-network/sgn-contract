@@ -6,13 +6,13 @@ interface IGuard {
     // functions
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;
 
-    function delegate(uint _amount, address _candidate) external;
+    function delegate(address _candidate, uint _amount) external;
 
     function updateSidechainAddr(bytes calldata _sidechainAddr) external;
 
     function claimValidator() external;
 
-    function intendWithdraw(uint _amount, address _candidate) external;
+    function intendWithdraw(address _candidate, uint _amount) external;
 
     function confirmWithdraw(address _candidateAddr) external;
 
@@ -34,13 +34,15 @@ interface IGuard {
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
-    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalLockedStake);
+    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
 
     event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
     event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);
     
-    event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint unlockTime, uint totalLockedStake);
+    event WithdrawFromUnbondedCandidate(address indexed delegator, address indexed candidate, uint amount);
+
+    event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint unlockTime, uint totalStake);
 
     event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
