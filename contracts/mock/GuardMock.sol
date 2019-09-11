@@ -53,6 +53,8 @@ contract GuardMock is IGuard {
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
     uint public sidechainGoLive;
+    // universal requirement for minimum total stake of each validator
+    uint public minTotalStake;
 
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
@@ -75,8 +77,6 @@ contract GuardMock is IGuard {
     constructor() public {
         // celerToken = IERC20(_celerTokenAddress);
         feePerBlock = 10;
-        blameTimeout = 0;
-        minValidatorNum = 0;
     }
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
@@ -124,6 +124,9 @@ contract GuardMock is IGuard {
         address msgSender = msg.sender;
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, "Candidate is not initialized");
+        // TODO: decide whether Unbonding status is valid to claimValidator or not
+        require(candidate.status == CandidateStatus.Unbonded);
+        require(candidate.totalStake >= minTotalStake, "Not enough total stake");
         require(
             candidate.delegatorProfiles[msgSender].stake >= candidate.minSelfStake,
             "Not enough self stake"
@@ -139,7 +142,6 @@ contract GuardMock is IGuard {
             }
         }
 
-        require(candidate.totalStake > minStake, "Not enough total stake");
         address removedValidator = validatorSet[minStakeIndex];
         if (removedValidator != address(0)) {
             _removeValidator(minStakeIndex);
@@ -184,12 +186,14 @@ contract GuardMock is IGuard {
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
         if (candidate.status == CandidateStatus.Bonded) {
-            // if validator withdraws its self stake
-            if (_candidateAddr == msgSender) {
-                if (delegator.stake < candidate.minSelfStake) {
-                    _removeValidator(_getValidatorIdx(_candidateAddr));
-                }
+            bool lowSelfStake = 
+                _candidateAddr == msgSender && delegator.stake < candidate.minSelfStake;
+            bool lowTotalStake = candidate.totalStake < minTotalStake;
+            
+            if (lowSelfStake || lowTotalStake) {
+                _removeValidator(_getValidatorIdx(_candidateAddr));
             }
+
             withdrawIntent.unlockTime = block.timestamp.add(blameTimeout);
         } else if (candidate.status == CandidateStatus.Unbonding) {
             // no need to wait another blameTimeout
