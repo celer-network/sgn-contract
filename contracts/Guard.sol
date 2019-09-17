@@ -59,7 +59,6 @@ contract Guard is IGuard {
     uint public subscriptionPool;
     mapping (address => uint) public subscriptionFees;
     uint public miningPool;
-
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
@@ -442,40 +441,4 @@ contract Guard is IGuard {
 
         return quorumSize >= minQuorumSize;
     }
-
-
-    /********************* old function records *********************/
-    // function punish(
-    //     uint _cpNumber,
-    //     bytes calldata _blockNumber,
-    //     bytes calldata _headersProofBytes,
-    //     bytes calldata _txIndex,
-    //     bytes calldata _receiptsProofBytes
-    // )
-    //     external
-    // {
-    //     bytes[Len] memory logs = _merkleProof(_cpNumber, _blockNumber, _headersProofBytes, _txIndex, _receiptsProofBytes);
-
-    //     bytes32 topic = _bytesToBytes32(RLP._decodeString(logs[1]), 0);
-    //     require(topic == PunishEventHash, "not Punish event");
-
-    //     bytes memory data = logs[2];
-
-    //     address client = _bytesToAddress(RLP._slice(data, 12, 20), 0);
-
-    //     uint cnt = _bytesToUint(RLP._slice(data, 32, 32));
-
-    //     for (uint i = 0; i < cnt; i++) {
-    //         address guardian = _bytesToAddress(RLP._slice(data, (i + 2) * 32 + 12, 32), 0);
-
-    //         uint amount = securityDeposit[guardian];
-    //         securityDeposit[guardian] = 0;
-
-    //         celerToken.approve(client, amount);
-    //         celerToken.safeTransfer(
-    //             client,
-    //             amount
-    //         );
-    //     }
-    // }
 }

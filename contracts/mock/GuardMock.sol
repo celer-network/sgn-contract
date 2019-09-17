@@ -3,11 +3,14 @@ pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "../lib/interface/IGuard.sol";
+import "../lib/data/PbSgn.sol";
 
 contract GuardMock is IGuard {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
+    using ECDSA for bytes32;
 
     enum MathOperation { Add, Sub }
 
@@ -53,10 +56,11 @@ contract GuardMock is IGuard {
     uint public sidechainGoLiveTime;
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
-    uint public subscriptionFees;
+    uint public subscriptionPool;
+    mapping (address => uint) public subscriptionFees;
     uint public miningPool;
-
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
+    mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
 
@@ -230,7 +234,9 @@ contract GuardMock is IGuard {
     function subscribe(uint _amount) external onlyValidSidechain {
         address msgSender = msg.sender;
 
-        subscriptionFees = subscriptionFees.add(_amount);
+        subscriptionPool = subscriptionPool.add(_amount);
+        subscriptionFees[msgSender] = subscriptionFees[msgSender].add(_amount);
+
         // celerToken.safeTransferFrom(
         //     msgSender,
         //     address(this),
@@ -240,11 +246,86 @@ contract GuardMock is IGuard {
         emit AddSubscriptionBalance(msgSender, _amount);
     }
 
-    // TODO
-    // function punish(bytes calldata _punishRequest) external onlyValidSidechain {
-        // think about punish protobuf message
-        // sidechain claims which delegators of a validator will be punished by what amount
-    // }
+    function punish(bytes calldata _penaltyRequest) external onlyValidSidechain {
+        PbSgn.PenaltyRequest memory penaltyRequest =
+            PbSgn.decPenaltyRequest(_penaltyRequest);
+        PbSgn.PenaltyInfo memory penaltyInfo =
+            PbSgn.decPenaltyInfo(penaltyRequest.penaltyInfo);
+        
+        bytes32 h = keccak256(penaltyRequest.penaltyInfo);
+        require(
+            _checkValidatorSigs(h, penaltyRequest.sigs),
+            "Fail to check validator sigs"
+        );
+        require(!usedPenaltyNonce[penaltyInfo.nonce]);
+        require(block.timestamp < penaltyInfo.expireTime);
+
+        usedPenaltyNonce[penaltyInfo.nonce] = true;
+        for (uint i = 0; i < penaltyInfo.penalties.length; i++) {
+            PbSgn.Penalty memory penalty = penaltyInfo.penalties[i];
+            address validatorAddr = penalty.validatorAddress;
+            address delegatorAddr = penalty.delegatorAddress;
+            ValidatorCandidate storage validator = candidateProfiles[validatorAddr];
+
+            uint totalAmount = 0;
+            for (uint j = 0; j < penalty.beneficiaries.length; j++) {
+                PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[j];
+                
+                totalAmount = totalAmount.add(beneficiary.amt);
+
+                if (beneficiary.account == address(0)) {
+                    // address(0) stands for miningPool
+                    miningPool = miningPool.add(beneficiary.amt);
+                } else {
+                    // celerToken.safeTransfer(beneficiary.account, beneficiary.amt);
+                }
+            }
+
+            _updateStake(validator, delegatorAddr, totalAmount, MathOperation.Sub);
+        }
+    }
+
+    function _updateStake(
+        ValidatorCandidate storage _candidate,
+        address _delegatorAddr,
+        uint _amount,
+        MathOperation _op
+    )
+        private
+    {
+        if (_op == MathOperation.Add) {
+            _candidate.delegatorProfiles[_delegatorAddr].stake =
+                _candidate.delegatorProfiles[_delegatorAddr].stake.add(_amount);
+            _candidate.totalStake = _candidate.totalStake.add(_amount);
+        } else if (_op == MathOperation.Sub) {
+            _candidate.delegatorProfiles[_delegatorAddr].stake =
+                _candidate.delegatorProfiles[_delegatorAddr].stake.sub(_amount);
+            _candidate.totalStake = _candidate.totalStake.sub(_amount);
+        } else {
+            assert(false);
+        }
+    }
+
+    function _addValidator(address _validatorAddr, uint _setIndex) private {
+        require(validatorSet[_setIndex] == address(0));
+
+        validatorSet[_setIndex] = _validatorAddr;
+        candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
+        delete candidateProfiles[_validatorAddr].unbondTime;
+        emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
+    }
+
+    function _removeValidator(uint _setIndex) private {
+        address removedValidator = validatorSet[_setIndex];
+        if (removedValidator == address(0)) {
+            return;
+        }
+
+        delete validatorSet[_setIndex];
+        candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
+        candidateProfiles[removedValidator].unbondTime = block.timestamp.add(blameTimeout);
+        emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
+    }
 
     function isValidator(address _addr) public view returns (bool) {
         return candidateProfiles[_addr].status == CandidateStatus.Bonded;
@@ -315,48 +396,6 @@ contract GuardMock is IGuard {
         nextWithdrawIntent = d.nextWithdrawIntent;
     }
 
-    function _updateStake(
-        ValidatorCandidate storage _candidate,
-        address _delegatorAddr,
-        uint _amount,
-        MathOperation _op
-    )
-        private
-    {
-        if (_op == MathOperation.Add) {
-            _candidate.delegatorProfiles[_delegatorAddr].stake =
-                _candidate.delegatorProfiles[_delegatorAddr].stake.add(_amount);
-            _candidate.totalStake = _candidate.totalStake.add(_amount);
-        } else if (_op == MathOperation.Sub) {
-            _candidate.delegatorProfiles[_delegatorAddr].stake =
-                _candidate.delegatorProfiles[_delegatorAddr].stake.sub(_amount);
-            _candidate.totalStake = _candidate.totalStake.sub(_amount);
-        } else {
-            assert(false);
-        }
-    }
-
-    function _addValidator(address _validatorAddr, uint _setIndex) private {
-        require(validatorSet[_setIndex] == address(0));
-
-        validatorSet[_setIndex] = _validatorAddr;
-        candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
-        delete candidateProfiles[_validatorAddr].unbondTime;
-        emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
-    }
-
-    function _removeValidator(uint _setIndex) private {
-        address removedValidator = validatorSet[_setIndex];
-        if (removedValidator == address(0)) {
-            return;
-        }
-
-        delete validatorSet[_setIndex];
-        candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
-        candidateProfiles[removedValidator].unbondTime = block.timestamp.add(blameTimeout);
-        emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
-    }
-
     function _getValidatorIdx(address _addr) private view returns (uint) {
         for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
             if (validatorSet[i] == _addr) {
@@ -364,7 +403,28 @@ contract GuardMock is IGuard {
             }
         }
 
-        revert("no such a validator");
+        revert("No such a validator");
+    }
+
+    // more than 2/3 validators sign this hash
+    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private returns(bool) {
+        // TODO: need to compute dynamically because there might be less validators
+        uint minQuorumSize = 8;
+
+        if (minQuorumSize > _sigs.length) {
+            return false;
+        }
+
+        bytes32 hash = _h.toEthSignedMessageHash();
+        address addr;
+        uint quorumSize = 0;
+        for (uint i = 0; i < _sigs.length; i++) {
+            addr = hash.recover(_sigs[i]);
+            if (candidateProfiles[addr].status == CandidateStatus.Bonded) {
+                quorumSize++;
+            }
+        }
+
+        return quorumSize >= minQuorumSize;
     }
 }
-
