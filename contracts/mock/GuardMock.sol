@@ -156,7 +156,6 @@ contract GuardMock is IGuard {
         require(candidate.status == CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
-        Delegator storage delegator = candidate.delegatorProfiles[msgSender];
         _updateStake(candidate, msgSender, _amount, MathOperation.Sub);
 
         // celerToken.safeTransfer(msgSender, _amount);
