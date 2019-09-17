@@ -10,7 +10,6 @@ const ONE_DAY = 3600 * 24;
 const UNLOCKING_TIMEOUT = 21 * ONE_DAY;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
-const FEE_PER_BLOCK = 10;
 const MIN_VALIDATOR_NUM = 4;
 // need to be larger than CANDIDATE_STAKE for test purpose
 const MIN_TOTAL_STAKE = 80;
@@ -34,7 +33,6 @@ contract("SGN Guard contract", async accounts => {
         celerToken = await ERC20ExampleToken.new();
         instance = await Guard.new(
             celerToken.address,
-            FEE_PER_BLOCK,
             UNLOCKING_TIMEOUT,
             MIN_VALIDATOR_NUM,
             MIN_TOTAL_STAKE
