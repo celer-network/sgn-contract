@@ -69,12 +69,16 @@ library PbSgn {
     struct Penalty {
         address validatorAddress;   // tag: 1
         address delegatorAddress;   // tag: 2
-        uint256 amt;   // tag: 3
+        AccountAmtPair[] beneficiaries;   // tag: 3
     } // end struct Penalty
 
     function decPenalty(bytes memory raw) internal pure returns (Penalty memory m) {
         Pb.Buffer memory buf = Pb.fromBytes(raw);
 
+        uint[] memory cnts = buf.cntTags(3);
+        m.beneficiaries = new AccountAmtPair[](cnts[3]);
+        cnts[3] = 0;  // reset counter for later use
+        
         uint tag;
         Pb.WireType wire;
         while (buf.hasMore()) {
@@ -87,10 +91,34 @@ library PbSgn {
                 m.delegatorAddress = Pb._address(buf.decBytes());
             }
             else if (tag == 3) {
-                m.amt = Pb._uint256(buf.decBytes());
+                m.beneficiaries[cnts[3]] = decAccountAmtPair(buf.decBytes());
+                cnts[3]++;
             }
             else { buf.skipValue(wire); } // skip value of unknown tag
         }
     } // end decoder Penalty
+
+    struct AccountAmtPair {
+        address account;   // tag: 1
+        uint256 amt;   // tag: 2
+    } // end struct AccountAmtPair
+
+    function decAccountAmtPair(bytes memory raw) internal pure returns (AccountAmtPair memory m) {
+        Pb.Buffer memory buf = Pb.fromBytes(raw);
+
+        uint tag;
+        Pb.WireType wire;
+        while (buf.hasMore()) {
+            (tag, wire) = buf.decKey();
+            if (false) {} // solidity has no switch/case
+            else if (tag == 1) {
+                m.account = Pb._address(buf.decBytes());
+            }
+            else if (tag == 2) {
+                m.amt = Pb._uint256(buf.decBytes());
+            }
+            else { buf.skipValue(wire); } // skip value of unknown tag
+        }
+    } // end decoder AccountAmtPair
 
 }

@@ -1,7 +1,8 @@
 syntax = "proto3";
-option go_package = "github.com/celer-network/goCeler/chain";
+option go_package = "github.com/celer-network/goCeler/sgn";
 
 import "google/protobuf/descriptor.proto";
+// import "github.com/celer-network/goCeler/entity";  // for AccountAmtPair msg
 
 package sgn;
 
@@ -28,5 +29,11 @@ message PenaltyInfo {
 message Penalty {
   bytes validator_address = 1 [ (soltype) = "address" ];
   bytes delegator_address = 2 [ (soltype) = "address" ];
-  bytes amt = 3 [ (soltype) = "uint256" ];
+  repeated AccountAmtPair beneficiaries = 3;
+}
+
+// Next Tag: 3
+message AccountAmtPair {
+  bytes account = 1 [(soltype) = "address"];
+  bytes amt = 2 [(soltype) = "uint256"];
 }
