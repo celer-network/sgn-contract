@@ -45,22 +45,20 @@ contract GuardMock is IGuard {
     uint public constant VALIDATOR_SET_MAX_SIZE = 11;
 
     IERC20 public celerToken;
-    // subscription fee per block
-    uint public feePerBlock;
     // timeout to blame (claim responsibility of) unlocking delegators or unbonding validators
     uint public blameTimeout;
     uint public minValidatorNum;
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
-    uint public sidechainGoLive;
+    uint public sidechainGoLiveTime;
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
+    uint public subscriptionFees;
+    uint public miningPool;
 
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
-    // consumer subscription
-    mapping (address => uint) public subscriptionExpiration;
 
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
@@ -69,15 +67,12 @@ contract GuardMock is IGuard {
 
     // check this before sidechain's operation
     modifier onlyValidSidechain() {
-        require(getValidatorNum() >= minValidatorNum, "too few validators");
-        require(block.number >= sidechainGoLive, "sidechain is not live");
+        require(block.number >= sidechainGoLiveTime, "Sidechain is not live");
+        require(getValidatorNum() >= minValidatorNum, "Too few validators");
         _;
     }
 
-    constructor() public {
-        // celerToken = IERC20(_celerTokenAddress);
-        feePerBlock = 10;
-    }
+    constructor() public {}
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
@@ -233,23 +228,17 @@ contract GuardMock is IGuard {
         emit ConfirmWithdraw(msgSender, _candidateAddr, withdrawAmount);
     }
 
-    function subscribe(uint _amount) external {
+    function subscribe(uint _amount) external onlyValidSidechain {
         address msgSender = msg.sender;
-        uint delta = _amount.div(feePerBlock);
 
-        if (subscriptionExpiration[msgSender] < block.number) {
-            subscriptionExpiration[msgSender] = block.number.add(delta);
-        }
-        else {
-            subscriptionExpiration[msgSender] = subscriptionExpiration[msgSender].add(delta);
-        }
+        subscriptionFees = subscriptionFees.add(_amount);
         // celerToken.safeTransferFrom(
         //     msgSender,
         //     address(this),
         //     _amount
         // );
 
-        emit Subscription(msgSender, _amount, subscriptionExpiration[msgSender]);
+        emit AddSubscriptionBalance(msgSender, _amount);
     }
 
     // TODO
