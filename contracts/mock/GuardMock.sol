@@ -285,48 +285,6 @@ contract GuardMock is IGuard {
         }
     }
 
-    function _updateStake(
-        ValidatorCandidate storage _candidate,
-        address _delegatorAddr,
-        uint _amount,
-        MathOperation _op
-    )
-        private
-    {
-        if (_op == MathOperation.Add) {
-            _candidate.delegatorProfiles[_delegatorAddr].stake =
-                _candidate.delegatorProfiles[_delegatorAddr].stake.add(_amount);
-            _candidate.totalStake = _candidate.totalStake.add(_amount);
-        } else if (_op == MathOperation.Sub) {
-            _candidate.delegatorProfiles[_delegatorAddr].stake =
-                _candidate.delegatorProfiles[_delegatorAddr].stake.sub(_amount);
-            _candidate.totalStake = _candidate.totalStake.sub(_amount);
-        } else {
-            assert(false);
-        }
-    }
-
-    function _addValidator(address _validatorAddr, uint _setIndex) private {
-        require(validatorSet[_setIndex] == address(0));
-
-        validatorSet[_setIndex] = _validatorAddr;
-        candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
-        delete candidateProfiles[_validatorAddr].unbondTime;
-        emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
-    }
-
-    function _removeValidator(uint _setIndex) private {
-        address removedValidator = validatorSet[_setIndex];
-        if (removedValidator == address(0)) {
-            return;
-        }
-
-        delete validatorSet[_setIndex];
-        candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
-        candidateProfiles[removedValidator].unbondTime = block.timestamp.add(blameTimeout);
-        emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
-    }
-
     function isValidator(address _addr) public view returns (bool) {
         return candidateProfiles[_addr].status == CandidateStatus.Bonded;
     }
@@ -394,6 +352,48 @@ contract GuardMock is IGuard {
 
         stake = d.stake;
         nextWithdrawIntent = d.nextWithdrawIntent;
+    }
+
+    function _updateStake(
+        ValidatorCandidate storage _candidate,
+        address _delegatorAddr,
+        uint _amount,
+        MathOperation _op
+    )
+        private
+    {
+        if (_op == MathOperation.Add) {
+            _candidate.delegatorProfiles[_delegatorAddr].stake =
+                _candidate.delegatorProfiles[_delegatorAddr].stake.add(_amount);
+            _candidate.totalStake = _candidate.totalStake.add(_amount);
+        } else if (_op == MathOperation.Sub) {
+            _candidate.delegatorProfiles[_delegatorAddr].stake =
+                _candidate.delegatorProfiles[_delegatorAddr].stake.sub(_amount);
+            _candidate.totalStake = _candidate.totalStake.sub(_amount);
+        } else {
+            assert(false);
+        }
+    }
+
+    function _addValidator(address _validatorAddr, uint _setIndex) private {
+        require(validatorSet[_setIndex] == address(0));
+
+        validatorSet[_setIndex] = _validatorAddr;
+        candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
+        delete candidateProfiles[_validatorAddr].unbondTime;
+        emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
+    }
+
+    function _removeValidator(uint _setIndex) private {
+        address removedValidator = validatorSet[_setIndex];
+        if (removedValidator == address(0)) {
+            return;
+        }
+
+        delete validatorSet[_setIndex];
+        candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
+        candidateProfiles[removedValidator].unbondTime = block.timestamp.add(blameTimeout);
+        emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
