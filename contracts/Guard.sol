@@ -57,7 +57,7 @@ contract Guard is IGuard {
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
     uint public subscriptionPool;
-    mapping (address => uint) public subscriptionFees;
+    mapping (address => uint) public subscriptionDeposits;
     uint public miningPool;
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     mapping (uint => bool) public usedPenaltyNonce;
@@ -249,7 +249,7 @@ contract Guard is IGuard {
         address msgSender = msg.sender;
 
         subscriptionPool = subscriptionPool.add(_amount);
-        subscriptionFees[msgSender] = subscriptionFees[msgSender].add(_amount);
+        subscriptionDeposits[msgSender] = subscriptionDeposits[msgSender].add(_amount);
 
         celerToken.safeTransferFrom(
             msgSender,
