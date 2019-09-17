@@ -48,5 +48,5 @@ interface IGuard {
 
     event Punish(address indexed indemnitor, address indexed indemnitee, uint amount);
 
-    event Subscription(address indexed consumer, uint amount, uint subscriptionExpiration);
+    event AddSubscriptionBalance(address indexed consumer, uint amount);
 }

@@ -10,10 +10,11 @@ const ONE_DAY = 3600 * 24;
 const UNLOCKING_TIMEOUT = 21 * ONE_DAY;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
-const FEE_PER_BLOCK = 10;
-const MIN_VALIDATOR_NUM = 4;
+const MIN_VALIDATOR_NUM = 1;
 // need to be larger than CANDIDATE_STAKE for test purpose
 const MIN_TOTAL_STAKE = 80;
+const SIDECHAIN_GO_LIVE_TIMEOUT = ONE_DAY;
+const SIDECHAIN_GO_LIVE_TIME = Math.round(Date.now() / 1000) + SIDECHAIN_GO_LIVE_TIMEOUT;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
@@ -26,6 +27,8 @@ contract("SGN Guard contract", async accounts => {
     const CANDIDATE_STAKE = 40;
     // CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN < MIN_SELF_STAKE
     const CANDIDATE_WITHDRAW_UNDER_MIN = 30;
+    const SUBSCRIBER = accounts[2];
+    const SUB_FEE = 100;
 
     let celerToken;
     let instance;
@@ -34,14 +37,14 @@ contract("SGN Guard contract", async accounts => {
         celerToken = await ERC20ExampleToken.new();
         instance = await Guard.new(
             celerToken.address,
-            FEE_PER_BLOCK,
             UNLOCKING_TIMEOUT,
             MIN_VALIDATOR_NUM,
-            MIN_TOTAL_STAKE
+            MIN_TOTAL_STAKE,
+            SIDECHAIN_GO_LIVE_TIME
         );
 
         // give enough money to other accounts
-        for (let i = 1; i < 2; i++) {
+        for (let i = 1; i < 3; i++) {
             await celerToken.transfer(accounts[i], 1000000);
         }
     });
@@ -54,6 +57,47 @@ contract("SGN Guard contract", async accounts => {
         } catch (error) {
             assert.isAbove(
                 error.message.search("Candidate is not initialized"),
+                -1
+            );
+            return;
+        }
+
+        assert.fail("should have thrown before");
+    });
+
+    it("should fail to subscribe before sidechain goes live", async () => {
+        await celerToken.approve(instance.address, SUB_FEE, {
+            from: SUBSCRIBER
+        });
+
+        try {
+            await instance.subscribe(SUB_FEE, {
+                from: SUBSCRIBER
+            });
+        } catch (error) {
+            assert.isAbove(
+                error.message.search("Sidechain is not live"),
+                -1
+            );
+            return;
+        }
+
+        assert.fail("should have thrown before");
+    });
+
+    it("should fail to subscribe before there are enough validators", async () => {
+        await Timetravel.advanceTime(SIDECHAIN_GO_LIVE_TIMEOUT + 1);
+        await celerToken.approve(instance.address, SUB_FEE, {
+            from: SUBSCRIBER
+        });
+
+        try {
+            await instance.subscribe(SUB_FEE, {
+                from: SUBSCRIBER
+            });
+        } catch (error) {
+            assert.isAbove(
+                error.message.search("Too few validators"),
                 -1
             );
             return;
@@ -270,6 +314,21 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
                         const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - DELEGATOR_WITHDRAW;
                         assert.equal(tx.logs[1].args.totalStake, totalStake);
+                    });
+
+                    // TODO: use a describe for the following when condition
+                    it("should subscribe successfully when there are enough validators", async () => {
+                        await celerToken.approve(instance.address, SUB_FEE, {
+                            from: SUBSCRIBER
+                        });
+                        const tx = await instance.subscribe(SUB_FEE, {
+                            from: SUBSCRIBER
+                        });
+                        const { event, args } = tx.logs[0];
+
+                        assert.equal(event, "AddSubscriptionBalance");
+                        assert.equal(args.consumer, SUBSCRIBER);
+                        assert.equal(args.amount, SUB_FEE);
                     });
 
                     describe("after a delegator intendWithdraw", async () => {
