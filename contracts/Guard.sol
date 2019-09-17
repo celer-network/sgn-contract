@@ -56,7 +56,8 @@ contract Guard is IGuard {
     uint public sidechainGoLiveTime;
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
-    uint public subscriptionFees;
+    uint public subscriptionPool;
+    mapping (address => uint) public subscriptionFees;
     uint public miningPool;
 
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
@@ -248,7 +249,9 @@ contract Guard is IGuard {
     function subscribe(uint _amount) external onlyValidSidechain {
         address msgSender = msg.sender;
 
-        subscriptionFees = subscriptionFees.add(_amount);
+        subscriptionPool = subscriptionPool.add(_amount);
+        subscriptionFees[msgSender] = subscriptionFees[msgSender].add(_amount);
+
         celerToken.safeTransferFrom(
             msgSender,
             address(this),
