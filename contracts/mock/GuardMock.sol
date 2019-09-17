@@ -50,7 +50,7 @@ contract GuardMock is IGuard {
     uint public minValidatorNum;
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
-    uint public sidechainGoLive;
+    uint public sidechainGoLiveTime;
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
     uint public subscriptionFees;
@@ -67,8 +67,8 @@ contract GuardMock is IGuard {
 
     // check this before sidechain's operation
     modifier onlyValidSidechain() {
-        require(getValidatorNum() >= minValidatorNum, "too few validators");
-        require(block.number >= sidechainGoLive, "sidechain is not live");
+        require(block.number >= sidechainGoLiveTime, "Sidechain is not live");
+        require(getValidatorNum() >= minValidatorNum, "Too few validators");
         _;
     }
 

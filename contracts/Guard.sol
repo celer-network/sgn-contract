@@ -50,7 +50,7 @@ contract Guard is IGuard {
     uint public minValidatorNum;
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
-    uint public sidechainGoLive;
+    uint public sidechainGoLiveTime;
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
     uint public subscriptionFees;
@@ -67,8 +67,8 @@ contract Guard is IGuard {
 
     // check this before sidechain's operation
     modifier onlyValidSidechain() {
-        require(getValidatorNum() >= minValidatorNum, "too few validators");
-        require(block.number >= sidechainGoLive, "sidechain is not live");
+        require(block.timestamp >= sidechainGoLiveTime, "Sidechain is not live");
+        require(getValidatorNum() >= minValidatorNum, "Too few validators");
         _;
     }
 
@@ -76,7 +76,8 @@ contract Guard is IGuard {
         address _celerTokenAddress,
         uint _blameTimeout,
         uint _minValidatorNum,
-        uint _minTotalStake
+        uint _minTotalStake,
+        uint _sidechainGoLiveTime
     )
         public
     {
@@ -84,6 +85,7 @@ contract Guard is IGuard {
         blameTimeout = _blameTimeout;
         minValidatorNum = _minValidatorNum;
         minTotalStake = _minTotalStake;
+        sidechainGoLiveTime = _sidechainGoLiveTime;
     }
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
