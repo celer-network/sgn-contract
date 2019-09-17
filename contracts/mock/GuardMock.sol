@@ -232,11 +232,11 @@ contract GuardMock is IGuard {
         address msgSender = msg.sender;
 
         subscriptionFees = subscriptionFees.add(_amount);
-        celerToken.safeTransferFrom(
-            msgSender,
-            address(this),
-            _amount
-        );
+        // celerToken.safeTransferFrom(
+        //     msgSender,
+        //     address(this),
+        //     _amount
+        // );
 
         emit AddSubscriptionBalance(msgSender, _amount);
     }
