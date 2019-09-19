@@ -11,25 +11,20 @@ extend google.protobuf.FieldOptions { string soltype = 1004; }
 /********** mainchain only **********/
 // Next Tag: 3
 message PenaltyRequest {
-  // serialized PenaltyInfo message
-  bytes penaltyInfo = 1;
+  // serialized Penalty message
+  bytes penalty = 1;
   // TODO: do we need an ordered sigs?
   repeated bytes sigs = 2;
 }
 
 /********** mainchain and sidechain **********/
-// Next Tag: 4
-message PenaltyInfo {
+// Next Tag: 6
+message Penalty {
   uint64 nonce = 1;
   uint64 expireTime = 2;
-  repeated Penalty penalties = 3;
-}
-
-// Next Tag: 4
-message Penalty {
-  bytes validator_address = 1 [ (soltype) = "address" ];
-  repeated AccountAmtPair penalizedDelegators = 2;
-  repeated AccountAmtPair beneficiaries = 3;
+  bytes validator_address = 3 [ (soltype) = "address" ];
+  repeated AccountAmtPair penalizedDelegators = 4;
+  repeated AccountAmtPair beneficiaries = 5;
 }
 
 // Next Tag: 3

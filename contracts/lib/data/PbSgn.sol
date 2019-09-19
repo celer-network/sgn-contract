@@ -7,7 +7,7 @@ library PbSgn {
     using Pb for Pb.Buffer;  // so we can call Pb funcs on Buffer obj
 
     struct PenaltyRequest {
-        bytes penaltyInfo;   // tag: 1
+        bytes penalty;   // tag: 1
         bytes[] sigs;   // tag: 2
     } // end struct PenaltyRequest
 
@@ -24,7 +24,7 @@ library PbSgn {
             (tag, wire) = buf.decKey();
             if (false) {} // solidity has no switch/case
             else if (tag == 1) {
-                m.penaltyInfo = bytes(buf.decBytes());
+                m.penalty = bytes(buf.decBytes());
             }
             else if (tag == 2) {
                 m.sigs[cnts[2]] = bytes(buf.decBytes());
@@ -34,18 +34,22 @@ library PbSgn {
         }
     } // end decoder PenaltyRequest
 
-    struct PenaltyInfo {
+    struct Penalty {
         uint64 nonce;   // tag: 1
         uint64 expireTime;   // tag: 2
-        Penalty[] penalties;   // tag: 3
-    } // end struct PenaltyInfo
+        address validatorAddress;   // tag: 3
+        AccountAmtPair[] penalizedDelegators;   // tag: 4
+        AccountAmtPair[] beneficiaries;   // tag: 5
+    } // end struct Penalty
 
-    function decPenaltyInfo(bytes memory raw) internal pure returns (PenaltyInfo memory m) {
+    function decPenalty(bytes memory raw) internal pure returns (Penalty memory m) {
         Pb.Buffer memory buf = Pb.fromBytes(raw);
 
-        uint[] memory cnts = buf.cntTags(3);
-        m.penalties = new Penalty[](cnts[3]);
-        cnts[3] = 0;  // reset counter for later use
+        uint[] memory cnts = buf.cntTags(5);
+        m.penalizedDelegators = new AccountAmtPair[](cnts[4]);
+        cnts[4] = 0;  // reset counter for later use
+        m.beneficiaries = new AccountAmtPair[](cnts[5]);
+        cnts[5] = 0;  // reset counter for later use
         
         uint tag;
         Pb.WireType wire;
@@ -59,43 +63,15 @@ library PbSgn {
                 m.expireTime = uint64(buf.decVarint());
             }
             else if (tag == 3) {
-                m.penalties[cnts[3]] = decPenalty(buf.decBytes());
-                cnts[3]++;
-            }
-            else { buf.skipValue(wire); } // skip value of unknown tag
-        }
-    } // end decoder PenaltyInfo
-
-    struct Penalty {
-        address validatorAddress;   // tag: 1
-        AccountAmtPair[] penalizedDelegators;   // tag: 2
-        AccountAmtPair[] beneficiaries;   // tag: 3
-    } // end struct Penalty
-
-    function decPenalty(bytes memory raw) internal pure returns (Penalty memory m) {
-        Pb.Buffer memory buf = Pb.fromBytes(raw);
-
-        uint[] memory cnts = buf.cntTags(3);
-        m.penalizedDelegators = new AccountAmtPair[](cnts[2]);
-        cnts[2] = 0;  // reset counter for later use
-        m.beneficiaries = new AccountAmtPair[](cnts[3]);
-        cnts[3] = 0;  // reset counter for later use
-        
-        uint tag;
-        Pb.WireType wire;
-        while (buf.hasMore()) {
-            (tag, wire) = buf.decKey();
-            if (false) {} // solidity has no switch/case
-            else if (tag == 1) {
                 m.validatorAddress = Pb._address(buf.decBytes());
             }
-            else if (tag == 2) {
-                m.penalizedDelegators[cnts[2]] = decAccountAmtPair(buf.decBytes());
-                cnts[2]++;
+            else if (tag == 4) {
+                m.penalizedDelegators[cnts[4]] = decAccountAmtPair(buf.decBytes());
+                cnts[4]++;
             }
-            else if (tag == 3) {
-                m.beneficiaries[cnts[3]] = decAccountAmtPair(buf.decBytes());
-                cnts[3]++;
+            else if (tag == 5) {
+                m.beneficiaries[cnts[5]] = decAccountAmtPair(buf.decBytes());
+                cnts[5]++;
             }
             else { buf.skipValue(wire); } // skip value of unknown tag
         }
