@@ -275,17 +275,24 @@ contract Guard is IGuard {
         require(block.timestamp < penaltyInfo.expireTime);
 
         usedPenaltyNonce[penaltyInfo.nonce] = true;
+
         for (uint i = 0; i < penaltyInfo.penalties.length; i++) {
             PbSgn.Penalty memory penalty = penaltyInfo.penalties[i];
             address validatorAddr = penalty.validatorAddress;
-            address delegatorAddr = penalty.delegatorAddress;
             ValidatorCandidate storage validator = candidateProfiles[validatorAddr];
 
-            uint totalAmount = 0;
+            uint totalSubAmt = 0;
+            for (uint j = 0; j < penalty.penalizedDelegators.length; j++) {
+                PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[j];
+                totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
+
+                _updateStake(validator, penalizedDelegator.account, penalizedDelegator.amt, MathOperation.Sub);
+            }
+
+            uint totalAddAmt = 0;
             for (uint j = 0; j < penalty.beneficiaries.length; j++) {
                 PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[j];
-                
-                totalAmount = totalAmount.add(beneficiary.amt);
+                totalAddAmt = totalAddAmt.add(beneficiary.amt);
 
                 if (beneficiary.account == address(0)) {
                     // address(0) stands for miningPool
@@ -295,7 +302,7 @@ contract Guard is IGuard {
                 }
             }
 
-            _updateStake(validator, delegatorAddr, totalAmount, MathOperation.Sub);
+            require(totalSubAmt == totalAddAmt, "Amount doesn't match");
         }
     }
 
