@@ -21,19 +21,19 @@ message PenaltyRequest {
 // Next Tag: 4
 message PenaltyInfo {
   uint64 nonce = 1;
-  repeated Penalty penalties = 2;
-  uint64 expireTime = 3;
+  uint64 expireTime = 2;
+  repeated Penalty penalties = 3;
 }
 
 // Next Tag: 4
 message Penalty {
   bytes validator_address = 1 [ (soltype) = "address" ];
-  bytes delegator_address = 2 [ (soltype) = "address" ];
+  repeated AccountAmtPair penalizedDelegators = 2;
   repeated AccountAmtPair beneficiaries = 3;
 }
 
 // Next Tag: 3
 message AccountAmtPair {
-  bytes account = 1 [(soltype) = "address"];
-  bytes amt = 2 [(soltype) = "uint256"];
+  bytes account = 1 [ (soltype) = "address" ];
+  bytes amt = 2 [ (soltype) = "uint256" ];
 }
