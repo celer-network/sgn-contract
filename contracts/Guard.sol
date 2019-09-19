@@ -261,49 +261,42 @@ contract Guard is IGuard {
     }
 
     function punish(bytes calldata _penaltyRequest) external onlyValidSidechain {
-        PbSgn.PenaltyRequest memory penaltyRequest =
-            PbSgn.decPenaltyRequest(_penaltyRequest);
-        PbSgn.PenaltyInfo memory penaltyInfo =
-            PbSgn.decPenaltyInfo(penaltyRequest.penaltyInfo);
+        PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
+        PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
         
-        bytes32 h = keccak256(penaltyRequest.penaltyInfo);
+        bytes32 h = keccak256(penaltyRequest.penalty);
         require(
             _checkValidatorSigs(h, penaltyRequest.sigs),
             "Fail to check validator sigs"
         );
-        require(!usedPenaltyNonce[penaltyInfo.nonce]);
-        require(block.number < penaltyInfo.expireTime);
+        require(!usedPenaltyNonce[penalty.nonce]);
+        require(block.number < penalty.expireTime);
 
-        usedPenaltyNonce[penaltyInfo.nonce] = true;
+        usedPenaltyNonce[penalty.nonce] = true;
 
-        for (uint i = 0; i < penaltyInfo.penalties.length; i++) {
-            PbSgn.Penalty memory penalty = penaltyInfo.penalties[i];
-            address validatorAddr = penalty.validatorAddress;
-            ValidatorCandidate storage validator = candidateProfiles[validatorAddr];
+        ValidatorCandidate storage validator = candidateProfiles[penalty.validatorAddress];
+        uint totalSubAmt = 0;
+        for (uint i = 0; i < penalty.penalizedDelegators.length; i++) {
+            PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
+            totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
 
-            uint totalSubAmt = 0;
-            for (uint j = 0; j < penalty.penalizedDelegators.length; j++) {
-                PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[j];
-                totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
-
-                _updateStake(validator, penalizedDelegator.account, penalizedDelegator.amt, MathOperation.Sub);
-            }
-
-            uint totalAddAmt = 0;
-            for (uint j = 0; j < penalty.beneficiaries.length; j++) {
-                PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[j];
-                totalAddAmt = totalAddAmt.add(beneficiary.amt);
-
-                if (beneficiary.account == address(0)) {
-                    // address(0) stands for miningPool
-                    miningPool = miningPool.add(beneficiary.amt);
-                } else {
-                    celerToken.safeTransfer(beneficiary.account, beneficiary.amt);
-                }
-            }
-
-            require(totalSubAmt == totalAddAmt, "Amount doesn't match");
+            _updateStake(validator, penalizedDelegator.account, penalizedDelegator.amt, MathOperation.Sub);
         }
+
+        uint totalAddAmt = 0;
+        for (uint i = 0; i < penalty.beneficiaries.length; i++) {
+            PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
+            totalAddAmt = totalAddAmt.add(beneficiary.amt);
+
+            if (beneficiary.account == address(0)) {
+                // address(0) stands for miningPool
+                miningPool = miningPool.add(beneficiary.amt);
+            } else {
+                celerToken.safeTransfer(beneficiary.account, beneficiary.amt);
+            }
+        }
+
+        require(totalSubAmt == totalAddAmt, "Amount doesn't match");
     }
 
     function isValidator(address _addr) public view returns (bool) {
