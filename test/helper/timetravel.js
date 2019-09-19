@@ -1,8 +1,8 @@
-// reference: https://medium.com/edgefund/time-travelling-truffle-tests-f581c1964687
+// base on https://medium.com/edgefund/time-travelling-truffle-tests-f581c1964687
 
 advanceTimeAndBlock = async (time) => {
     await advanceTime(time);
-    await advanceBlock();
+    await advanceOneBlock();
 
     return Promise.resolve(web3.eth.getBlock('latest'));
 }
@@ -21,7 +21,7 @@ advanceTime = (time) => {
     });
 }
 
-advanceBlock = () => {
+advanceOneBlock = () => {
     return new Promise((resolve, reject) => {
         web3.currentProvider.send({
             jsonrpc: "2.0",
@@ -36,8 +36,15 @@ advanceBlock = () => {
     });
 }
 
+async function advanceBlocks(number) {
+    for (let i = 0; i < number; i++) {
+        await advanceOneBlock();
+    }
+}
+
 module.exports = {
     advanceTime,
-    advanceBlock,
+    advanceOneBlock,
+    advanceBlocks,
     advanceTimeAndBlock
 }

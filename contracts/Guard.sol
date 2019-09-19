@@ -71,7 +71,7 @@ contract Guard is IGuard {
 
     // check this before sidechain's operation
     modifier onlyValidSidechain() {
-        require(block.timestamp >= sidechainGoLiveTime, "Sidechain is not live");
+        require(block.number >= sidechainGoLiveTime, "Sidechain is not live");
         require(getValidatorNum() >= minValidatorNum, "Too few validators");
         _;
     }
@@ -81,7 +81,7 @@ contract Guard is IGuard {
         uint _blameTimeout,
         uint _minValidatorNum,
         uint _minTotalStake,
-        uint _sidechainGoLiveTime
+        uint _sidechainGoLiveTimeout
     )
         public
     {
@@ -89,7 +89,7 @@ contract Guard is IGuard {
         blameTimeout = _blameTimeout;
         minValidatorNum = _minValidatorNum;
         minTotalStake = _minTotalStake;
-        sidechainGoLiveTime = _sidechainGoLiveTime;
+        sidechainGoLiveTime = block.number.add(_sidechainGoLiveTimeout);
     }
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
@@ -206,7 +206,7 @@ contract Guard is IGuard {
                 _removeValidator(_getValidatorIdx(_candidateAddr));
             }
 
-            withdrawIntent.unlockTime = block.timestamp.add(blameTimeout);
+            withdrawIntent.unlockTime = block.number.add(blameTimeout);
         } else if (candidate.status == CandidateStatus.Unbonding) {
             // no need to wait another blameTimeout
             withdrawIntent.unlockTime = candidate.unbondTime;
@@ -230,10 +230,10 @@ contract Guard is IGuard {
             candidateProfiles[_candidateAddr].delegatorProfiles[msgSender];
 
         uint intentLen = delegator.withdrawIntents.length;
-        uint ts = block.timestamp;
+        uint bn = block.number;
         uint withdrawAmount = 0;
         for (uint i = delegator.nextWithdrawIntent; i < intentLen; i++) {
-            if (ts > delegator.withdrawIntents[i].unlockTime) {
+            if (bn > delegator.withdrawIntents[i].unlockTime) {
                 withdrawAmount = withdrawAmount.add(delegator.withdrawIntents[i].amount);
             } else {
                 delegator.nextWithdrawIntent = i;
@@ -272,7 +272,7 @@ contract Guard is IGuard {
             "Fail to check validator sigs"
         );
         require(!usedPenaltyNonce[penaltyInfo.nonce]);
-        require(block.timestamp < penaltyInfo.expireTime);
+        require(block.number < penaltyInfo.expireTime);
 
         usedPenaltyNonce[penaltyInfo.nonce] = true;
 
@@ -413,7 +413,7 @@ contract Guard is IGuard {
 
         delete validatorSet[_setIndex];
         candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
-        candidateProfiles[removedValidator].unbondTime = block.timestamp.add(blameTimeout);
+        candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
