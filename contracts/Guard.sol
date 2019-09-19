@@ -3,11 +3,14 @@ pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./lib/interface/IGuard.sol";
+import "./lib/data/PbSgn.sol";
 
 contract Guard is IGuard {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
+    using ECDSA for bytes32;
 
     enum MathOperation { Add, Sub }
 
@@ -53,10 +56,11 @@ contract Guard is IGuard {
     uint public sidechainGoLiveTime;
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
-    uint public subscriptionFees;
+    uint public subscriptionPool;
+    mapping (address => uint) public subscriptionDeposits;
     uint public miningPool;
-
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
+    mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
 
@@ -67,7 +71,7 @@ contract Guard is IGuard {
 
     // check this before sidechain's operation
     modifier onlyValidSidechain() {
-        require(block.timestamp >= sidechainGoLiveTime, "Sidechain is not live");
+        require(block.number >= sidechainGoLiveTime, "Sidechain is not live");
         require(getValidatorNum() >= minValidatorNum, "Too few validators");
         _;
     }
@@ -77,7 +81,7 @@ contract Guard is IGuard {
         uint _blameTimeout,
         uint _minValidatorNum,
         uint _minTotalStake,
-        uint _sidechainGoLiveTime
+        uint _sidechainGoLiveTimeout
     )
         public
     {
@@ -85,7 +89,7 @@ contract Guard is IGuard {
         blameTimeout = _blameTimeout;
         minValidatorNum = _minValidatorNum;
         minTotalStake = _minTotalStake;
-        sidechainGoLiveTime = _sidechainGoLiveTime;
+        sidechainGoLiveTime = block.number.add(_sidechainGoLiveTimeout);
     }
 
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
@@ -170,7 +174,6 @@ contract Guard is IGuard {
         require(candidate.status == CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
-        Delegator storage delegator = candidate.delegatorProfiles[msgSender];
         _updateStake(candidate, msgSender, _amount, MathOperation.Sub);
 
         celerToken.safeTransfer(msgSender, _amount);
@@ -203,7 +206,7 @@ contract Guard is IGuard {
                 _removeValidator(_getValidatorIdx(_candidateAddr));
             }
 
-            withdrawIntent.unlockTime = block.timestamp.add(blameTimeout);
+            withdrawIntent.unlockTime = block.number.add(blameTimeout);
         } else if (candidate.status == CandidateStatus.Unbonding) {
             // no need to wait another blameTimeout
             withdrawIntent.unlockTime = candidate.unbondTime;
@@ -227,10 +230,10 @@ contract Guard is IGuard {
             candidateProfiles[_candidateAddr].delegatorProfiles[msgSender];
 
         uint intentLen = delegator.withdrawIntents.length;
-        uint ts = block.timestamp;
+        uint bn = block.number;
         uint withdrawAmount = 0;
         for (uint i = delegator.nextWithdrawIntent; i < intentLen; i++) {
-            if (ts > delegator.withdrawIntents[i].unlockTime) {
+            if (bn > delegator.withdrawIntents[i].unlockTime) {
                 withdrawAmount = withdrawAmount.add(delegator.withdrawIntents[i].amount);
             } else {
                 delegator.nextWithdrawIntent = i;
@@ -245,7 +248,9 @@ contract Guard is IGuard {
     function subscribe(uint _amount) external onlyValidSidechain {
         address msgSender = msg.sender;
 
-        subscriptionFees = subscriptionFees.add(_amount);
+        subscriptionPool = subscriptionPool.add(_amount);
+        subscriptionDeposits[msgSender] = subscriptionDeposits[msgSender].add(_amount);
+
         celerToken.safeTransferFrom(
             msgSender,
             address(this),
@@ -255,11 +260,44 @@ contract Guard is IGuard {
         emit AddSubscriptionBalance(msgSender, _amount);
     }
 
-    // TODO
-    // function punish(bytes calldata _punishRequest) external onlyValidSidechain {
-        // think about punish protobuf message
-        // sidechain claims which delegators of a validator will be punished by what amount
-    // }
+    function punish(bytes calldata _penaltyRequest) external onlyValidSidechain {
+        PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
+        PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
+        
+        bytes32 h = keccak256(penaltyRequest.penalty);
+        require(
+            _checkValidatorSigs(h, penaltyRequest.sigs),
+            "Fail to check validator sigs"
+        );
+        require(!usedPenaltyNonce[penalty.nonce]);
+        require(block.number < penalty.expireTime);
+
+        usedPenaltyNonce[penalty.nonce] = true;
+
+        ValidatorCandidate storage validator = candidateProfiles[penalty.validatorAddress];
+        uint totalSubAmt = 0;
+        for (uint i = 0; i < penalty.penalizedDelegators.length; i++) {
+            PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
+            totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
+
+            _updateStake(validator, penalizedDelegator.account, penalizedDelegator.amt, MathOperation.Sub);
+        }
+
+        uint totalAddAmt = 0;
+        for (uint i = 0; i < penalty.beneficiaries.length; i++) {
+            PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
+            totalAddAmt = totalAddAmt.add(beneficiary.amt);
+
+            if (beneficiary.account == address(0)) {
+                // address(0) stands for miningPool
+                miningPool = miningPool.add(beneficiary.amt);
+            } else {
+                celerToken.safeTransfer(beneficiary.account, beneficiary.amt);
+            }
+        }
+
+        require(totalSubAmt == totalAddAmt, "Amount doesn't match");
+    }
 
     function isValidator(address _addr) public view returns (bool) {
         return candidateProfiles[_addr].status == CandidateStatus.Bonded;
@@ -368,7 +406,7 @@ contract Guard is IGuard {
 
         delete validatorSet[_setIndex];
         candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
-        candidateProfiles[removedValidator].unbondTime = block.timestamp.add(blameTimeout);
+        candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
@@ -379,42 +417,28 @@ contract Guard is IGuard {
             }
         }
 
-        revert("no such a validator");
+        revert("No such a validator");
     }
 
+    // more than 2/3 validators sign this hash
+    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private view returns(bool) {
+        // TODO: need to compute dynamically because there might be less validators
+        uint minQuorumSize = 8;
 
-    /********************* old function records *********************/
-    // function punish(
-    //     uint _cpNumber,
-    //     bytes calldata _blockNumber,
-    //     bytes calldata _headersProofBytes,
-    //     bytes calldata _txIndex,
-    //     bytes calldata _receiptsProofBytes
-    // )
-    //     external
-    // {
-    //     bytes[Len] memory logs = _merkleProof(_cpNumber, _blockNumber, _headersProofBytes, _txIndex, _receiptsProofBytes);
+        if (minQuorumSize > _sigs.length) {
+            return false;
+        }
 
-    //     bytes32 topic = _bytesToBytes32(RLP._decodeString(logs[1]), 0);
-    //     require(topic == PunishEventHash, "not Punish event");
+        bytes32 hash = _h.toEthSignedMessageHash();
+        address addr;
+        uint quorumSize = 0;
+        for (uint i = 0; i < _sigs.length; i++) {
+            addr = hash.recover(_sigs[i]);
+            if (candidateProfiles[addr].status == CandidateStatus.Bonded) {
+                quorumSize++;
+            }
+        }
 
-    //     bytes memory data = logs[2];
-
-    //     address client = _bytesToAddress(RLP._slice(data, 12, 20), 0);
-
-    //     uint cnt = _bytesToUint(RLP._slice(data, 32, 32));
-
-    //     for (uint i = 0; i < cnt; i++) {
-    //         address guardian = _bytesToAddress(RLP._slice(data, (i + 2) * 32 + 12, 32), 0);
-
-    //         uint amount = securityDeposit[guardian];
-    //         securityDeposit[guardian] = 0;
-
-    //         celerToken.approve(client, amount);
-    //         celerToken.safeTransfer(
-    //             client,
-    //             amount
-    //         );
-    //     }
-    // }
+        return quorumSize >= minQuorumSize;
+    }
 }

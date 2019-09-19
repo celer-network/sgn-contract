@@ -1,0 +1,34 @@
+syntax = "proto3";
+option go_package = "github.com/celer-network/goCeler/sgn";
+
+import "google/protobuf/descriptor.proto";
+// import "github.com/celer-network/goCeler/entity";  // for AccountAmtPair msg
+
+package sgn;
+
+extend google.protobuf.FieldOptions { string soltype = 1004; }
+
+/********** mainchain only **********/
+// Next Tag: 3
+message PenaltyRequest {
+  // serialized Penalty message
+  bytes penalty = 1;
+  // TODO: do we need an ordered sigs?
+  repeated bytes sigs = 2;
+}
+
+/********** mainchain and sidechain **********/
+// Next Tag: 6
+message Penalty {
+  uint64 nonce = 1;
+  uint64 expireTime = 2;
+  bytes validator_address = 3 [ (soltype) = "address" ];
+  repeated AccountAmtPair penalizedDelegators = 4;
+  repeated AccountAmtPair beneficiaries = 5;
+}
+
+// Next Tag: 3
+message AccountAmtPair {
+  bytes account = 1 [ (soltype) = "address" ];
+  bytes amt = 2 [ (soltype) = "uint256" ];
+}

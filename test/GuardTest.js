@@ -6,15 +6,13 @@ const Timetravel = require("./helper/timetravel")
 const Guard = artifacts.require("Guard");
 const ERC20ExampleToken = artifacts.require("ERC20ExampleToken");
 
-const ONE_DAY = 3600 * 24;
-const UNLOCKING_TIMEOUT = 21 * ONE_DAY;
+const BLAME_TIMEOUT = 50;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
 const MIN_VALIDATOR_NUM = 1;
 // need to be larger than CANDIDATE_STAKE for test purpose
 const MIN_TOTAL_STAKE = 80;
-const SIDECHAIN_GO_LIVE_TIMEOUT = ONE_DAY;
-const SIDECHAIN_GO_LIVE_TIME = Math.round(Date.now() / 1000) + SIDECHAIN_GO_LIVE_TIMEOUT;
+const SIDECHAIN_GO_LIVE_TIMEOUT = 50;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
@@ -35,12 +33,13 @@ contract("SGN Guard contract", async accounts => {
 
     beforeEach(async () => {
         celerToken = await ERC20ExampleToken.new();
+
         instance = await Guard.new(
             celerToken.address,
-            UNLOCKING_TIMEOUT,
+            BLAME_TIMEOUT,
             MIN_VALIDATOR_NUM,
             MIN_TOTAL_STAKE,
-            SIDECHAIN_GO_LIVE_TIME
+            SIDECHAIN_GO_LIVE_TIMEOUT
         );
 
         // give enough money to other accounts
@@ -86,7 +85,7 @@ contract("SGN Guard contract", async accounts => {
     });
 
     it("should fail to subscribe before there are enough validators", async () => {
-        await Timetravel.advanceTime(SIDECHAIN_GO_LIVE_TIMEOUT + 1);
+        await Timetravel.advanceBlocks(SIDECHAIN_GO_LIVE_TIMEOUT);
         await celerToken.approve(instance.address, SUB_FEE, {
             from: SUBSCRIBER
         });
@@ -275,7 +274,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(args.delegator, DELEGATOR);
                         assert.equal(args.candidate, CANDIDATE);
                         assert.equal(args.withdrawAmount.toString(), smallAmount);
-                        assert.equal(args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
+                        assert.equal(args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
                         const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - smallAmount;
                         assert.equal(args.totalStake.toString(), totalStake);
                     });
@@ -294,7 +293,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.delegator, CANDIDATE);
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.withdrawAmount, CANDIDATE_WITHDRAW_UNDER_MIN);
-                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
+                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
                         const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN;
                         assert.equal(tx.logs[1].args.totalStake, totalStake);
                     });
@@ -311,24 +310,30 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.delegator, DELEGATOR);
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.withdrawAmount, DELEGATOR_WITHDRAW);
-                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.timestamp + UNLOCKING_TIMEOUT);
+                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
                         const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - DELEGATOR_WITHDRAW;
                         assert.equal(tx.logs[1].args.totalStake, totalStake);
                     });
 
-                    // TODO: use a describe for the following when condition
-                    it("should subscribe successfully when there are enough validators", async () => {
-                        await celerToken.approve(instance.address, SUB_FEE, {
-                            from: SUBSCRIBER
-                        });
-                        const tx = await instance.subscribe(SUB_FEE, {
-                            from: SUBSCRIBER
-                        });
-                        const { event, args } = tx.logs[0];
+                    describe("after sidechain goes live", async () => {
+                        beforeEach(async () => {
+                            await Timetravel.advanceBlocks(SIDECHAIN_GO_LIVE_TIMEOUT);
+                        })
 
-                        assert.equal(event, "AddSubscriptionBalance");
-                        assert.equal(args.consumer, SUBSCRIBER);
-                        assert.equal(args.amount, SUB_FEE);
+                        // TODO: use a describe for the following when condition
+                        it("should subscribe successfully when there are enough validators", async () => {
+                            await celerToken.approve(instance.address, SUB_FEE, {
+                                from: SUBSCRIBER
+                            });
+                            const tx = await instance.subscribe(SUB_FEE, {
+                                from: SUBSCRIBER
+                            });
+                            const { event, args } = tx.logs[0];
+
+                            assert.equal(event, "AddSubscriptionBalance");
+                            assert.equal(args.consumer, SUBSCRIBER);
+                            assert.equal(args.amount, SUB_FEE);
+                        });
                     });
 
                     describe("after a delegator intendWithdraw", async () => {
@@ -348,7 +353,7 @@ contract("SGN Guard contract", async accounts => {
 
                         describe("after withdrawTimeout", async () => {
                             beforeEach(async () => {
-                                await Timetravel.advanceTime(UNLOCKING_TIMEOUT + 1);
+                                await Timetravel.advanceBlocks(BLAME_TIMEOUT);
                             })
 
                             it("should confirmWithdraw successfully", async () => {
