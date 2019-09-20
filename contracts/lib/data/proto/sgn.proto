@@ -21,9 +21,9 @@ message PenaltyRequest {
 // Next Tag: 6
 message Penalty {
   uint64 nonce = 1;
-  uint64 expireTime = 2;
+  uint64 expire_time = 2;
   bytes validator_address = 3 [ (soltype) = "address" ];
-  repeated AccountAmtPair penalizedDelegators = 4;
+  repeated AccountAmtPair penalized_delegators = 4;
   repeated AccountAmtPair beneficiaries = 5;
 }
 
