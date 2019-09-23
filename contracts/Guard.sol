@@ -406,16 +406,6 @@ contract Guard is IGuard {
             _candidate.totalStake = _candidate.totalStake.add(_amount);
             delegator.delegatedStake = delegator.delegatedStake.add(_amount);
         } else if (_op == MathOperation.Sub) {
-            // if (delegator.delegatedStake >= _amount) {
-            //     _candidate.totalStake = _candidate.totalStake.sub(_amount);
-            //     delegator.delegatedStake = delegator.delegatedStake.sub(_amount);
-            // } else {
-            //     _candidate.totalStake = _candidate.totalStake.sub(delegator.delegatedStake);
-            //     uint remainingAmt = _amount.sub(delegator.delegatedStake);
-            //     delegator.delegatedStake = 0;
-            //     delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
-            // }
-
             _candidate.totalStake = _candidate.totalStake.sub(_amount);
             delegator.delegatedStake = delegator.delegatedStake.sub(_amount);
         } else {
