@@ -312,6 +312,8 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
                     });
 
+                    // TODO: add a test of "fail to confirmWithdraw because penalty slashes all unlocking stake"
+
                     describe("after sidechain goes live", async () => {
                         beforeEach(async () => {
                             await Timetravel.advanceBlocks(SIDECHAIN_GO_LIVE_TIMEOUT);

@@ -193,6 +193,7 @@ contract Guard is IGuard {
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
         _updateStake(candidate, msgSender, _amount, MathOperation.Sub);
+        delegator.unlockingStake = delegator.unlockingStake.add(_amount);
         
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
@@ -245,6 +246,7 @@ contract Guard is IGuard {
 
             withdrawAmount = withdrawAmount.add(wi.amount);
             wi.withdrawed = true;
+            delegator.unlockingStake = delegator.unlockingStake.sub(wi.amount);
             
             emit ConfirmWithdraw(msgSender, _candidateAddr, _intentIndexes[i], wi.amount);
         }
