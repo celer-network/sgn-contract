@@ -25,12 +25,13 @@ contract Guard is IGuard {
     struct WithdrawIntent {
         uint amount;
         uint unlockTime;
+        bool withdrawed;
     }
 
     struct Delegator {
-        uint stake;
+        uint lockedStake;
+        uint unlockingStake;
         WithdrawIntent[] withdrawIntents;
-        uint nextWithdrawIntent;
     }
 
     struct ValidatorCandidate {
@@ -38,8 +39,8 @@ contract Guard is IGuard {
         uint minSelfStake;
         bytes sidechainAddr;
 
+        // total sum of lockedStake of each delegator
         uint totalStake;
-        // TODO: do we need address[] delegators?
         mapping (address => Delegator) delegatorProfiles;
         CandidateStatus status;
         uint unbondTime;
@@ -131,8 +132,6 @@ contract Guard is IGuard {
         emit UpdateSidechainAddr(msgSender, oldSidechainAddr, _sidechainAddr);
     }
 
-    // TODO: function updateMinSelfStake - unlock all stakes when candidate updates this field?
-
     function claimValidator() external {
         address msgSender = msg.sender;
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
@@ -141,7 +140,7 @@ contract Guard is IGuard {
         require(candidate.status == CandidateStatus.Unbonded);
         require(candidate.totalStake >= minTotalStake, "Not enough total stake");
         require(
-            candidate.delegatorProfiles[msgSender].stake >= candidate.minSelfStake,
+            candidate.delegatorProfiles[msgSender].lockedStake >= candidate.minSelfStake,
             "Not enough self stake"
         );
 
@@ -198,8 +197,7 @@ contract Guard is IGuard {
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
         if (candidate.status == CandidateStatus.Bonded) {
-            bool lowSelfStake = 
-                _candidateAddr == msgSender && delegator.stake < candidate.minSelfStake;
+            bool lowSelfStake = _candidateAddr == msgSender && delegator.lockedStake < candidate.minSelfStake;
             bool lowTotalStake = candidate.totalStake < minTotalStake;
             
             if (lowSelfStake || lowTotalStake) {
@@ -218,31 +216,39 @@ contract Guard is IGuard {
         emit IntendWithdraw(
             msgSender,
             _candidateAddr,
+            delegator.withdrawIntents.length - 1,
             _amount,
-            withdrawIntent.unlockTime,
-            candidate.totalStake
+            withdrawIntent.unlockTime
         );
     }
 
-    function confirmWithdraw(address _candidateAddr) external onlyNonZeroAddr(_candidateAddr) {
+    function confirmWithdraw(
+        address _candidateAddr,
+        uint[] calldata _intentIndexes
+    )
+        external
+        onlyNonZeroAddr(_candidateAddr)
+    {
         address msgSender = msg.sender;
         Delegator storage delegator =
             candidateProfiles[_candidateAddr].delegatorProfiles[msgSender];
 
-        uint intentLen = delegator.withdrawIntents.length;
+        // uint intentLen = delegator.withdrawIntents.length;
         uint bn = block.number;
         uint withdrawAmount = 0;
-        for (uint i = delegator.nextWithdrawIntent; i < intentLen; i++) {
-            if (bn > delegator.withdrawIntents[i].unlockTime) {
-                withdrawAmount = withdrawAmount.add(delegator.withdrawIntents[i].amount);
-            } else {
-                delegator.nextWithdrawIntent = i;
-                break;
-            }
+        for (uint i = 0; i < _intentIndexes.length; i++) {
+            WithdrawIntent storage wi = delegator.withdrawIntents[_intentIndexes[i]];
+            // Not needed for a dynamic array
+            // require(wi.unlockTime > 0, "Null intent");
+            require(bn >= wi.unlockTime, "Not unlocked");
+            require(!wi.withdrawed, "Withdrawed intent");
+
+            withdrawAmount = withdrawAmount.add(wi.amount);
+            wi.withdrawed = true;
+            
+            emit ConfirmWithdraw(msgSender, _candidateAddr, _intentIndexes[i], wi.amount);
         }
         celerToken.safeTransfer(msgSender, withdrawAmount);
-
-        emit ConfirmWithdraw(msgSender, _candidateAddr, withdrawAmount);
     }
 
     function subscribe(uint _amount) external onlyValidSidechain {
@@ -279,14 +285,17 @@ contract Guard is IGuard {
         for (uint i = 0; i < penalty.penalizedDelegators.length; i++) {
             PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
             totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
+            emit Punish(penalty.validatorAddress, penalizedDelegator.account, penalizedDelegator.amt);
 
             _updateStake(validator, penalizedDelegator.account, penalizedDelegator.amt, MathOperation.Sub);
+            // TODO: if the remaining stake is lower than the required amount, remove it from validator set
         }
 
         uint totalAddAmt = 0;
         for (uint i = 0; i < penalty.beneficiaries.length; i++) {
             PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
             totalAddAmt = totalAddAmt.add(beneficiary.amt);
+            emit Indemnify(beneficiary.account, beneficiary.amt);
 
             if (beneficiary.account == address(0)) {
                 // address(0) stands for miningPool
@@ -348,10 +357,11 @@ contract Guard is IGuard {
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) public view
         returns (
-        uint stake,
+        uint lockedStake,
+        uint unlockingStake,
         uint[] memory intentAmounts,
         uint[] memory intentUnlockTimes,
-        uint nextWithdrawIntent
+        bool[] memory intentWithdrawed
     )
     {
         Delegator storage d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
@@ -359,13 +369,15 @@ contract Guard is IGuard {
         uint len = d.withdrawIntents.length;
         intentAmounts = new uint[](len);
         intentUnlockTimes = new uint[](len);
+        intentWithdrawed = new bool[](len);
         for (uint i = 0; i < d.withdrawIntents.length; i++) {
             intentAmounts[i] = d.withdrawIntents[i].amount;
             intentUnlockTimes[i] = d.withdrawIntents[i].unlockTime;
+            intentWithdrawed[i] = d.withdrawIntents[i].withdrawed;
         }
 
-        stake = d.stake;
-        nextWithdrawIntent = d.nextWithdrawIntent;
+        lockedStake = d.lockedStake;
+        unlockingStake = d.unlockingStake;
     }
 
     function _updateStake(
@@ -376,14 +388,21 @@ contract Guard is IGuard {
     )
         private
     {
+        Delegator storage delegator = _candidate.delegatorProfiles[_delegatorAddr];
+
         if (_op == MathOperation.Add) {
-            _candidate.delegatorProfiles[_delegatorAddr].stake =
-                _candidate.delegatorProfiles[_delegatorAddr].stake.add(_amount);
             _candidate.totalStake = _candidate.totalStake.add(_amount);
+            delegator.lockedStake = delegator.lockedStake.add(_amount);
         } else if (_op == MathOperation.Sub) {
-            _candidate.delegatorProfiles[_delegatorAddr].stake =
-                _candidate.delegatorProfiles[_delegatorAddr].stake.sub(_amount);
-            _candidate.totalStake = _candidate.totalStake.sub(_amount);
+            if (delegator.lockedStake >= _amount) {
+                _candidate.totalStake = _candidate.totalStake.sub(_amount);
+                delegator.lockedStake = delegator.lockedStake.sub(_amount);
+            } else {
+                _candidate.totalStake = _candidate.totalStake.sub(delegator.lockedStake);
+                uint remainingAmt = _amount.sub(delegator.lockedStake);
+                delegator.lockedStake = 0;
+                delegator.unlockingStake = delegator.unlockingStake.sub(remainingAmt);
+            }
         } else {
             assert(false);
         }
