@@ -24,13 +24,13 @@ contract Guard is IGuard {
 
     struct WithdrawIntent {
         uint amount;
-        uint unlockTime;
+        uint undelegateTime;
         bool withdrawed;
     }
 
     struct Delegator {
-        uint lockedStake;
-        uint unlockingStake;
+        uint delegatedStake;
+        uint undelegatingStake;
         WithdrawIntent[] withdrawIntents;
     }
 
@@ -39,7 +39,7 @@ contract Guard is IGuard {
         uint minSelfStake;
         bytes sidechainAddr;
 
-        // total sum of lockedStake of each delegator
+        // total sum of delegatedStake of each delegator
         uint totalStake;
         mapping (address => Delegator) delegatorProfiles;
         CandidateStatus status;
@@ -49,7 +49,7 @@ contract Guard is IGuard {
     uint public constant VALIDATOR_SET_MAX_SIZE = 11;
 
     IERC20 public celerToken;
-    // timeout to blame (claim responsibility of) unlocking delegators or unbonding validators
+    // timeout to blame (claim responsibility of) undelegating delegators or unbonding validators
     uint public blameTimeout;
     uint public minValidatorNum;
     // used for bootstrap: there should be enough time for delegating and
@@ -140,7 +140,7 @@ contract Guard is IGuard {
         require(candidate.status == CandidateStatus.Unbonded);
         require(candidate.totalStake >= minTotalStake, "Not enough total stake");
         require(
-            candidate.delegatorProfiles[msgSender].lockedStake >= candidate.minSelfStake,
+            candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
             "Not enough self stake"
         );
 
@@ -193,22 +193,22 @@ contract Guard is IGuard {
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
         _updateStake(candidate, msgSender, _amount, MathOperation.Sub);
-        delegator.unlockingStake = delegator.unlockingStake.add(_amount);
+        delegator.undelegatingStake = delegator.undelegatingStake.add(_amount);
         
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
         if (candidate.status == CandidateStatus.Bonded) {
-            bool lowSelfStake = _candidateAddr == msgSender && delegator.lockedStake < candidate.minSelfStake;
+            bool lowSelfStake = _candidateAddr == msgSender && delegator.delegatedStake < candidate.minSelfStake;
             bool lowTotalStake = candidate.totalStake < minTotalStake;
             
             if (lowSelfStake || lowTotalStake) {
                 _removeValidator(_getValidatorIdx(_candidateAddr));
             }
 
-            withdrawIntent.unlockTime = block.number.add(blameTimeout);
+            withdrawIntent.undelegateTime = block.number.add(blameTimeout);
         } else if (candidate.status == CandidateStatus.Unbonding) {
             // no need to wait another blameTimeout
-            withdrawIntent.unlockTime = candidate.unbondTime;
+            withdrawIntent.undelegateTime = candidate.unbondTime;
         } else {
             revert("Candidate status is not Bonded or Unbonding");
         }
@@ -219,7 +219,7 @@ contract Guard is IGuard {
             _candidateAddr,
             delegator.withdrawIntents.length - 1,
             _amount,
-            withdrawIntent.unlockTime
+            withdrawIntent.undelegateTime
         );
     }
 
@@ -240,13 +240,13 @@ contract Guard is IGuard {
         for (uint i = 0; i < _intentIndexes.length; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[_intentIndexes[i]];
             // Not needed for a dynamic array
-            // require(wi.unlockTime > 0, "Null intent");
-            require(bn >= wi.unlockTime, "Not unlocked");
+            // require(wi.undelegateTime > 0, "Null intent");
+            require(bn >= wi.undelegateTime, "Not undelegated");
             require(!wi.withdrawed, "Withdrawed intent");
 
             withdrawAmount = withdrawAmount.add(wi.amount);
             wi.withdrawed = true;
-            delegator.unlockingStake = delegator.unlockingStake.sub(wi.amount);
+            delegator.undelegatingStake = delegator.undelegatingStake.sub(wi.amount);
             
             emit ConfirmWithdraw(msgSender, _candidateAddr, _intentIndexes[i], wi.amount);
         }
@@ -359,10 +359,10 @@ contract Guard is IGuard {
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) public view
         returns (
-        uint lockedStake,
-        uint unlockingStake,
+        uint delegatedStake,
+        uint undelegatingStake,
         uint[] memory intentAmounts,
-        uint[] memory intentUnlockTimes,
+        uint[] memory intentUndelegateTimes,
         bool[] memory intentWithdrawed
     )
     {
@@ -370,16 +370,16 @@ contract Guard is IGuard {
 
         uint len = d.withdrawIntents.length;
         intentAmounts = new uint[](len);
-        intentUnlockTimes = new uint[](len);
+        intentUndelegateTimes = new uint[](len);
         intentWithdrawed = new bool[](len);
         for (uint i = 0; i < d.withdrawIntents.length; i++) {
             intentAmounts[i] = d.withdrawIntents[i].amount;
-            intentUnlockTimes[i] = d.withdrawIntents[i].unlockTime;
+            intentUndelegateTimes[i] = d.withdrawIntents[i].undelegateTime;
             intentWithdrawed[i] = d.withdrawIntents[i].withdrawed;
         }
 
-        lockedStake = d.lockedStake;
-        unlockingStake = d.unlockingStake;
+        delegatedStake = d.delegatedStake;
+        undelegatingStake = d.undelegatingStake;
     }
 
     function _updateStake(
@@ -394,16 +394,16 @@ contract Guard is IGuard {
 
         if (_op == MathOperation.Add) {
             _candidate.totalStake = _candidate.totalStake.add(_amount);
-            delegator.lockedStake = delegator.lockedStake.add(_amount);
+            delegator.delegatedStake = delegator.delegatedStake.add(_amount);
         } else if (_op == MathOperation.Sub) {
-            if (delegator.lockedStake >= _amount) {
+            if (delegator.delegatedStake >= _amount) {
                 _candidate.totalStake = _candidate.totalStake.sub(_amount);
-                delegator.lockedStake = delegator.lockedStake.sub(_amount);
+                delegator.delegatedStake = delegator.delegatedStake.sub(_amount);
             } else {
-                _candidate.totalStake = _candidate.totalStake.sub(delegator.lockedStake);
-                uint remainingAmt = _amount.sub(delegator.lockedStake);
-                delegator.lockedStake = 0;
-                delegator.unlockingStake = delegator.unlockingStake.sub(remainingAmt);
+                _candidate.totalStake = _candidate.totalStake.sub(delegator.delegatedStake);
+                uint remainingAmt = _amount.sub(delegator.delegatedStake);
+                delegator.delegatedStake = 0;
+                delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
             }
         } else {
             assert(false);

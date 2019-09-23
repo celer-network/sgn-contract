@@ -275,7 +275,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(args.candidate, CANDIDATE);
                         assert.equal(args.index, 0);
                         assert.equal(args.withdrawAmount.toString(), smallAmount);
-                        assert.equal(args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
+                        assert.equal(args.undelegateTime.toString(), block.number + BLAME_TIMEOUT);
                     });
 
                     it("should remove the validator after validator intendWithdraw to an amount under minSelfStake", async () => {
@@ -293,7 +293,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.index, 0);
                         assert.equal(tx.logs[1].args.withdrawAmount, CANDIDATE_WITHDRAW_UNDER_MIN);
-                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
+                        assert.equal(tx.logs[1].args.undelegateTime.toString(), block.number + BLAME_TIMEOUT);
                     });
 
                     it("should remove the validator after delegator intendWithdraw to an amount under minTotalStake", async () => {
@@ -309,7 +309,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.index, 0);
                         assert.equal(tx.logs[1].args.withdrawAmount, DELEGATOR_WITHDRAW);
-                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
+                        assert.equal(tx.logs[1].args.undelegateTime.toString(), block.number + BLAME_TIMEOUT);
                     });
 
                     // TODO: add a test of "fail to confirmWithdraw because penalty slashes all unlocking stake"
@@ -345,7 +345,7 @@ contract("SGN Guard contract", async accounts => {
                                 await instance.confirmWithdraw(CANDIDATE, [0]);
                             } catch (error) {
                                 assert.isAbove(
-                                    error.message.search("Not unlocked"),
+                                    error.message.search("Not undelegated"),
                                     -1
                                 );
                                 return;
