@@ -173,8 +173,6 @@ contract Guard is IGuard {
         require(candidate.status == CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
-        // TODO: what if there is an withdraw intent exist?
-        // next time I can withdraw immediately?
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
 
         celerToken.safeTransfer(msgSender, _amount);
