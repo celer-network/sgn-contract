@@ -24,7 +24,7 @@ contract Guard is IGuard {
 
     struct WithdrawIntent {
         uint amount;
-        uint unlockTime;
+        uint intendTime;
         bool withdrawed;
     }
 
@@ -197,6 +197,7 @@ contract Guard is IGuard {
         
         WithdrawIntent memory withdrawIntent;
         withdrawIntent.amount = _amount;
+        withdrawIntent.intendTime = block.number;
         if (candidate.status == CandidateStatus.Bonded) {
             bool lowSelfStake = _candidateAddr == msgSender && delegator.lockedStake < candidate.minSelfStake;
             bool lowTotalStake = candidate.totalStake < minTotalStake;
@@ -204,13 +205,6 @@ contract Guard is IGuard {
             if (lowSelfStake || lowTotalStake) {
                 _removeValidator(_getValidatorIdx(_candidateAddr));
             }
-
-            withdrawIntent.unlockTime = block.number.add(blameTimeout);
-        } else if (candidate.status == CandidateStatus.Unbonding) {
-            // no need to wait another blameTimeout
-            withdrawIntent.unlockTime = candidate.unbondTime;
-        } else {
-            revert("Candidate status is not Bonded or Unbonding");
         }
 
         delegator.withdrawIntents.push(withdrawIntent);
@@ -219,7 +213,7 @@ contract Guard is IGuard {
             _candidateAddr,
             delegator.withdrawIntents.length - 1,
             _amount,
-            withdrawIntent.unlockTime
+            withdrawIntent.intendTime
         );
     }
 
@@ -239,9 +233,11 @@ contract Guard is IGuard {
         uint withdrawAmount = 0;
         for (uint i = 0; i < _intentIndexes.length; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[_intentIndexes[i]];
-            // Not needed for a dynamic array
-            // require(wi.unlockTime > 0, "Null intent");
-            require(bn >= wi.unlockTime, "Not unlocked");
+            require(
+                candidateProfiles[_candidateAddr].status == CandidateStatus.Unbonded ||
+                    wi.intendTime.add(blameTimeout) <= bn,
+                "Not unlocked"
+            );
             require(!wi.withdrawed, "Withdrawed intent");
 
             withdrawAmount = withdrawAmount.add(wi.amount);
@@ -362,7 +358,7 @@ contract Guard is IGuard {
         uint lockedStake,
         uint unlockingStake,
         uint[] memory intentAmounts,
-        uint[] memory intentUnlockTimes,
+        uint[] memory intentIntendTimes,
         bool[] memory intentWithdrawed
     )
     {
@@ -370,11 +366,11 @@ contract Guard is IGuard {
 
         uint len = d.withdrawIntents.length;
         intentAmounts = new uint[](len);
-        intentUnlockTimes = new uint[](len);
+        intentIntendTimes = new uint[](len);
         intentWithdrawed = new bool[](len);
         for (uint i = 0; i < d.withdrawIntents.length; i++) {
             intentAmounts[i] = d.withdrawIntents[i].amount;
-            intentUnlockTimes[i] = d.withdrawIntents[i].unlockTime;
+            intentIntendTimes[i] = d.withdrawIntents[i].intendTime;
             intentWithdrawed[i] = d.withdrawIntents[i].withdrawed;
         }
 

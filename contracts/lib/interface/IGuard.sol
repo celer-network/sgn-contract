@@ -42,7 +42,7 @@ interface IGuard {
     
     event WithdrawFromUnbondedCandidate(address indexed delegator, address indexed candidate, uint amount);
 
-    event IntendWithdraw(address indexed delegator, address indexed candidate, uint indexed index, uint withdrawAmount, uint unlockTime);
+    event IntendWithdraw(address indexed delegator, address indexed candidate, uint indexed index, uint withdrawAmount, uint intendTime);
 
     event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint indexed index, uint amount);
 
