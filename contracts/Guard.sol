@@ -30,9 +30,8 @@ contract Guard is IGuard {
     struct Delegator {
         uint lockedStake;
         uint unlockingStake;
-        // WithdrawIntent[] withdrawIntents;
         mapping(uint => WithdrawIntent) withdrawIntents;
-        // valid intents are located in [intentStartIndex, intentEndIndex)
+        // valid intent range is [intentStartIndex, intentEndIndex)
         uint intentStartIndex;
         uint intentEndIndex;
     }
@@ -183,7 +182,6 @@ contract Guard is IGuard {
         emit WithdrawFromUnbondedCandidate(msgSender, _candidateAddr, _amount);
     }
 
-    // intendWithdraw from bonded or unbonding candidates
     function intendWithdraw(
         address _candidateAddr,
         uint _amount
