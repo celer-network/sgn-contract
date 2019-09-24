@@ -14,7 +14,7 @@ interface IGuard {
 
     function intendWithdraw(address _candidate, uint _amount) external;
 
-    function confirmWithdraw(address _candidateAddr, uint[] calldata _intentIndexes) external;
+    function confirmWithdraw(address _candidateAddr) external;
 
     // TODO
     // function punish(bytes calldata _punishRequest) external;
@@ -29,7 +29,7 @@ interface IGuard {
 
     function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, bool);
 
-    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory, bool[] memory);
+    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);
 
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
@@ -42,9 +42,9 @@ interface IGuard {
     
     event WithdrawFromUnbondedCandidate(address indexed delegator, address indexed candidate, uint amount);
 
-    event IntendWithdraw(address indexed delegator, address indexed candidate, uint indexed index, uint withdrawAmount, uint intendTime);
+    event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint intendTime);
 
-    event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint indexed index, uint amount);
+    event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
     event AddSubscriptionBalance(address indexed consumer, uint amount);
 

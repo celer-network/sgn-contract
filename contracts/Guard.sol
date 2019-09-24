@@ -25,13 +25,16 @@ contract Guard is IGuard {
     struct WithdrawIntent {
         uint amount;
         uint intendTime;
-        bool withdrawed;
     }
 
     struct Delegator {
         uint lockedStake;
         uint unlockingStake;
-        WithdrawIntent[] withdrawIntents;
+        // WithdrawIntent[] withdrawIntents;
+        mapping(uint => WithdrawIntent) withdrawIntents;
+        // valid intents are located in [intentStartIndex, intentEndIndex)
+        uint intentStartIndex;
+        uint intentEndIndex;
     }
 
     struct ValidatorCandidate {
@@ -195,7 +198,7 @@ contract Guard is IGuard {
         _updateStake(candidate, msgSender, _amount, MathOperation.Sub);
         delegator.unlockingStake = delegator.unlockingStake.add(_amount);
         
-        WithdrawIntent memory withdrawIntent;
+        WithdrawIntent storage withdrawIntent = delegator.withdrawIntents[delegator.intentEndIndex];
         withdrawIntent.amount = _amount;
         withdrawIntent.intendTime = block.number;
         if (candidate.status == CandidateStatus.Bonded) {
@@ -206,47 +209,50 @@ contract Guard is IGuard {
                 _removeValidator(_getValidatorIdx(_candidateAddr));
             }
         }
-
-        delegator.withdrawIntents.push(withdrawIntent);
+        delegator.intentEndIndex++;
         emit IntendWithdraw(
             msgSender,
             _candidateAddr,
-            delegator.withdrawIntents.length - 1,
             _amount,
             withdrawIntent.intendTime
         );
     }
 
-    function confirmWithdraw(
-        address _candidateAddr,
-        uint[] calldata _intentIndexes
-    )
-        external
-        onlyNonZeroAddr(_candidateAddr)
-    {
+    function confirmWithdraw(address _candidateAddr) external onlyNonZeroAddr(_candidateAddr) {
         address msgSender = msg.sender;
         Delegator storage delegator =
             candidateProfiles[_candidateAddr].delegatorProfiles[msgSender];
 
-        // uint intentLen = delegator.withdrawIntents.length;
         uint bn = block.number;
-        uint withdrawAmount = 0;
-        for (uint i = 0; i < _intentIndexes.length; i++) {
-            WithdrawIntent storage wi = delegator.withdrawIntents[_intentIndexes[i]];
-            require(
-                candidateProfiles[_candidateAddr].status == CandidateStatus.Unbonded ||
-                    wi.intendTime.add(blameTimeout) <= bn,
-                "Not unlocked"
-            );
-            require(!wi.withdrawed, "Withdrawed intent");
-
-            withdrawAmount = withdrawAmount.add(wi.amount);
-            wi.withdrawed = true;
-            delegator.unlockingStake = delegator.unlockingStake.sub(wi.amount);
-            
-            emit ConfirmWithdraw(msgSender, _candidateAddr, _intentIndexes[i], wi.amount);
+        uint i;
+        bool isUnbonded = candidateProfiles[_candidateAddr].status == CandidateStatus.Unbonded;
+        // for all unlocked withdraw intents
+        for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
+            WithdrawIntent storage wi = delegator.withdrawIntents[i];            
+            if (isUnbonded || wi.intendTime.add(blameTimeout) <= bn) {
+                // withdraw intent is unlocked
+                delete delegator.withdrawIntents[i];
+                continue;
+            }
+            break;
         }
-        celerToken.safeTransfer(msgSender, withdrawAmount);
+        delegator.intentStartIndex = i;
+        // for all unlocking withdraw intents
+        uint unlockingStakeWithoutSlash = 0;
+        for (; i < delegator.intentEndIndex; i++) {
+            WithdrawIntent storage wi = delegator.withdrawIntents[i];            
+            unlockingStakeWithoutSlash = unlockingStakeWithoutSlash.add(wi.amount);
+        }
+
+        uint withdrawAmt = 0;
+        if (delegator.unlockingStake > unlockingStakeWithoutSlash) {
+            withdrawAmt = delegator.unlockingStake.sub(unlockingStakeWithoutSlash);
+            delegator.unlockingStake = unlockingStakeWithoutSlash;
+
+            celerToken.safeTransfer(msgSender, withdrawAmt);
+        }
+
+        emit ConfirmWithdraw(msgSender, _candidateAddr, withdrawAmt);
     }
 
     function subscribe(uint _amount) external onlyValidSidechain {
@@ -358,20 +364,17 @@ contract Guard is IGuard {
         uint lockedStake,
         uint unlockingStake,
         uint[] memory intentAmounts,
-        uint[] memory intentIntendTimes,
-        bool[] memory intentWithdrawed
+        uint[] memory intentIntendTimes
     )
     {
         Delegator storage d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
 
-        uint len = d.withdrawIntents.length;
+        uint len = d.intentEndIndex.sub(d.intentStartIndex);
         intentAmounts = new uint[](len);
         intentIntendTimes = new uint[](len);
-        intentWithdrawed = new bool[](len);
-        for (uint i = 0; i < d.withdrawIntents.length; i++) {
+        for (uint i = d.intentStartIndex; i < d.intentEndIndex; i++) {
             intentAmounts[i] = d.withdrawIntents[i].amount;
             intentIntendTimes[i] = d.withdrawIntents[i].intendTime;
-            intentWithdrawed[i] = d.withdrawIntents[i].withdrawed;
         }
 
         lockedStake = d.lockedStake;
