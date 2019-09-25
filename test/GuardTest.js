@@ -295,7 +295,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.intendTime.toString(), block.number);
                     });
 
-                    // TODO: add a test of "fail to confirmWithdraw because penalty slashes all unlocking stake"
+                    // TODO: add a test of "fail to confirmWithdraw because penalty slashes all undelegating stake"
 
                     describe("after sidechain goes live", async () => {
                         beforeEach(async () => {
