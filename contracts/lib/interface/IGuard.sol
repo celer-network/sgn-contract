@@ -18,8 +18,7 @@ interface IGuard {
 
     function confirmWithdraw(address _candidateAddr) external;
 
-    // TODO
-    // function punish(bytes calldata _punishRequest) external;
+    function punish(bytes calldata _penaltyRequest) external;
 
     function subscribe(uint _amount) external;
 
