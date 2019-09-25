@@ -12,6 +12,8 @@ interface IGuard {
 
     function claimValidator() external;
 
+    function confirmUnbondedCandidate(address _candidateAddr) external;
+
     function intendWithdraw(address _candidate, uint _amount) external;
 
     function confirmWithdraw(address _candidateAddr) external;
@@ -51,4 +53,6 @@ interface IGuard {
     event Punish(address indexed validator, address indexed delegator, uint amount);
 
     event Indemnify(address indexed indemnitee, uint amount);
+
+    event CandidateUnbonded(address indexed candidate);
 }

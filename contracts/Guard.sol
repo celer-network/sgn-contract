@@ -163,6 +163,16 @@ contract Guard is IGuard {
         _addValidator(msgSender, minStakeIndex);
     }
 
+    function confirmUnbondedCandidate(address _candidateAddr) external {
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
+        require(candidate.status == CandidateStatus.Unbonding);
+        require(block.number >= candidate.unbondTime);
+
+        candidate.status = CandidateStatus.Unbonded;
+        delete candidate.unbondTime;
+        emit CandidateUnbonded(_candidateAddr);
+    }
+
     // for withdrawing stakes of unbonded candidates
     function withdrawFromUnbondedCandidate(
         address _candidateAddr,
@@ -228,7 +238,8 @@ contract Guard is IGuard {
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];            
             if (isUnbonded || wi.intendTime.add(blameTimeout) <= bn) {
-                // withdraw intent is unlocked
+                // withdraw intent is unlocked when the validator becomes unbonded or the blameTimeout
+                // for the withdraw intent is up.
                 delete delegator.withdrawIntents[i];
                 continue;
             }
