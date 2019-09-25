@@ -124,7 +124,10 @@ contract Guard is IGuard {
 
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
-        require(!isValidator(msgSender), "msg.sender is validator");
+        require(
+            candidateProfiles[msgSender].status == CandidateStatus.Unbonded,
+            "msg.sender is not unbonded"
+        );
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, "Candidate is not initialized");
         
