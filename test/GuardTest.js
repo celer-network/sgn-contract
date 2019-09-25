@@ -222,20 +222,6 @@ contract("SGN Guard contract", async accounts => {
                 assert.equal(args.amount, DELEGATOR_WITHDRAW);
             });
 
-            it("should fail to intendWithdraw from an unbonded candidate", async () => {
-                try {
-                    await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
-                } catch (error) {
-                    assert.isAbove(
-                        error.message.search("Candidate status is not Bonded or Unbonding"),
-                        -1
-                    );
-                    return;
-                }
-
-                assert.fail("should have thrown before");
-            });
-
             describe("after candidate self delegates minSelfStake", async () => {
                 beforeEach(async () => {
                     await celerToken.approve(instance.address, CANDIDATE_STAKE, {
@@ -274,9 +260,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(args.delegator, DELEGATOR);
                         assert.equal(args.candidate, CANDIDATE);
                         assert.equal(args.withdrawAmount.toString(), smallAmount);
-                        assert.equal(args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
-                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - smallAmount;
-                        assert.equal(args.totalStake.toString(), totalStake);
+                        assert.equal(args.intendTime.toString(), block.number);
                     });
 
                     it("should remove the validator after validator intendWithdraw to an amount under minSelfStake", async () => {
@@ -293,9 +277,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.delegator, CANDIDATE);
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.withdrawAmount, CANDIDATE_WITHDRAW_UNDER_MIN);
-                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
-                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN;
-                        assert.equal(tx.logs[1].args.totalStake, totalStake);
+                        assert.equal(tx.logs[1].args.intendTime.toString(), block.number);
                     });
 
                     it("should remove the validator after delegator intendWithdraw to an amount under minTotalStake", async () => {
@@ -310,10 +292,10 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.delegator, DELEGATOR);
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.withdrawAmount, DELEGATOR_WITHDRAW);
-                        assert.equal(tx.logs[1].args.unlockTime.toString(), block.number + BLAME_TIMEOUT);
-                        const totalStake = CANDIDATE_STAKE + DELEGATOR_STAKE - DELEGATOR_WITHDRAW;
-                        assert.equal(tx.logs[1].args.totalStake, totalStake);
+                        assert.equal(tx.logs[1].args.intendTime.toString(), block.number);
                     });
+
+                    // TODO: add a test of "fail to confirmWithdraw because penalty slashes all unlocking stake"
 
                     describe("after sidechain goes live", async () => {
                         beforeEach(async () => {
@@ -354,7 +336,7 @@ contract("SGN Guard contract", async accounts => {
                         describe("after withdrawTimeout", async () => {
                             beforeEach(async () => {
                                 await Timetravel.advanceBlocks(BLAME_TIMEOUT);
-                            })
+                            });
 
                             it("should confirmWithdraw successfully", async () => {
                                 const tx = await instance.confirmWithdraw(CANDIDATE);
@@ -364,6 +346,22 @@ contract("SGN Guard contract", async accounts => {
                                 assert.equal(args.delegator, DELEGATOR);
                                 assert.equal(args.candidate, CANDIDATE);
                                 assert.equal(args.amount, DELEGATOR_WITHDRAW);
+                            });
+
+                            describe("after confirmWithdraw", async () => {
+                                beforeEach(async () => {
+                                    await instance.confirmWithdraw(CANDIDATE);
+                                });
+
+                                it("should confirmWithdraw 0 after all withdraw intents are cleared", async () => {
+                                    const tx = await instance.confirmWithdraw(CANDIDATE);
+                                    const { event, args } = tx.logs[0];
+
+                                    assert.equal(event, "ConfirmWithdraw");
+                                    assert.equal(args.delegator, DELEGATOR);
+                                    assert.equal(args.candidate, CANDIDATE);
+                                    assert.equal(args.amount, 0);
+                                });
                             });
                         });
                     });
