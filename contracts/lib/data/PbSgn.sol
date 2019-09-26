@@ -34,6 +34,34 @@ library PbSgn {
         }
     } // end decoder PenaltyRequest
 
+    struct RewardRequest {
+        bytes reward;   // tag: 1
+        bytes[] sigs;   // tag: 2
+    } // end struct RewardRequest
+
+    function decRewardRequest(bytes memory raw) internal pure returns (RewardRequest memory m) {
+        Pb.Buffer memory buf = Pb.fromBytes(raw);
+
+        uint[] memory cnts = buf.cntTags(2);
+        m.sigs = new bytes[](cnts[2]);
+        cnts[2] = 0;  // reset counter for later use
+        
+        uint tag;
+        Pb.WireType wire;
+        while (buf.hasMore()) {
+            (tag, wire) = buf.decKey();
+            if (false) {} // solidity has no switch/case
+            else if (tag == 1) {
+                m.reward = bytes(buf.decBytes());
+            }
+            else if (tag == 2) {
+                m.sigs[cnts[2]] = bytes(buf.decBytes());
+                cnts[2]++;
+            }
+            else { buf.skipValue(wire); } // skip value of unknown tag
+        }
+    } // end decoder RewardRequest
+
     struct Penalty {
         uint64 nonce;   // tag: 1
         uint64 expireTime;   // tag: 2
@@ -99,5 +127,32 @@ library PbSgn {
             else { buf.skipValue(wire); } // skip value of unknown tag
         }
     } // end decoder AccountAmtPair
+
+    struct Reward {
+        address receiver;   // tag: 1
+        uint256 cumulativeMiningReward;   // tag: 2
+        uint256 cumulativeServiceReward;   // tag: 3
+    } // end struct Reward
+
+    function decReward(bytes memory raw) internal pure returns (Reward memory m) {
+        Pb.Buffer memory buf = Pb.fromBytes(raw);
+
+        uint tag;
+        Pb.WireType wire;
+        while (buf.hasMore()) {
+            (tag, wire) = buf.decKey();
+            if (false) {} // solidity has no switch/case
+            else if (tag == 1) {
+                m.receiver = Pb._address(buf.decBytes());
+            }
+            else if (tag == 2) {
+                m.cumulativeMiningReward = Pb._uint256(buf.decBytes());
+            }
+            else if (tag == 3) {
+                m.cumulativeServiceReward = Pb._uint256(buf.decBytes());
+            }
+            else { buf.skipValue(wire); } // skip value of unknown tag
+        }
+    } // end decoder Reward
 
 }
