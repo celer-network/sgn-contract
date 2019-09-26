@@ -43,8 +43,8 @@ contract("SGN Guard contract", async accounts => {
         );
 
         // give enough money to other accounts
-        for (let i = 1; i < 3; i++) {
-            await celerToken.transfer(accounts[i], 1000000);
+        for (let i = 1; i < 9; i++) {
+            await celerToken.transfer(accounts[i], 10000000);
         }
     });
 
@@ -119,7 +119,7 @@ contract("SGN Guard contract", async accounts => {
         assert.equal(args.sidechainAddr, sha3(sidechainAddr));
     });
 
-    describe("after candidate finishes initialization", async () => {
+    describe("after one candidate finishes initialization", async () => {
         const sidechainAddr = sha3(CANDIDATE);
 
         beforeEach(async () => {
@@ -190,7 +190,7 @@ contract("SGN Guard contract", async accounts => {
             assert.fail("should have thrown before");
         });
 
-        describe("after delegator delegates enough stake to the candidate", async () => {
+        describe("after one delegator delegates enough stake to the candidate", async () => {
             beforeEach(async () => {
                 await celerToken.approve(instance.address, DELEGATOR_STAKE);
                 await instance.delegate(CANDIDATE, DELEGATOR_STAKE);
@@ -222,7 +222,7 @@ contract("SGN Guard contract", async accounts => {
                 assert.equal(args.amount, DELEGATOR_WITHDRAW);
             });
 
-            describe("after candidate self delegates minSelfStake", async () => {
+            describe("after one candidate self delegates minSelfStake", async () => {
                 beforeEach(async () => {
                     await celerToken.approve(instance.address, CANDIDATE_STAKE, {
                         from: CANDIDATE
@@ -243,7 +243,7 @@ contract("SGN Guard contract", async accounts => {
                     assert.equal(args.changeType, VALIDATOR_ADD);
                 });
 
-                describe("after candidate claimValidator", async () => {
+                describe("after one candidate claimValidator", async () => {
                     beforeEach(async () => {
                         await instance.claimValidator({
                             from: CANDIDATE
@@ -259,8 +259,8 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(event, "IntendWithdraw");
                         assert.equal(args.delegator, DELEGATOR);
                         assert.equal(args.candidate, CANDIDATE);
-                        assert.equal(args.withdrawAmount.toString(), smallAmount);
-                        assert.equal(args.intendTime.toString(), block.number);
+                        assert.equal(args.withdrawAmount.toNumber(), smallAmount);
+                        assert.equal(args.intendTime.toNumber(), block.number);
                     });
 
                     it("should remove the validator after validator intendWithdraw to an amount under minSelfStake", async () => {
@@ -277,7 +277,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.delegator, CANDIDATE);
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.withdrawAmount, CANDIDATE_WITHDRAW_UNDER_MIN);
-                        assert.equal(tx.logs[1].args.intendTime.toString(), block.number);
+                        assert.equal(tx.logs[1].args.intendTime.toNumber(), block.number);
                     });
 
                     it("should remove the validator after delegator intendWithdraw to an amount under minTotalStake", async () => {
@@ -292,7 +292,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.delegator, DELEGATOR);
                         assert.equal(tx.logs[1].args.candidate, CANDIDATE);
                         assert.equal(tx.logs[1].args.withdrawAmount, DELEGATOR_WITHDRAW);
-                        assert.equal(tx.logs[1].args.intendTime.toString(), block.number);
+                        assert.equal(tx.logs[1].args.intendTime.toNumber(), block.number);
                     });
 
                     // TODO: add a test of "fail to confirmWithdraw because penalty slashes all undelegating stake"
@@ -367,6 +367,50 @@ contract("SGN Guard contract", async accounts => {
                     });
                 });
             });
+        });
+    });
+
+    describe("after multiple validators join the validator set", async () => {
+        const VALIDATORS = [
+            accounts[1],
+            accounts[2],
+            accounts[3],
+            accounts[4],
+            accounts[5],
+            accounts[6],
+            accounts[7]
+        ];
+
+        beforeEach(async () => {
+            for (let i = 0; i < VALIDATORS.length; i++) {
+                // validators finish initialization
+                const sidechainAddr = sha3(VALIDATORS[i]);
+                await instance.initializeCandidate(MIN_SELF_STAKE, sidechainAddr, {
+                    from: VALIDATORS[i]
+                });
+
+                // validators self delegates max(MIN_SELF_STAKE, MIN_TOTAL_STAKE)
+                let amount = Math.max(MIN_SELF_STAKE, MIN_TOTAL_STAKE);
+                await celerToken.approve(instance.address, amount, {
+                    from: VALIDATORS[i]
+                });
+                await instance.delegate(VALIDATORS[i], amount, {
+                    from: VALIDATORS[i]
+                });
+
+                // validators claimValidator
+                await instance.claimValidator({
+                    from: VALIDATORS[i]
+                });
+            }
+        });
+
+        it("should getMinQuorumSize successfully", async () => {
+            const number = await instance.getValidatorNum();
+            const size = await instance.getMinQuorumSize();
+
+            assert.equal(number.toNumber(), 7);
+            assert.equal(size.toNumber(), 5);
         });
     });
 });
