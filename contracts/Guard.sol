@@ -207,19 +207,13 @@ contract Guard is IGuard {
 
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
         delegator.undelegatingStake = delegator.undelegatingStake.add(_amount);
+        _validateValidatorStake(_candidateAddr);
         
         WithdrawIntent storage withdrawIntent = delegator.withdrawIntents[delegator.intentEndIndex];
         withdrawIntent.amount = _amount;
         withdrawIntent.intendTime = block.number;
-        if (candidate.status == CandidateStatus.Bonded) {
-            bool lowSelfStake = _candidateAddr == msgSender && delegator.delegatedStake < candidate.minSelfStake;
-            bool lowTotalStake = candidate.totalStake < minTotalStake;
-            
-            if (lowSelfStake || lowTotalStake) {
-                _removeValidator(_getValidatorIdx(_candidateAddr));
-            }
-        }
         delegator.intentEndIndex++;
+
         emit IntendWithdraw(
             msgSender,
             _candidateAddr,
@@ -310,9 +304,8 @@ contract Guard is IGuard {
                 delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
                 _updateDelegatedStake(validator, penalizedDelegator.account, delegator.delegatedStake, MathOperation.Sub);
             }
-
-            // TODO: if the remaining stake is lower than the required amount, remove it from validator set
         }
+        _validateValidatorStake(penalty.validatorAddress);
 
         uint totalAddAmt = 0;
         for (uint i = 0; i < penalty.beneficiaries.length; i++) {
@@ -440,6 +433,21 @@ contract Guard is IGuard {
         candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
         candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
+    }
+
+    function _validateValidatorStake(address _validatorAddr) private {
+        ValidatorCandidate storage v = candidateProfiles[_validatorAddr];
+        if (v.status != CandidateStatus.Bonded) {
+            // no need to validate the stake of a non-validator
+            return;
+        }
+
+        bool lowSelfStake = v.delegatorProfiles[_validatorAddr].delegatedStake < v.minSelfStake;
+        bool lowTotalStake = v.totalStake < minTotalStake;
+            
+        if (lowSelfStake || lowTotalStake) {
+            _removeValidator(_getValidatorIdx(_validatorAddr));
+        }
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
