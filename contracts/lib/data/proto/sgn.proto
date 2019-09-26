@@ -1,8 +1,7 @@
 syntax = "proto3";
-option go_package = "github.com/celer-network/goCeler/sgn";
+option go_package = "github.com/celer-network/sgn/proto";
 
 import "google/protobuf/descriptor.proto";
-// import "github.com/celer-network/goCeler/entity";  // for AccountAmtPair msg
 
 package sgn;
 
