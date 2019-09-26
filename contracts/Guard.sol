@@ -393,6 +393,10 @@ contract Guard is IGuard {
         undelegatingStake = d.undelegatingStake;
     }
 
+    function getMinQuorumSize() public view returns(uint) {
+        return getValidatorNum().mul(2).div(3).add(1);
+    }
+
     function _updateDelegatedStake(
         ValidatorCandidate storage _candidate,
         address _delegatorAddr,
@@ -462,8 +466,7 @@ contract Guard is IGuard {
 
     // more than 2/3 validators sign this hash
     function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private view returns(bool) {
-        // TODO: need to compute dynamically because there might be less validators
-        uint minQuorumSize = 8;
+        uint minQuorumSize = getMinQuorumSize();
 
         if (minQuorumSize > _sigs.length) {
             return false;
