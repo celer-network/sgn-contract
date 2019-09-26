@@ -13,7 +13,13 @@ extend google.protobuf.FieldOptions { string soltype = 1004; }
 message PenaltyRequest {
   // serialized Penalty message
   bytes penalty = 1;
-  // TODO: do we need an ordered sigs?
+  repeated bytes sigs = 2;
+}
+
+// Next Tag: 3
+message RewardRequest {
+  // serialized Reward message
+  bytes reward = 1;
   repeated bytes sigs = 2;
 }
 
@@ -31,4 +37,11 @@ message Penalty {
 message AccountAmtPair {
   bytes account = 1 [ (soltype) = "address" ];
   bytes amt = 2 [ (soltype) = "uint256" ];
+}
+
+// Next Tag: 4
+message Reward {
+  bytes receiver = 1 [ (soltype) = "address" ];
+  bytes cumulative_mining_reward = 2 [ (soltype) = "uint256" ];
+  bytes cumulative_service_reward = 3 [ (soltype) = "uint256" ];
 }
