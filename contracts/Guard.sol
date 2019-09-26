@@ -111,7 +111,7 @@ contract Guard is IGuard {
         require(candidate.initialized, "Candidate is not initialized");
 
         address msgSender = msg.sender;
-        _updateStake(candidate, msgSender, _amount, MathOperation.Add);
+        _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Add);
 
         celerToken.safeTransferFrom(
             msgSender,
@@ -188,8 +188,7 @@ contract Guard is IGuard {
         require(candidate.status == CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
-        _updateStake(candidate, msgSender, _amount, MathOperation.Sub);
-
+        _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
         celerToken.safeTransfer(msgSender, _amount);
 
         emit WithdrawFromUnbondedCandidate(msgSender, _candidateAddr, _amount);
@@ -206,7 +205,7 @@ contract Guard is IGuard {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
-        _updateStake(candidate, msgSender, _amount, MathOperation.Sub);
+        _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
         delegator.undelegatingStake = delegator.undelegatingStake.add(_amount);
         
         WithdrawIntent storage withdrawIntent = delegator.withdrawIntents[delegator.intentEndIndex];
@@ -303,7 +302,15 @@ contract Guard is IGuard {
             totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
             emit Punish(penalty.validatorAddress, penalizedDelegator.account, penalizedDelegator.amt);
 
-            _updateStake(validator, penalizedDelegator.account, penalizedDelegator.amt, MathOperation.Sub);
+            Delegator storage delegator = validator.delegatorProfiles[penalizedDelegator.account];
+            if (delegator.delegatedStake >= penalizedDelegator.amt) {
+                _updateDelegatedStake(validator, penalizedDelegator.account, penalizedDelegator.amt, MathOperation.Sub);
+            } else {
+                uint remainingAmt = penalizedDelegator.amt.sub(delegator.delegatedStake);
+                delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
+                _updateDelegatedStake(validator, penalizedDelegator.account, delegator.delegatedStake, MathOperation.Sub);
+            }
+
             // TODO: if the remaining stake is lower than the required amount, remove it from validator set
         }
 
@@ -393,7 +400,7 @@ contract Guard is IGuard {
         undelegatingStake = d.undelegatingStake;
     }
 
-    function _updateStake(
+    function _updateDelegatedStake(
         ValidatorCandidate storage _candidate,
         address _delegatorAddr,
         uint _amount,
@@ -407,15 +414,8 @@ contract Guard is IGuard {
             _candidate.totalStake = _candidate.totalStake.add(_amount);
             delegator.delegatedStake = delegator.delegatedStake.add(_amount);
         } else if (_op == MathOperation.Sub) {
-            if (delegator.delegatedStake >= _amount) {
-                _candidate.totalStake = _candidate.totalStake.sub(_amount);
-                delegator.delegatedStake = delegator.delegatedStake.sub(_amount);
-            } else {
-                _candidate.totalStake = _candidate.totalStake.sub(delegator.delegatedStake);
-                uint remainingAmt = _amount.sub(delegator.delegatedStake);
-                delegator.delegatedStake = 0;
-                delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
-            }
+            _candidate.totalStake = _candidate.totalStake.sub(_amount);
+            delegator.delegatedStake = delegator.delegatedStake.sub(_amount);
         } else {
             assert(false);
         }
