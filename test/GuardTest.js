@@ -1,7 +1,8 @@
-const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+const Web3 = require("web3");
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 const sha3 = web3.utils.keccak256;
 
+const protoChainFactory = require("./helper/protoChainFactory");
 const Timetravel = require("./helper/timetravel")
 const Guard = artifacts.require("Guard");
 const ERC20ExampleToken = artifacts.require("ERC20ExampleToken");
@@ -13,6 +14,7 @@ const MIN_VALIDATOR_NUM = 1;
 // need to be larger than CANDIDATE_STAKE for test purpose
 const MIN_TOTAL_STAKE = 80;
 const SIDECHAIN_GO_LIVE_TIMEOUT = 50;
+const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
