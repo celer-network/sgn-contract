@@ -341,6 +341,9 @@ contract("SGN Guard contract", async accounts => {
                         });
 
                         it("should punish successfully", async () => {
+                            const oldMiningPool = await instance.miningPool().toNumber();
+                            const oldTokenAmt = await celerToken.balanceOf(SUBSCRIBER).toNumber();
+
                             const request = await getPenaltyRequestBytes({
                                 nonce: 1,
                                 expireTime: 1000000,
@@ -352,6 +355,9 @@ contract("SGN Guard contract", async accounts => {
                                 signers: [CANDIDATE],
                             });
                             const tx = await instance.punish(request);
+                            const newMiningPool = await instance.miningPool().toNumber();
+                            const newTokenAmt = await celerToken.balanceOf(SUBSCRIBER).toNumber();
+
 
                             assert.equal(tx.logs[0].event, "Punish");
                             assert.equal(tx.logs[0].args.validator, CANDIDATE);
@@ -362,6 +368,9 @@ contract("SGN Guard contract", async accounts => {
                             assert.equal(tx.logs[1].args.validator, CANDIDATE);
                             assert.equal(tx.logs[1].args.delegator, DELEGATOR);
                             assert.equal(tx.logs[1].args.amount, 10);
+
+                            assert.equal(newMiningPool, oldMiningPool + 7);
+                            assert.equal(newTokenAmt, oldTokenAmt + 8);
                         });
 
                         it("should fail to punish with same request twice", async () => {
@@ -407,6 +416,31 @@ contract("SGN Guard contract", async accounts => {
                             } catch (error) {
                                 assert.isAbove(
                                     error.message.search("Penalty expired"),
+                                    -1
+                                );
+                                return;
+                            }
+
+                            assert.fail("should have thrown before");
+                        });
+
+                        it("should fail to punish if amount sums don't match", async () => {
+                            const request = await getPenaltyRequestBytes({
+                                nonce: 1,
+                                expireTime: 1000000,
+                                validatorAddr: [CANDIDATE],
+                                delegatorAddrs: [CANDIDATE, DELEGATOR],
+                                delegatorAmts: [5, 10],
+                                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                                beneficiaryAmts: [10, 10],
+                                signers: [CANDIDATE],
+                            });
+
+                            try {
+                                await instance.punish(request);
+                            } catch (error) {
+                                assert.isAbove(
+                                    error.message.search("Amount doesn't match"),
                                     -1
                                 );
                                 return;
@@ -585,11 +619,11 @@ contract("SGN Guard contract", async accounts => {
         });
 
         it("should getMinQuorumSize successfully", async () => {
-            const number = await instance.getValidatorNum();
-            const size = await instance.getMinQuorumSize();
+            const number = await instance.getValidatorNum().toNumber();
+            const size = await instance.getMinQuorumSize().toNumber();
 
-            assert.equal(number.toNumber(), 7);
-            assert.equal(size.toNumber(), 5);
+            assert.equal(number, 7);
+            assert.equal(size, 5);
         });
     });
 });
