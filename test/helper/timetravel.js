@@ -4,7 +4,7 @@ advanceTimeAndBlock = async (time) => {
     await advanceTime(time);
     await advanceOneBlock();
 
-    return Promise.resolve(web3.eth.getBlock('latest'));
+    return Promise.resolve(web3.eth.getBlock("latest"));
 }
 
 advanceTime = (time) => {
@@ -29,7 +29,7 @@ advanceOneBlock = () => {
             id: new Date().getTime()
         }, (err, result) => {
             if (err) { return reject(err); }
-            const newBlockHash = web3.eth.getBlock('latest').hash;
+            const newBlockHash = web3.eth.getBlock("latest").hash;
 
             return resolve(newBlockHash)
         });
