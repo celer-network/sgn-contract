@@ -1,12 +1,11 @@
 syntax = "proto3";
-option go_package = "github.com/celer-network/goCeler/sgn";
+option go_package = "github.com/celer-network/sgn/proto/sgn";
 
 import "google/protobuf/descriptor.proto";
-// import "github.com/celer-network/goCeler/entity";  // for AccountAmtPair msg
 
 package sgn;
 
-extend google.protobuf.FieldOptions { string soltype = 1004; }
+extend google.protobuf.FieldOptions { string soltype = 1001; }
 
 /********** mainchain only **********/
 // Next Tag: 3
