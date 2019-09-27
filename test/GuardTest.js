@@ -33,10 +33,12 @@ contract("SGN Guard contract", async accounts => {
     let celerToken;
     let instance;
     let getRewardRequestBytes;
+    let getPenaltyRequestBytes;
 
     before(async () => {
         const protoChainInstance = await protoChainFactory();
         getRewardRequestBytes = protoChainInstance.getRewardRequestBytes;
+        getPenaltyRequestBytes = protoChainInstance.getPenaltyRequestBytes;
     });
 
     beforeEach(async () => {
@@ -336,6 +338,30 @@ contract("SGN Guard contract", async accounts => {
                             assert.equal(event, "AddSubscriptionBalance");
                             assert.equal(args.consumer, SUBSCRIBER);
                             assert.equal(args.amount, SUB_FEE);
+                        });
+
+                        it("should punish successfully", async () => {
+                            const request = await getPenaltyRequestBytes({
+                                nonce: 1,
+                                expireTime: 1000000,
+                                validatorAddr: [CANDIDATE],
+                                delegatorAddrs: [CANDIDATE, DELEGATOR],
+                                delegatorAmts: [5, 10],
+                                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                                beneficiaryAmts: [7, 8],
+                                signers: [CANDIDATE],
+                            });
+                            const tx = await instance.punish(request);
+
+                            assert.equal(tx.logs[0].event, "Punish");
+                            assert.equal(tx.logs[0].args.validator, CANDIDATE);
+                            assert.equal(tx.logs[0].args.delegator, CANDIDATE);
+                            assert.equal(tx.logs[0].args.amount, 5);
+
+                            assert.equal(tx.logs[1].event, "Punish");
+                            assert.equal(tx.logs[1].args.validator, CANDIDATE);
+                            assert.equal(tx.logs[1].args.delegator, DELEGATOR);
+                            assert.equal(tx.logs[1].args.amount, 10);
                         });
 
                         it("should redeem reward successfully", async () => {

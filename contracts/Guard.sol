@@ -294,8 +294,8 @@ contract Guard is IGuard {
             _checkValidatorSigs(h, penaltyRequest.sigs),
             "Fail to check validator sigs"
         );
-        require(!usedPenaltyNonce[penalty.nonce]);
-        require(block.number < penalty.expireTime);
+        require(!usedPenaltyNonce[penalty.nonce], "Used penalty nonce");
+        require(block.number < penalty.expireTime, "Penalty expired");
 
         usedPenaltyNonce[penalty.nonce] = true;
 

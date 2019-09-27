@@ -73,7 +73,7 @@ module.exports = async () => {
         const penalty = {
             nonce: nonce,
             expireTime: expireTime,
-            validatorAddress: validatorAddr,
+            validatorAddress: web3.utils.hexToBytes(validatorAddr),
             penalizedDelegators: penalizedDelegators,
             beneficiaries: beneficiaries
         };
