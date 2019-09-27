@@ -97,6 +97,14 @@ contract Guard is IGuard {
         sidechainGoLiveTime = block.number.add(_sidechainGoLiveTimeout);
     }
 
+    function contributeToMiningPool(uint _amount) public {
+        address msgSender = msg.sender;
+        miningPool = miningPool.add(_amount);
+        celerToken.safeTransferFrom(msgSender, address(this), _amount);
+
+        emit MiningPoolContribution(msgSender, _amount, miningPool);
+    }
+
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(!candidate.initialized, "Candidate is initialized");
