@@ -59,9 +59,11 @@ contract Guard is IGuard {
     uint public sidechainGoLiveTime;
     // universal requirement for minimum total stake of each validator
     uint public minTotalStake;
-    uint public servicePool;
     mapping (address => uint) public subscriptionDeposits;
+    uint public servicePool;
+    mapping (address => uint) public redeemedServiceReward;
     uint public miningPool;
+    mapping (address => uint) public redeemedMiningReward;
     address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
     mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
@@ -322,6 +324,31 @@ contract Guard is IGuard {
         }
 
         require(totalSubAmt == totalAddAmt, "Amount doesn't match");
+    }
+
+    function redeemReward(bytes calldata _rewardRequest) external onlyValidSidechain {
+        PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(_rewardRequest);
+        PbSgn.Reward memory reward = PbSgn.decReward(rewardRequest.reward);
+        
+        bytes32 h = keccak256(rewardRequest.reward);
+        require(
+            _checkValidatorSigs(h, rewardRequest.sigs),
+            "Fail to check validator sigs"
+        );
+
+        uint newMiningReward =
+            reward.cumulativeMiningReward.sub(redeemedMiningReward[reward.receiver]);
+        redeemedMiningReward[reward.receiver] = reward.cumulativeMiningReward;
+        uint newServiceReward =
+            reward.cumulativeServiceReward.sub(redeemedServiceReward[reward.receiver]);
+        redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;
+
+        miningPool = miningPool.sub(newMiningReward);
+        servicePool = servicePool.sub(newServiceReward);
+        
+        celerToken.safeTransfer(reward.receiver, newMiningReward.add(newServiceReward));
+
+        emit RedeemReward(reward.receiver, newMiningReward, newServiceReward);
     }
 
     function isValidator(address _addr) public view returns (bool) {

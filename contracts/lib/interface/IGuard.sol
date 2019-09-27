@@ -20,6 +20,8 @@ interface IGuard {
 
     function punish(bytes calldata _penaltyRequest) external;
 
+    function redeemReward(bytes calldata _rewardRequest) external;
+
     function subscribe(uint _amount) external;
 
     function isValidator(address _addr) external view returns (bool);
@@ -54,4 +56,6 @@ interface IGuard {
     event Indemnify(address indexed indemnitee, uint amount);
 
     event CandidateUnbonded(address indexed candidate);
+
+    event RedeemReward(address indexed receiver, uint miningReward, uint serviceReward);
 }
