@@ -4,6 +4,8 @@ interface IGuard {
     enum ValidatorChangeType { Add, Removal }
 
     // functions
+    function contributeToMiningPool(uint _amount) external;
+
     function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;
 
     function delegate(address _candidate, uint _amount) external;
@@ -20,6 +22,8 @@ interface IGuard {
 
     function punish(bytes calldata _penaltyRequest) external;
 
+    function redeemReward(bytes calldata _rewardRequest) external;
+
     function subscribe(uint _amount) external;
 
     function isValidator(address _addr) external view returns (bool);
@@ -33,6 +37,8 @@ interface IGuard {
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);
 
     // events
+    event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);
+
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
@@ -54,4 +60,6 @@ interface IGuard {
     event Indemnify(address indexed indemnitee, uint amount);
 
     event CandidateUnbonded(address indexed candidate);
+
+    event RedeemReward(address indexed receiver, uint miningReward, uint serviceReward, uint miningPool, uint servicePool);
 }
