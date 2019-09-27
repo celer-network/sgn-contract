@@ -61,5 +61,5 @@ interface IGuard {
 
     event CandidateUnbonded(address indexed candidate);
 
-    event RedeemReward(address indexed receiver, uint miningReward, uint serviceReward);
+    event RedeemReward(address indexed receiver, uint miningReward, uint serviceReward, uint miningPool, uint servicePool);
 }

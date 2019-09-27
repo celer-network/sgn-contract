@@ -356,7 +356,7 @@ contract Guard is IGuard {
         
         celerToken.safeTransfer(reward.receiver, newMiningReward.add(newServiceReward));
 
-        emit RedeemReward(reward.receiver, newMiningReward, newServiceReward);
+        emit RedeemReward(reward.receiver, newMiningReward, newServiceReward, miningPool, servicePool);
     }
 
     function isValidator(address _addr) public view returns (bool) {

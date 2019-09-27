@@ -36,7 +36,7 @@ contract("SGN Guard contract", async accounts => {
 
     before(async () => {
         const protoChainInstance = await protoChainFactory();
-        getRewardRequestBytes = protoChainInstance.protoChainInstance;
+        getRewardRequestBytes = protoChainInstance.getRewardRequestBytes;
     });
 
     beforeEach(async () => {
@@ -336,6 +336,87 @@ contract("SGN Guard contract", async accounts => {
                             assert.equal(event, "AddSubscriptionBalance");
                             assert.equal(args.consumer, SUBSCRIBER);
                             assert.equal(args.amount, SUB_FEE);
+                        });
+
+                        it("should redeem reward successfully", async () => {
+                            // contribute to mining pool
+                            const contribution = 100;
+                            await celerToken.approve(instance.address, contribution);
+                            await instance.contributeToMiningPool(contribution);
+
+                            // submit subscription fees
+                            await celerToken.approve(instance.address, SUB_FEE, {
+                                from: SUBSCRIBER
+                            });
+                            await instance.subscribe(SUB_FEE, {
+                                from: SUBSCRIBER
+                            });
+
+                            const receiver = accounts[9];
+                            const miningReward = 40;
+                            const serviceReward = 60;
+                            const rewardRequest = await getRewardRequestBytes({
+                                receiver: receiver,
+                                cumulativeMiningReward: miningReward,
+                                cumulativeServiceReward: serviceReward,
+                                signers: [CANDIDATE]
+                            });
+                            const tx = await instance.redeemReward(rewardRequest);
+                            const { event, args } = tx.logs[0];
+
+                            assert.equal(event, "RedeemReward");
+                            assert.equal(args.receiver, receiver);
+                            assert.equal(args.miningReward, miningReward);
+                            assert.equal(args.serviceReward, serviceReward);
+                            assert.equal(args.miningPool, contribution - miningReward);
+                            assert.equal(args.servicePool, SUB_FEE - serviceReward);
+                        });
+
+                        it("should fail to redeem reward more than amount in mining pool", async () => {
+                            // contribute to mining pool
+                            const contribution = 100;
+                            await celerToken.approve(instance.address, contribution);
+                            await instance.contributeToMiningPool(contribution);
+
+                            let rewardRequest = await getRewardRequestBytes({
+                                receiver: accounts[9],
+                                cumulativeMiningReward: contribution + 1,
+                                cumulativeServiceReward: 0,
+                                signers: [CANDIDATE]
+                            });
+
+                            try {
+                                await instance.redeemReward(rewardRequest);
+                            } catch (error) {
+                                return;
+                            }
+
+                            assert.fail("should have thrown before");
+                        });
+
+                        it("should fail to redeem reward more than amount in service pool", async () => {
+                            // submit subscription fees
+                            await celerToken.approve(instance.address, SUB_FEE, {
+                                from: SUBSCRIBER
+                            });
+                            await instance.subscribe(SUB_FEE, {
+                                from: SUBSCRIBER
+                            });
+
+                            let rewardRequest = await getRewardRequestBytes({
+                                receiver: accounts[9],
+                                cumulativeMiningReward: 0,
+                                cumulativeServiceReward: SUB_FEE + 1,
+                                signers: [CANDIDATE]
+                            });
+
+                            try {
+                                await instance.redeemReward(rewardRequest);
+                            } catch (error) {
+                                return;
+                            }
+
+                            assert.fail("should have thrown before");
                         });
                     });
 
