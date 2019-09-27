@@ -364,6 +364,57 @@ contract("SGN Guard contract", async accounts => {
                             assert.equal(tx.logs[1].args.amount, 10);
                         });
 
+                        it("should fail to punish with same request twice", async () => {
+                            const request = await getPenaltyRequestBytes({
+                                nonce: 1,
+                                expireTime: 1000000,
+                                validatorAddr: [CANDIDATE],
+                                delegatorAddrs: [CANDIDATE, DELEGATOR],
+                                delegatorAmts: [5, 10],
+                                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                                beneficiaryAmts: [7, 8],
+                                signers: [CANDIDATE],
+                            });
+                            await instance.punish(request);
+
+                            try {
+                                await instance.punish(request);
+                            } catch (error) {
+                                assert.isAbove(
+                                    error.message.search("Used penalty nonce"),
+                                    -1
+                                );
+                                return;
+                            }
+
+                            assert.fail("should have thrown before");
+                        });
+
+                        it("should fail to punish with expired request", async () => {
+                            const request = await getPenaltyRequestBytes({
+                                nonce: 1,
+                                expireTime: 1,
+                                validatorAddr: [CANDIDATE],
+                                delegatorAddrs: [CANDIDATE, DELEGATOR],
+                                delegatorAmts: [5, 10],
+                                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                                beneficiaryAmts: [7, 8],
+                                signers: [CANDIDATE],
+                            });
+
+                            try {
+                                await instance.punish(request);
+                            } catch (error) {
+                                assert.isAbove(
+                                    error.message.search("Penalty expired"),
+                                    -1
+                                );
+                                return;
+                            }
+
+                            assert.fail("should have thrown before");
+                        });
+
                         it("should redeem reward successfully", async () => {
                             // contribute to mining pool
                             const contribution = 100;
