@@ -32,6 +32,12 @@ contract("SGN Guard contract", async accounts => {
 
     let celerToken;
     let instance;
+    let getRewardRequestBytes;
+
+    before(async () => {
+        const protoChainInstance = await protoChainFactory();
+        getRewardRequestBytes = protoChainInstance.protoChainInstance;
+    });
 
     beforeEach(async () => {
         celerToken = await ERC20ExampleToken.new();
@@ -190,6 +196,19 @@ contract("SGN Guard contract", async accounts => {
             }
 
             assert.fail("should have thrown before");
+        });
+
+        it("should contribute to mining pool successfully", async () => {
+            const contribution = 100;
+            await celerToken.approve(instance.address, contribution);
+            const tx = await instance.contributeToMiningPool(contribution);
+            const { event, args } = tx.logs[0];
+
+            assert.equal(event, "MiningPoolContribution");
+            assert.equal(args.contributor, accounts[0]);
+            assert.equal(args.contribution, contribution);
+            // previous miningPoolSize is 0
+            assert.equal(args.miningPoolSize, contribution);
         });
 
         describe("after one delegator delegates enough stake to the candidate", async () => {
