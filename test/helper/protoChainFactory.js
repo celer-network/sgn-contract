@@ -84,7 +84,6 @@ module.exports = async () => {
 
         const penaltyBytesHash = sha3(penaltyBytes);
         const sigs = await calculateSignatures(signers, penaltyBytesHash);
-
         const penaltyRequest = {
             penalty: penaltyBytes,
             sigs: sigs
@@ -97,8 +96,39 @@ module.exports = async () => {
         return penaltyRequestBytes;
     }
 
-    // exposed APIs
+    const getRewardRequestBytes = async ({
+        receiver,
+        cumulativeMiningReward,
+        cumulativeServiceReward,
+        signers
+    }) => {
+        const reward = {
+            receiver: web3.utils.hexToBytes(receiver),
+            cumulativeMiningReward: uint2bytes(cumulativeMiningReward),
+            cumulativeServiceReward: uint2bytes(cumulativeServiceReward)
+        }
+        const rewardProto = Reward.create(reward);
+        const rewardBytes = Reward.encode(rewardProto)
+            .finish()
+            .toJSON().data;
+
+        const rewardBytesHash = sha3(rewardBytes);
+        const sigs = await calculateSignatures(signers, rewardBytesHash);
+        const rewardRequest = {
+            reward: rewardBytes,
+            sigs: sigs
+        }
+        const rewardRequestProto = RewardRequest.create(rewardRequest);
+        const rewardRequestBytes = RewardRequest.encode(rewardRequestProto)
+            .finish()
+            .toJSON().data;
+
+        return rewardRequestBytes;
+    }
+
+    /********** exposed APIs **********/
     return {
-        getPenaltyRequestBytes // async
+        getPenaltyRequestBytes, // async
+        getRewardRequestBytes // async
     };
 }
