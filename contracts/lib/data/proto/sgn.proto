@@ -5,7 +5,7 @@ import "google/protobuf/descriptor.proto";
 
 package sgn;
 
-extend google.protobuf.FieldOptions { string soltype = 1001; }
+extend google.protobuf.FieldOptions { string soltype = 1004; }
 
 /********** mainchain only **********/
 // Next Tag: 3
