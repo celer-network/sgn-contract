@@ -41,7 +41,7 @@ interface IGuard {
 
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
-    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint totalStake);
+    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint delegation);
 
     event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 

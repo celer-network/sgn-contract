@@ -177,7 +177,7 @@ contract("SGN Guard contract", async accounts => {
             assert.equal(args.delegator, DELEGATOR);
             assert.equal(args.candidate, CANDIDATE);
             assert.equal(args.newStake, DELEGATOR_STAKE);
-            assert.equal(args.totalStake, DELEGATOR_STAKE);
+            assert.equal(args.delegation, DELEGATOR_STAKE);
         });
 
         it("should fail to claimValidator before delegating enough stake", async () => {
@@ -303,7 +303,7 @@ contract("SGN Guard contract", async accounts => {
                         assert.equal(tx.logs[1].args.intendTime.toNumber(), block.number);
                     });
 
-                    it("should remove the validator after delegator intendWithdraw to an amount under minTotalStake", async () => {
+                    it("should remove the validator after delegator intendWithdraw to an amount under minDelegation", async () => {
                         const tx = await instance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
                         const block = await web3.eth.getBlock("latest");
 
