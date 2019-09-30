@@ -57,7 +57,7 @@ contract Guard is IGuard {
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
     uint public sidechainGoLiveTime;
-    // universal requirement for minimum total stake of each validator
+    // universal requirement for minimum total delegation of each validator
     uint public minDelegation;
     mapping (address => uint) public subscriptionDeposits;
     uint public servicePool;
@@ -153,27 +153,28 @@ contract Guard is IGuard {
         require(candidate.initialized, "Candidate is not initialized");
         // TODO: decide whether Unbonding status is valid to claimValidator or not
         require(candidate.status == CandidateStatus.Unbonded);
-        require(candidate.delegation >= minDelegation, "Not enough total stake");
+        require(candidate.delegation >= minDelegation, "Not enough delegation");
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
             "Not enough self stake"
         );
 
-        uint minStakeIndex = 0;
-        uint minStake = candidateProfiles[validatorSet[0]].delegation;
+        uint minDelegationIndex = 0;
+        uint minDelegation = candidateProfiles[validatorSet[0]].delegation;
+        require(validatorSet[0] != msgSender, "Already in validator set");
         for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
             require(validatorSet[i] != msgSender, "Already in validator set");
-            if (candidateProfiles[validatorSet[i]].delegation < minStake) {
-                minStakeIndex = i;
-                minStake = candidateProfiles[validatorSet[i]].delegation;
+            if (candidateProfiles[validatorSet[i]].delegation < minDelegation) {
+                minDelegationIndex = i;
+                minDelegation = candidateProfiles[validatorSet[i]].delegation;
             }
         }
 
-        address removedValidator = validatorSet[minStakeIndex];
+        address removedValidator = validatorSet[minDelegationIndex];
         if (removedValidator != address(0)) {
-            _removeValidator(minStakeIndex);
+            _removeValidator(minDelegationIndex);
         }
-        _addValidator(msgSender, minStakeIndex);
+        _addValidator(msgSender, minDelegationIndex);
     }
 
     function confirmUnbondedCandidate(address _candidateAddr) external {
@@ -217,7 +218,7 @@ contract Guard is IGuard {
 
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
         delegator.undelegatingStake = delegator.undelegatingStake.add(_amount);
-        _validateValidatorStake(_candidateAddr);
+        _validateValidator(_candidateAddr);
         
         WithdrawIntent storage withdrawIntent = delegator.withdrawIntents[delegator.intentEndIndex];
         withdrawIntent.amount = _amount;
@@ -315,7 +316,7 @@ contract Guard is IGuard {
                 _updateDelegatedStake(validator, penalizedDelegator.account, delegator.delegatedStake, MathOperation.Sub);
             }
         }
-        _validateValidatorStake(penalty.validatorAddress);
+        _validateValidator(penalty.validatorAddress);
 
         uint totalAddAmt = 0;
         for (uint i = 0; i < penalty.beneficiaries.length; i++) {
@@ -374,24 +375,24 @@ contract Guard is IGuard {
     }
 
     function getMinDelegation() public view returns (uint) {
-        uint minStake = 0;
+        uint minDelegation = 0;
         uint i = 0;
         for (; i < VALIDATOR_SET_MAX_SIZE; i++) {
             if (validatorSet[i] == address(0)) {
                 continue;
             }
 
-            minStake = candidateProfiles[validatorSet[i]].delegation;
+            minDelegation = candidateProfiles[validatorSet[i]].delegation;
             break;
         }
 
         for (i++; i < VALIDATOR_SET_MAX_SIZE; i++) {
-            if (candidateProfiles[validatorSet[i]].delegation < minStake) {
-                minStake = candidateProfiles[validatorSet[i]].delegation;
+            if (candidateProfiles[validatorSet[i]].delegation < minDelegation) {
+                minDelegation = candidateProfiles[validatorSet[i]].delegation;
             }
         }
 
-        return minStake;
+        return minDelegation;
     }
 
     function getCandidateInfo(address _candidateAddr) public view returns (
@@ -479,7 +480,7 @@ contract Guard is IGuard {
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
-    function _validateValidatorStake(address _validatorAddr) private {
+    function _validateValidator(address _validatorAddr) private {
         ValidatorCandidate storage v = candidateProfiles[_validatorAddr];
         if (v.status != CandidateStatus.Bonded) {
             // no need to validate the stake of a non-validator

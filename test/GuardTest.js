@@ -191,7 +191,7 @@ contract("SGN Guard contract", async accounts => {
                 });
             } catch (error) {
                 assert.isAbove(
-                    error.message.search("Not enough total stake"),
+                    error.message.search("Not enough delegation"),
                     -1
                 );
                 return;
