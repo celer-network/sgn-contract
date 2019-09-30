@@ -374,13 +374,18 @@ contract Guard is IGuard {
     }
 
     function getMinStake() public view returns (uint) {
-        uint minStake = candidateProfiles[validatorSet[0]].totalStake;
-
-        for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
-            if (minStake == 0) {
-                break;
+        uint minStake = 0;
+        uint i = 0;
+        for (; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] == address(0)) {
+                continue;
             }
 
+            minStake = candidateProfiles[validatorSet[i]].totalStake;
+            break;
+        }
+
+        for (i++; i < VALIDATOR_SET_MAX_SIZE; i++) {
             if (candidateProfiles[validatorSet[i]].totalStake < minStake) {
                 minStake = candidateProfiles[validatorSet[i]].totalStake;
             }
