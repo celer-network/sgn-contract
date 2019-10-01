@@ -30,7 +30,7 @@ interface IGuard {
 
     function getValidatorNum() external view returns (uint);
 
-    function getMinStake() external view returns (uint);
+    function getMinDelegation() external view returns (uint);
 
     function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, bool);
 
