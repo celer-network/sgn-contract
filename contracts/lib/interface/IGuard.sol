@@ -16,15 +16,17 @@ interface IGuard {
 
     function confirmUnbondedCandidate(address _candidateAddr) external;
 
+    function withdrawFromUnbondedCandidate(address _candidateAddr, uint _amount) external;
+
     function intendWithdraw(address _candidate, uint _amount) external;
 
     function confirmWithdraw(address _candidateAddr) external;
 
+    function subscribe(uint _amount) external;
+
     function punish(bytes calldata _penaltyRequest) external;
 
     function redeemReward(bytes calldata _rewardRequest) external;
-
-    function subscribe(uint _amount) external;
 
     function isValidator(address _addr) external view returns (bool);
 
@@ -35,6 +37,8 @@ interface IGuard {
     function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, bool);
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);
+
+    function getMinQuorumDelegation() external view returns(uint);
 
     // events
     event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);

@@ -12,7 +12,7 @@ const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
 const MIN_VALIDATOR_NUM = 1;
 // need to be larger than CANDIDATE_STAKE for test purpose
-const MIN_TOTAL_STAKE = 80;
+const MIN_DELEGATION = 80;
 const SIDECHAIN_GO_LIVE_TIMEOUT = 50;
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
@@ -48,7 +48,7 @@ contract("SGN Guard contract", async accounts => {
             celerToken.address,
             BLAME_TIMEOUT,
             MIN_VALIDATOR_NUM,
-            MIN_TOTAL_STAKE,
+            MIN_DELEGATION,
             SIDECHAIN_GO_LIVE_TIMEOUT
         );
 
@@ -181,7 +181,7 @@ contract("SGN Guard contract", async accounts => {
         });
 
         it("should fail to claimValidator before delegating enough stake", async () => {
-            const delegation = MIN_TOTAL_STAKE - 1;
+            const delegation = MIN_DELEGATION - 1;
             await celerToken.approve(instance.address, delegation);
             await instance.delegate(CANDIDATE, delegation);
 
@@ -594,6 +594,9 @@ contract("SGN Guard contract", async accounts => {
             accounts[7]
         ];
 
+        // validators self delegates max(MIN_SELF_STAKE, MIN_DELEGATION)
+        const delegation = Math.max(MIN_SELF_STAKE, MIN_DELEGATION);
+
         beforeEach(async () => {
             for (let i = 0; i < VALIDATORS.length; i++) {
                 // validators finish initialization
@@ -602,12 +605,10 @@ contract("SGN Guard contract", async accounts => {
                     from: VALIDATORS[i]
                 });
 
-                // validators self delegates max(MIN_SELF_STAKE, MIN_TOTAL_STAKE)
-                let amount = Math.max(MIN_SELF_STAKE, MIN_TOTAL_STAKE);
-                await celerToken.approve(instance.address, amount, {
+                await celerToken.approve(instance.address, delegation, {
                     from: VALIDATORS[i]
                 });
-                await instance.delegate(VALIDATORS[i], amount, {
+                await instance.delegate(VALIDATORS[i], delegation, {
                     from: VALIDATORS[i]
                 });
 
@@ -618,12 +619,13 @@ contract("SGN Guard contract", async accounts => {
             }
         });
 
-        it("should getMinQuorumSize successfully", async () => {
+        it("should getMinQuorumDelegation successfully", async () => {
             const number = await instance.getValidatorNum();
-            const size = await instance.getMinQuorumSize();
+            const quorumDelegation = await instance.getMinQuorumDelegation();
 
             assert.equal(number.toNumber(), 7);
-            assert.equal(size.toNumber(), 5);
+            let expectedDelegation = Math.floor(delegation * number * 2 / 3) + 1;
+            assert.equal(quorumDelegation.toNumber(), expectedDelegation);
         });
     });
 });
