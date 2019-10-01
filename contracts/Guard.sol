@@ -41,7 +41,7 @@ contract Guard is IGuard {
         uint minSelfStake;
         bytes sidechainAddr;
 
-        // total sum of delegatedStake of each delegator
+        // delegatedStake sum of all delegators to this candidate
         uint delegation;
         mapping (address => Delegator) delegatorProfiles;
         CandidateStatus status;
