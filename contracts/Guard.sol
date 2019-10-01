@@ -68,6 +68,7 @@ contract Guard is IGuard {
     mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
+    uint totalDelegation;
 
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
@@ -434,8 +435,8 @@ contract Guard is IGuard {
         undelegatingStake = d.undelegatingStake;
     }
 
-    function getMinQuorumSize() public view returns(uint) {
-        return getValidatorNum().mul(2).div(3).add(1);
+    function getMinQuorumDelegation() public view returns(uint) {
+        return totalDelegation.mul(2).div(3).add(1);
     }
 
     function _updateDelegatedStake(
@@ -465,6 +466,7 @@ contract Guard is IGuard {
         validatorSet[_setIndex] = _validatorAddr;
         candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
         delete candidateProfiles[_validatorAddr].unbondTime;
+        totalDelegation = totalDelegation.add(candidateProfiles[_validatorAddr].delegation);
         emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
     }
 
@@ -477,6 +479,7 @@ contract Guard is IGuard {
         delete validatorSet[_setIndex];
         candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
         candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
+        totalDelegation = totalDelegation.sub(candidateProfiles[removedValidator].delegation);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
@@ -505,24 +508,20 @@ contract Guard is IGuard {
         revert("No such a validator");
     }
 
-    // more than 2/3 validators sign this hash
+    // validators with more than 2/3 total delegation need to sign this hash
     function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private view returns(bool) {
-        uint minQuorumSize = getMinQuorumSize();
-
-        if (minQuorumSize > _sigs.length) {
-            return false;
-        }
+        uint minQuorumDelegation = getMinQuorumDelegation();
 
         bytes32 hash = _h.toEthSignedMessageHash();
         address addr;
-        uint quorumSize = 0;
+        uint quorumDelegation = 0;
         for (uint i = 0; i < _sigs.length; i++) {
             addr = hash.recover(_sigs[i]);
             if (candidateProfiles[addr].status == CandidateStatus.Bonded) {
-                quorumSize++;
+                quorumDelegation = quorumDelegation.add(candidateProfiles[addr].delegation);
             }
         }
 
-        return quorumSize >= minQuorumSize;
+        return quorumDelegation >= minQuorumDelegation;
     }
 }
