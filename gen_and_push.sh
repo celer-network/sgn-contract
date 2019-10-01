@@ -41,8 +41,8 @@ commit_and_push() {
 
 # $1 is contract abi/bin name, $2 is go pkg name
 abigen_files() {
-  mkdir -p $2
-  ../node_modules/.bin/abigen -abi ../genfiles/$1.abi -bin ../genfiles/$1.bin -pkg $2 -type $1 -out $2/$2.go
+  # mkdir -p $2
+  ../node_modules/.bin/abigen -abi ../genfiles/$1.abi -bin ../genfiles/$1.bin -pkg $2 -type $1 -out $2/$3.go
 }
 
 # send a PR to gobinding repo
@@ -54,7 +54,7 @@ sync_go_binding() {
   pushd sgn
   git fetch
   git checkout $BRANCH || git checkout -b $BRANCH
-  abigen_files Guard mainchain  # TODO: check
+  abigen_files Guard mainchain guard
   if [[ `git status --porcelain` ]]; then
     echo "Sync-ing go binding"
     git add .
