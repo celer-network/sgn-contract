@@ -32,20 +32,20 @@ interface IGuard {
 
     function getValidatorNum() external view returns (uint);
 
-    function getMinDelegation() external view returns (uint);
+    function getMinStakingPool() external view returns (uint);
 
     function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, bool);
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);
 
-    function getMinQuorumDelegation() external view returns(uint);
+    function getMinQuorumStakingPool() external view returns(uint);
 
     // events
     event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);
 
     event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
 
-    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint delegation);
+    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);
 
     event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
