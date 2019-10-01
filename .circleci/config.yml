@@ -44,12 +44,12 @@ jobs:
             node_modules/.bin/truffle test
             kill -9 $GANACHE_PID
             # git checkout -- gas_used_logs/  # discard changes generated during ci tests in gas_used_logs/
-      # - run:
-      #     name: update genfiles and sync go bindings if PR
-      #     command: |
-      #       if [ -n "${CIRCLE_PULL_REQUEST##*/}" ]; then
-      #         bash ./gen_and_push.sh "${CIRCLE_PULL_REQUEST##*/}" "$CIRCLE_BRANCH"
-      #       fi
+      - run:
+          name: update genfiles and sync go bindings if PR
+          command: |
+            if [ -n "${CIRCLE_PULL_REQUEST##*/}" ]; then
+              bash ./gen_and_push.sh "${CIRCLE_PULL_REQUEST##*/}" "$CIRCLE_BRANCH"
+            fi
       - save_cache:
           key: npm-cache-{{ checksum "package-lock.json" }}
           paths:
