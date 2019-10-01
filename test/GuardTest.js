@@ -595,7 +595,7 @@ contract("SGN Guard contract", async accounts => {
         ];
 
         // validators self delegates max(MIN_SELF_STAKE, MIN_DELEGATION)
-        const delegation = Math.max(MIN_SELF_STAKE, MIN_DELEGATION);
+        const DELEGATION = Math.max(MIN_SELF_STAKE, MIN_DELEGATION);
 
         beforeEach(async () => {
             for (let i = 0; i < VALIDATORS.length; i++) {
@@ -605,10 +605,10 @@ contract("SGN Guard contract", async accounts => {
                     from: VALIDATORS[i]
                 });
 
-                await celerToken.approve(instance.address, delegation, {
+                await celerToken.approve(instance.address, DELEGATION, {
                     from: VALIDATORS[i]
                 });
-                await instance.delegate(VALIDATORS[i], delegation, {
+                await instance.delegate(VALIDATORS[i], DELEGATION, {
                     from: VALIDATORS[i]
                 });
 
@@ -624,7 +624,7 @@ contract("SGN Guard contract", async accounts => {
             const quorumDelegation = await instance.getMinQuorumDelegation();
 
             assert.equal(number.toNumber(), 7);
-            let expectedDelegation = Math.floor(delegation * number * 2 / 3) + 1;
+            let expectedDelegation = Math.floor(DELEGATION * number * 2 / 3) + 1;
             assert.equal(quorumDelegation.toNumber(), expectedDelegation);
         });
     });
