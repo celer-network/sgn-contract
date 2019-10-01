@@ -41,8 +41,8 @@ contract Guard is IGuard {
         uint minSelfStake;
         bytes sidechainAddr;
 
-        // total sum of delegatedStake of each delegator
-        uint totalStake;
+        // delegatedStake sum of all delegators to this candidate
+        uint stakingPool;
         mapping (address => Delegator) delegatorProfiles;
         CandidateStatus status;
         uint unbondTime;
@@ -57,8 +57,8 @@ contract Guard is IGuard {
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
     uint public sidechainGoLiveTime;
-    // universal requirement for minimum total stake of each validator
-    uint public minTotalStake;
+    // universal requirement for minimum staking pool of each validator
+    uint public minStakingPool;
     mapping (address => uint) public subscriptionDeposits;
     uint public servicePool;
     mapping (address => uint) public redeemedServiceReward;
@@ -68,6 +68,7 @@ contract Guard is IGuard {
     mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
+    uint totalValidatorStakingPool;
 
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
@@ -85,7 +86,7 @@ contract Guard is IGuard {
         address _celerTokenAddress,
         uint _blameTimeout,
         uint _minValidatorNum,
-        uint _minTotalStake,
+        uint _minStakingPool,
         uint _sidechainGoLiveTimeout
     )
         public
@@ -93,7 +94,7 @@ contract Guard is IGuard {
         celerToken = IERC20(_celerTokenAddress);
         blameTimeout = _blameTimeout;
         minValidatorNum = _minValidatorNum;
-        minTotalStake = _minTotalStake;
+        minStakingPool = _minStakingPool;
         sidechainGoLiveTime = block.number.add(_sidechainGoLiveTimeout);
     }
 
@@ -129,7 +130,7 @@ contract Guard is IGuard {
             _amount
         );
 
-        emit Delegate(msgSender, _candidateAddr, _amount, candidate.totalStake);
+        emit Delegate(msgSender, _candidateAddr, _amount, candidate.stakingPool);
     }
 
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
@@ -153,27 +154,28 @@ contract Guard is IGuard {
         require(candidate.initialized, "Candidate is not initialized");
         // TODO: decide whether Unbonding status is valid to claimValidator or not
         require(candidate.status == CandidateStatus.Unbonded);
-        require(candidate.totalStake >= minTotalStake, "Not enough total stake");
+        require(candidate.stakingPool >= minStakingPool, "Insufficient staking pool");
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
             "Not enough self stake"
         );
 
-        uint minStakeIndex = 0;
-        uint minStake = candidateProfiles[validatorSet[0]].totalStake;
+        uint minStakingPoolIndex = 0;
+        uint minStakingPool = candidateProfiles[validatorSet[0]].stakingPool;
+        require(validatorSet[0] != msgSender, "Already in validator set");
         for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
             require(validatorSet[i] != msgSender, "Already in validator set");
-            if (candidateProfiles[validatorSet[i]].totalStake < minStake) {
-                minStakeIndex = i;
-                minStake = candidateProfiles[validatorSet[i]].totalStake;
+            if (candidateProfiles[validatorSet[i]].stakingPool < minStakingPool) {
+                minStakingPoolIndex = i;
+                minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
             }
         }
 
-        address removedValidator = validatorSet[minStakeIndex];
+        address removedValidator = validatorSet[minStakingPoolIndex];
         if (removedValidator != address(0)) {
-            _removeValidator(minStakeIndex);
+            _removeValidator(minStakingPoolIndex);
         }
-        _addValidator(msgSender, minStakeIndex);
+        _addValidator(msgSender, minStakingPoolIndex);
     }
 
     function confirmUnbondedCandidate(address _candidateAddr) external {
@@ -217,7 +219,7 @@ contract Guard is IGuard {
 
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
         delegator.undelegatingStake = delegator.undelegatingStake.add(_amount);
-        _validateValidatorStake(_candidateAddr);
+        _validateValidator(_candidateAddr);
         
         WithdrawIntent storage withdrawIntent = delegator.withdrawIntents[delegator.intentEndIndex];
         withdrawIntent.amount = _amount;
@@ -315,7 +317,7 @@ contract Guard is IGuard {
                 _updateDelegatedStake(validator, penalizedDelegator.account, delegator.delegatedStake, MathOperation.Sub);
             }
         }
-        _validateValidatorStake(penalty.validatorAddress);
+        _validateValidator(penalty.validatorAddress);
 
         uint totalAddAmt = 0;
         for (uint i = 0; i < penalty.beneficiaries.length; i++) {
@@ -373,27 +375,32 @@ contract Guard is IGuard {
         return num;
     }
 
-    function getMinStake() public view returns (uint) {
-        uint minStake = candidateProfiles[validatorSet[0]].totalStake;
-
-        for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
-            if (minStake == 0) {
-                break;
+    function getMinStakingPool() public view returns (uint) {
+        uint minStakingPool = 0;
+        uint i = 0;
+        for (; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (validatorSet[i] == address(0)) {
+                continue;
             }
 
-            if (candidateProfiles[validatorSet[i]].totalStake < minStake) {
-                minStake = candidateProfiles[validatorSet[i]].totalStake;
+            minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
+            break;
+        }
+
+        for (i++; i < VALIDATOR_SET_MAX_SIZE; i++) {
+            if (candidateProfiles[validatorSet[i]].stakingPool < minStakingPool) {
+                minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
             }
         }
 
-        return minStake;
+        return minStakingPool;
     }
 
     function getCandidateInfo(address _candidateAddr) public view returns (
         bool initialized,
         uint minSelfStake,
         bytes memory sidechainAddr,
-        uint totalStake,
+        uint stakingPool,
         bool isVldt
     )
     {
@@ -402,7 +409,7 @@ contract Guard is IGuard {
         initialized = c.initialized;
         minSelfStake = c.minSelfStake;
         sidechainAddr = c.sidechainAddr;
-        totalStake = c.totalStake;
+        stakingPool = c.stakingPool;
         isVldt = isValidator(_candidateAddr);
     }
 
@@ -428,8 +435,8 @@ contract Guard is IGuard {
         undelegatingStake = d.undelegatingStake;
     }
 
-    function getMinQuorumSize() public view returns(uint) {
-        return getValidatorNum().mul(2).div(3).add(1);
+    function getMinQuorumStakingPool() public view returns(uint) {
+        return totalValidatorStakingPool.mul(2).div(3).add(1);
     }
 
     function _updateDelegatedStake(
@@ -443,10 +450,10 @@ contract Guard is IGuard {
         Delegator storage delegator = _candidate.delegatorProfiles[_delegatorAddr];
 
         if (_op == MathOperation.Add) {
-            _candidate.totalStake = _candidate.totalStake.add(_amount);
+            _candidate.stakingPool = _candidate.stakingPool.add(_amount);
             delegator.delegatedStake = delegator.delegatedStake.add(_amount);
         } else if (_op == MathOperation.Sub) {
-            _candidate.totalStake = _candidate.totalStake.sub(_amount);
+            _candidate.stakingPool = _candidate.stakingPool.sub(_amount);
             delegator.delegatedStake = delegator.delegatedStake.sub(_amount);
         } else {
             assert(false);
@@ -459,6 +466,7 @@ contract Guard is IGuard {
         validatorSet[_setIndex] = _validatorAddr;
         candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
         delete candidateProfiles[_validatorAddr].unbondTime;
+        totalValidatorStakingPool = totalValidatorStakingPool.add(candidateProfiles[_validatorAddr].stakingPool);
         emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
     }
 
@@ -471,10 +479,11 @@ contract Guard is IGuard {
         delete validatorSet[_setIndex];
         candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
         candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
+        totalValidatorStakingPool = totalValidatorStakingPool.sub(candidateProfiles[removedValidator].stakingPool);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
-    function _validateValidatorStake(address _validatorAddr) private {
+    function _validateValidator(address _validatorAddr) private {
         ValidatorCandidate storage v = candidateProfiles[_validatorAddr];
         if (v.status != CandidateStatus.Bonded) {
             // no need to validate the stake of a non-validator
@@ -482,9 +491,9 @@ contract Guard is IGuard {
         }
 
         bool lowSelfStake = v.delegatorProfiles[_validatorAddr].delegatedStake < v.minSelfStake;
-        bool lowTotalStake = v.totalStake < minTotalStake;
+        bool lowStakingPool = v.stakingPool < minStakingPool;
             
-        if (lowSelfStake || lowTotalStake) {
+        if (lowSelfStake || lowStakingPool) {
             _removeValidator(_getValidatorIdx(_validatorAddr));
         }
     }
@@ -499,24 +508,20 @@ contract Guard is IGuard {
         revert("No such a validator");
     }
 
-    // more than 2/3 validators sign this hash
+    // validators with more than 2/3 total validators' staking pool need to sign this hash
     function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private view returns(bool) {
-        uint minQuorumSize = getMinQuorumSize();
-
-        if (minQuorumSize > _sigs.length) {
-            return false;
-        }
+        uint minQuorumStakingPool = getMinQuorumStakingPool();
 
         bytes32 hash = _h.toEthSignedMessageHash();
         address addr;
-        uint quorumSize = 0;
+        uint quorumStakingPool = 0;
         for (uint i = 0; i < _sigs.length; i++) {
             addr = hash.recover(_sigs[i]);
             if (candidateProfiles[addr].status == CandidateStatus.Bonded) {
-                quorumSize++;
+                quorumStakingPool = quorumStakingPool.add(candidateProfiles[addr].stakingPool);
             }
         }
 
-        return quorumSize >= minQuorumSize;
+        return quorumStakingPool >= minQuorumStakingPool;
     }
 }
