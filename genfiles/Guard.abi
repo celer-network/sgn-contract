@@ -767,8 +767,12 @@
         "type": "uint256"
       },
       {
-        "name": "isVldt",
-        "type": "bool"
+        "name": "status",
+        "type": "uint256"
+      },
+      {
+        "name": "unbondTime",
+        "type": "uint256"
       }
     ],
     "payable": false,
