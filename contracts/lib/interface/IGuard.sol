@@ -34,7 +34,7 @@ interface IGuard {
 
     function getMinStakingPool() external view returns (uint);
 
-    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, bool);
+    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, uint, uint);
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);
 

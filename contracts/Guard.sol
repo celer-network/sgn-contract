@@ -401,7 +401,8 @@ contract Guard is IGuard {
         uint minSelfStake,
         bytes memory sidechainAddr,
         uint stakingPool,
-        bool isVldt
+        uint status,
+        uint unbondTime
     )
     {
         ValidatorCandidate storage c = candidateProfiles[_candidateAddr];
@@ -410,7 +411,8 @@ contract Guard is IGuard {
         minSelfStake = c.minSelfStake;
         sidechainAddr = c.sidechainAddr;
         stakingPool = c.stakingPool;
-        isVldt = isValidator(_candidateAddr);
+        status = uint(c.status);
+        unbondTime = c.unbondTime;
     }
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) public view
