@@ -58,7 +58,7 @@ contract Guard is IGuard {
     // claim the initial validators
     uint public sidechainGoLiveTime;
     // universal requirement for minimum staking pool of each validator
-    uint public minStakingPool;
+    uint public minStakeInPool;
     mapping (address => uint) public subscriptionDeposits;
     uint public servicePool;
     mapping (address => uint) public redeemedServiceReward;
@@ -86,7 +86,7 @@ contract Guard is IGuard {
         address _celerTokenAddress,
         uint _blameTimeout,
         uint _minValidatorNum,
-        uint _minStakingPool,
+        uint _minStakeInPool,
         uint _sidechainGoLiveTimeout
     )
         public
@@ -94,7 +94,7 @@ contract Guard is IGuard {
         celerToken = IERC20(_celerTokenAddress);
         blameTimeout = _blameTimeout;
         minValidatorNum = _minValidatorNum;
-        minStakingPool = _minStakingPool;
+        minStakeInPool = _minStakeInPool;
         sidechainGoLiveTime = block.number.add(_sidechainGoLiveTimeout);
     }
 
@@ -154,7 +154,7 @@ contract Guard is IGuard {
         require(candidate.initialized, "Candidate is not initialized");
         // TODO: decide whether Unbonding status is valid to claimValidator or not
         require(candidate.status == CandidateStatus.Unbonded);
-        require(candidate.stakingPool >= minStakingPool, "Insufficient staking pool");
+        require(candidate.stakingPool >= minStakeInPool, "Insufficient staking pool");
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
             "Not enough self stake"
@@ -170,6 +170,7 @@ contract Guard is IGuard {
                 minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
             }
         }
+        require(candidate.stakingPool > minStakingPool, "Stake is less than all validators");
 
         address removedValidator = validatorSet[minStakingPoolIndex];
         if (removedValidator != address(0)) {
@@ -493,7 +494,7 @@ contract Guard is IGuard {
         }
 
         bool lowSelfStake = v.delegatorProfiles[_validatorAddr].delegatedStake < v.minSelfStake;
-        bool lowStakingPool = v.stakingPool < minStakingPool;
+        bool lowStakingPool = v.stakingPool < minStakeInPool;
             
         if (lowSelfStake || lowStakingPool) {
             _removeValidator(_getValidatorIdx(_validatorAddr));

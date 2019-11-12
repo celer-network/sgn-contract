@@ -7,6 +7,9 @@ const Timetravel = require("./helper/timetravel")
 const Guard = artifacts.require("Guard");
 const ERC20ExampleToken = artifacts.require("ERC20ExampleToken");
 
+const GANACHE_ACCOUNT_NUM = 20;  // defined in .circleci/config.yml
+const ValidatorAdd = 0;
+const ValidatorRemoval = 1;
 const BLAME_TIMEOUT = 50;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
@@ -53,7 +56,7 @@ contract("SGN Guard contract", async accounts => {
         );
 
         // give enough money to other accounts
-        for (let i = 1; i < 9; i++) {
+        for (let i = 1; i < GANACHE_ACCOUNT_NUM; i++) {
             await celerToken.transfer(accounts[i], 10000000);
         }
     });
@@ -583,7 +586,7 @@ contract("SGN Guard contract", async accounts => {
         });
     });
 
-    describe("after multiple validators join the validator set", async () => {
+    describe("after max number of validators join the validator set", async () => {
         const VALIDATORS = [
             accounts[1],
             accounts[2],
@@ -591,11 +594,15 @@ contract("SGN Guard contract", async accounts => {
             accounts[4],
             accounts[5],
             accounts[6],
-            accounts[7]
+            accounts[7],
+            accounts[8],
+            accounts[9],
+            accounts[10],
+            accounts[11],
         ];
 
-        // validators self delegates max(MIN_SELF_STAKE, MIN_STAKING_POOL)
-        const STAKING_POOL = Math.max(MIN_SELF_STAKE, MIN_STAKING_POOL);
+        // validators self delegates 2 * max(MIN_SELF_STAKE, MIN_STAKING_POOL)
+        const SELF_STAKE = 2 * Math.max(MIN_SELF_STAKE, MIN_STAKING_POOL);
 
         beforeEach(async () => {
             for (let i = 0; i < VALIDATORS.length; i++) {
@@ -605,10 +612,10 @@ contract("SGN Guard contract", async accounts => {
                     from: VALIDATORS[i]
                 });
 
-                await celerToken.approve(instance.address, STAKING_POOL, {
+                await celerToken.approve(instance.address, SELF_STAKE, {
                     from: VALIDATORS[i]
                 });
-                await instance.delegate(VALIDATORS[i], STAKING_POOL, {
+                await instance.delegate(VALIDATORS[i], SELF_STAKE, {
                     from: VALIDATORS[i]
                 });
 
@@ -623,9 +630,67 @@ contract("SGN Guard contract", async accounts => {
             const number = await instance.getValidatorNum();
             const quorumStakingPool = await instance.getMinQuorumStakingPool();
 
-            assert.equal(number.toNumber(), 7);
-            let expectedStakingPool = Math.floor(STAKING_POOL * number * 2 / 3) + 1;
+            assert.equal(number.toNumber(), VALIDATORS.length);
+            let expectedStakingPool = Math.floor(SELF_STAKE * number * 2 / 3) + 1;
             assert.equal(quorumStakingPool.toNumber(), expectedStakingPool);
+        });
+
+        it("should fail to claimValidator with low stake", async () => {
+            const addr = accounts[12];
+
+            // validators finish initialization
+            const sidechainAddr = sha3(addr);
+            await instance.initializeCandidate(MIN_SELF_STAKE, sidechainAddr, {
+                from: addr
+            });
+
+            await celerToken.approve(instance.address, SELF_STAKE - 1, {
+                from: addr
+            });
+            await instance.delegate(addr, SELF_STAKE - 1, {
+                from: addr
+            });
+
+            try {
+                await instance.claimValidator({
+                    from: addr
+                });
+            } catch (error) {
+                console.log(error.message);
+                assert.isAbove(
+                    error.message.search("Stake is less than all validators"),
+                    -1
+                );
+                return;
+            }
+
+            assert.fail("should have thrown before");
+        });
+
+        it("should replace a current validator by calling claimValidator with enough stake", async () => {
+            const addr = accounts[12];
+
+            // validators finish initialization
+            const sidechainAddr = sha3(addr);
+            await instance.initializeCandidate(MIN_SELF_STAKE, sidechainAddr, {
+                from: addr
+            });
+
+            await celerToken.approve(instance.address, SELF_STAKE + 1, {
+                from: addr
+            });
+            await instance.delegate(addr, SELF_STAKE + 1, {
+                from: addr
+            });
+
+            const tx = await instance.claimValidator({ from: addr });
+
+            assert.equal(tx.logs[0].event, "ValidatorChange");
+            assert.equal(tx.logs[0].args.ethAddr, accounts[1]);
+            assert.equal(tx.logs[0].args.changeType, ValidatorRemoval);
+            assert.equal(tx.logs[1].event, "ValidatorChange");
+            assert.equal(tx.logs[1].args.ethAddr, addr);
+            assert.equal(tx.logs[1].args.changeType, ValidatorAdd);
         });
     });
 });
