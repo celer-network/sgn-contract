@@ -141,7 +141,7 @@ contract Guard is IGuard {
         );
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, "Candidate is not initialized");
-        
+
         bytes memory oldSidechainAddr = candidate.sidechainAddr;
         candidate.sidechainAddr = _sidechainAddr;
 
@@ -221,7 +221,7 @@ contract Guard is IGuard {
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
         delegator.undelegatingStake = delegator.undelegatingStake.add(_amount);
         _validateValidator(_candidateAddr);
-        
+
         WithdrawIntent storage withdrawIntent = delegator.withdrawIntents[delegator.intentEndIndex];
         withdrawIntent.amount = _amount;
         withdrawIntent.intendTime = block.number;
@@ -245,7 +245,7 @@ contract Guard is IGuard {
         bool isUnbonded = candidateProfiles[_candidateAddr].status == CandidateStatus.Unbonded;
         // for all undelegated withdraw intents
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
-            WithdrawIntent storage wi = delegator.withdrawIntents[i];            
+            WithdrawIntent storage wi = delegator.withdrawIntents[i];
             if (isUnbonded || wi.intendTime.add(blameTimeout) <= bn) {
                 // withdraw intent is undelegated when the validator becomes unbonded or the blameTimeout
                 // for the withdraw intent is up.
@@ -258,7 +258,7 @@ contract Guard is IGuard {
         // for all undelegating withdraw intents
         uint undelegatingStakeWithoutSlash = 0;
         for (; i < delegator.intentEndIndex; i++) {
-            WithdrawIntent storage wi = delegator.withdrawIntents[i];            
+            WithdrawIntent storage wi = delegator.withdrawIntents[i];
             undelegatingStakeWithoutSlash = undelegatingStakeWithoutSlash.add(wi.amount);
         }
 
@@ -291,7 +291,7 @@ contract Guard is IGuard {
     function punish(bytes calldata _penaltyRequest) external onlyValidSidechain {
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
-        
+
         bytes32 h = keccak256(penaltyRequest.penalty);
         require(
             _checkValidatorSigs(h, penaltyRequest.sigs),
@@ -340,7 +340,7 @@ contract Guard is IGuard {
     function redeemReward(bytes calldata _rewardRequest) external onlyValidSidechain {
         PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(_rewardRequest);
         PbSgn.Reward memory reward = PbSgn.decReward(rewardRequest.reward);
-        
+
         bytes32 h = keccak256(rewardRequest.reward);
         require(
             _checkValidatorSigs(h, rewardRequest.sigs),
@@ -356,7 +356,7 @@ contract Guard is IGuard {
 
         miningPool = miningPool.sub(newMiningReward);
         servicePool = servicePool.sub(newServiceReward);
-        
+
         celerToken.safeTransfer(reward.receiver, newMiningReward.add(newServiceReward));
 
         emit RedeemReward(reward.receiver, newMiningReward, newServiceReward, miningPool, servicePool);
@@ -495,7 +495,7 @@ contract Guard is IGuard {
 
         bool lowSelfStake = v.delegatorProfiles[_validatorAddr].delegatedStake < v.minSelfStake;
         bool lowStakingPool = v.stakingPool < minStakeInPool;
-            
+
         if (lowSelfStake || lowStakingPool) {
             _removeValidator(_getValidatorIdx(_validatorAddr));
         }
