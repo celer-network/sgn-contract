@@ -269,7 +269,7 @@
         "type": "uint256"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "name": "sidechainAddr",
         "type": "bytes"
       }
