@@ -4,8 +4,7 @@ import web3 from 'web3';
 import { Modal } from 'antd';
 
 import Form from '../form';
-import { minValueRule, currencyFieldOptions } from '../../utils/form';
-import { CELR } from '../../utils/unit';
+import { minValueRule, celerFieldOptions } from '../../utils/form';
 
 class AuctionForm extends React.Component {
   constructor(props, context) {
@@ -43,7 +42,7 @@ class AuctionForm extends React.Component {
         label: 'Min Self Stake',
         field: 'number',
         fieldOptions: {
-          ...currencyFieldOptions(CELR),
+          ...celerFieldOptions(),
           placeholder: 'The minimum self stake',
           initialValue: 0
         },
