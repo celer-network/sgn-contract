@@ -5,14 +5,7 @@ const ROPSTEN = '3';
 
 const networkConfigs = {};
 
-const localNetworkConfig = {
-  supportedTokens: [
-    {
-      symbol: 'ETH',
-      address: '0x0000000000000000000000000000000000000000'
-    }
-  ]
-};
+const localNetworkConfig = {};
 
 export const getNetworkConfig = networkID => {
   if (networkConfigs[networkID]) {

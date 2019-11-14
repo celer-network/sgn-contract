@@ -22,8 +22,8 @@ get_pr() {
 }
 
 extract_abi_bin() {
-  jq .abi build/contracts/$1.json > genfiles/$1.abi
-  jq -r .bytecode build/contracts/$1.json > genfiles/$1.bin
+  jq .abi web/src/contracts/$1.json > genfiles/$1.abi
+  jq -r .bytecode web/src/contracts/$1.json > genfiles/$1.bin
 }
 
 update_genfiles() {

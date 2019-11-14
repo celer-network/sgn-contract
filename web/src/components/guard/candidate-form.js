@@ -4,14 +4,8 @@ import web3 from 'web3';
 import { Modal } from 'antd';
 
 import Form from '../form';
-import {
-  currencyFieldOptions,
-  rateFieldOptions,
-  minValueRule,
-  blockFieldOptions,
-  dayFieldOptions
-} from '../../utils/form';
-import { getUnitByAddress } from '../../utils/unit';
+import { minValueRule, currencyFieldOptions } from '../../utils/form';
+import { CELR } from '../../utils/constant';
 
 class AuctionForm extends React.Component {
   constructor(props, context) {
@@ -22,230 +16,48 @@ class AuctionForm extends React.Component {
     this.contracts = context.drizzle.contracts;
   }
 
-  handleValueChange = changedValue => this.setState(changedValue);
-
-  handleInitAuction = () => {
+  handleInitializeCandidate = () => {
     const { onClose } = this.props;
 
     this.form.current.validateFields((err, values) => {
       if (err) {
+        console.log(err);
         return;
       }
 
-      const {
-        token,
-        bidDuration,
-        revealDuration,
-        claimDuration,
-        challengeDuration,
-        finalizeDuration,
-        value,
-        duration,
-        maxRate,
-        minValue,
-        collateralAddress,
-        collateralValue = 0
-      } = values;
-
-      this.contracts.LiBA.methods.initAuction.cacheSend(
-        token,
-        bidDuration,
-        revealDuration,
-        claimDuration,
-        challengeDuration,
-        finalizeDuration,
-        web3.utils.toWei(value.toString(), 'ether'),
-        duration,
-        maxRate,
-        web3.utils.toWei(minValue.toString(), 'ether'),
-        collateralAddress,
-        web3.utils.toWei(collateralValue.toString(), 'ether')
+      const { minSelfStake = 0, sidechainAddr } = values;
+      this.contracts.Guard.methods.initializeCandidate.cacheSend(
+        web3.utils.toWei(minSelfStake.toString(), 'ether'),
+        sidechainAddr
       );
       onClose();
     });
   };
 
   render() {
-    const { visible, network, onClose } = this.props;
-    const supportedTokenOptions = network.supportedTokens.map(
-      supportedToken => [
-        supportedToken.address,
-        `${supportedToken.symbol} (${supportedToken.address})`
-      ]
-    );
-    const unit = getUnitByAddress(network.supportedTokens, this.state.token);
+    const { visible, onClose } = this.props;
 
     const formItems = [
       {
-        name: 'token',
-        field: 'select',
-        fieldOptions: {
-          options: supportedTokenOptions,
-          placeholder: 'Token type to borrow'
-        },
-        rules: [
-          {
-            message: 'Please select a token!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'value',
+        name: 'minSelfStake',
+        label: 'Min Self Stake',
         field: 'number',
         fieldOptions: {
-          ...currencyFieldOptions(unit),
-          placeholder: 'The amount of token to borrow'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a value!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'duration',
-        field: 'number',
-        fieldOptions: {
-          ...dayFieldOptions,
-          placeholder: 'The duration of the borrowing'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a duration!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'maxRate',
-        label: 'Max Rate',
-        field: 'number',
-        fieldOptions: {
-          ...rateFieldOptions,
-          step: 0.001,
-          precision: 3,
-          placeholder: 'The maximum interest rate'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a max rate!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'minValue',
-        label: 'Min Value',
-        field: 'number',
-        fieldOptions: {
-          ...currencyFieldOptions(unit),
-          placeholder: 'The minimum value for bidding'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a min value!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'collateralAddress',
-        label: 'Collateral Address',
-        fieldOptions: {
-          placeholder: 'The address of collateral token'
-        }
-      },
-      {
-        name: 'collateralValue',
-        label: 'Collateral Value',
-        field: 'number',
-        fieldOptions: {
-          placeholder: 'The amount of collateral token'
+          ...currencyFieldOptions(CELR),
+          placeholder: 'The minimum self stake',
+          initialValue: 0
         },
         rules: [minValueRule(0)]
       },
       {
-        name: 'bidDuration',
-        label: 'Bid Duration',
-        field: 'number',
+        name: 'sidechainAddr',
+        label: 'Sidechain Address',
         fieldOptions: {
-          ...blockFieldOptions,
-          placeholder: 'The duration of bidding period'
+          placeholder: 'The account address on sgn'
         },
         rules: [
-          minValueRule(0),
           {
-            message: 'Please enter a duration!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'revealDuration',
-        label: 'Reveal Duration',
-        field: 'number',
-        fieldOptions: {
-          ...blockFieldOptions,
-          placeholder: 'The duration of revealing period'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a duration!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'claimDuration',
-        label: 'Claim Duration',
-        field: 'number',
-        fieldOptions: {
-          ...blockFieldOptions,
-          placeholder: 'The duration of claiming period'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a duration!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'challengeDuration',
-        label: 'Challenge Duration',
-        field: 'number',
-        fieldOptions: {
-          ...blockFieldOptions,
-          placeholder: 'The duration of challenge period'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a duration!',
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'finalizeDuration',
-        label: 'Finalize Duration',
-        field: 'number',
-        fieldOptions: {
-          ...blockFieldOptions,
-          placeholder: 'The duration of finalize period'
-        },
-        rules: [
-          minValueRule(0),
-          {
-            message: 'Please enter a duration!',
+            message: 'Please enter a sidechainAddr!',
             required: true
           }
         ]
@@ -254,16 +66,12 @@ class AuctionForm extends React.Component {
 
     return (
       <Modal
-        title="Launch Auction"
+        title="Initialize Candidate"
         visible={visible}
-        onOk={this.handleInitAuction}
+        onOk={this.handleInitializeCandidate}
         onCancel={onClose}
       >
-        <Form
-          ref={this.form}
-          items={formItems}
-          onValuesChange={this.handleValueChange}
-        />
+        <Form ref={this.form} items={formItems} />
       </Modal>
     );
   }

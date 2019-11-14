@@ -1,6 +1,25 @@
 const POLL_INTERVAL = 1000;
 
-export const subscribeEvent = (account, contracts, dispatch) => {};
+export const subscribeEvent = contracts => {
+  const { Guard } = contracts;
+  console.log(Guard);
+
+  Guard.events.InitializeCandidate(
+    {
+      fromBlock: 0
+    },
+    (err, event) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+
+      console.log(event);
+      const { candidate } = event.returnValues;
+      Guard.methods.getCandidateInfo.cacheCall(candidate);
+    }
+  );
+};
 
 export const subscribeChainInfo = (web3, dispatch) => {
   const account = web3.currentProvider.selectedAddress;

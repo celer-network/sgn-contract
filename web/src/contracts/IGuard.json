@@ -37,7 +37,7 @@
           "type": "uint256"
         },
         {
-          "indexed": true,
+          "indexed": false,
           "name": "sidechainAddr",
           "type": "bytes"
         }
@@ -597,12 +597,12 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.10+commit.5a6ea5b1\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"name\":\"_candidate\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"delegate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"subscribe\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidatorNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_minSelfStake\",\"type\":\"uint256\"},{\"name\":\"_sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"initializeCandidate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"getCandidateInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_penaltyRequest\",\"type\":\"bytes\"}],\"name\":\"punish\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"contributeToMiningPool\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_rewardRequest\",\"type\":\"bytes\"}],\"name\":\"redeemReward\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidate\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"intendWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getMinStakingPool\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getMinQuorumStakingPool\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdrawFromUnbondedCandidate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"confirmUnbondedCandidate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"confirmWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"updateSidechainAddr\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"},{\"name\":\"_delegatorAddr\",\"type\":\"address\"}],\"name\":\"getDelegatorInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"isValidator\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"contributor\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"contribution\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"miningPoolSize\",\"type\":\"uint256\"}],\"name\":\"MiningPoolContribution\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"minSelfStake\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"InitializeCandidate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"newStake\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"stakingPool\",\"type\":\"uint256\"}],\"name\":\"Delegate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"oldSidechainAddr\",\"type\":\"bytes\"},{\"indexed\":true,\"name\":\"newSidechainAddr\",\"type\":\"bytes\"}],\"name\":\"UpdateSidechainAddr\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"ethAddr\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"changeType\",\"type\":\"uint8\"}],\"name\":\"ValidatorChange\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"WithdrawFromUnbondedCandidate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"withdrawAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"intendTime\",\"type\":\"uint256\"}],\"name\":\"IntendWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ConfirmWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"consumer\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"AddSubscriptionBalance\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Punish\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"indemnitee\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Indemnify\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"}],\"name\":\"CandidateUnbonded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"miningReward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"serviceReward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"miningPool\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"servicePool\",\"type\":\"uint256\"}],\"name\":\"RedeemReward\",\"type\":\"event\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/zhuxuefeng/mygit/celer/sgn-contract/contracts/lib/interface/IGuard.sol\":\"IGuard\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/zhuxuefeng/mygit/celer/sgn-contract/contracts/lib/interface/IGuard.sol\":{\"keccak256\":\"0xca4ee17849cffa96bfe14062c9df79ab73a7efa64a5498d83f2b8edf7de32f9e\",\"urls\":[\"bzzr://1a38064365d6dda20cc3d750092b6404a155755799fe8dfba02d98e6c30c4d7a\",\"dweb:/ipfs/QmXX5CDqgmc6g4R1ebiLrib8gvrq9Gx5i7UppijiuRcxTL\"]}},\"version\":1}",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.10+commit.5a6ea5b1\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"name\":\"_candidate\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"delegate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"subscribe\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidatorNum\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_minSelfStake\",\"type\":\"uint256\"},{\"name\":\"_sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"initializeCandidate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"getCandidateInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_penaltyRequest\",\"type\":\"bytes\"}],\"name\":\"punish\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"contributeToMiningPool\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimValidator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_rewardRequest\",\"type\":\"bytes\"}],\"name\":\"redeemReward\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidate\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"intendWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getMinStakingPool\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getMinQuorumStakingPool\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdrawFromUnbondedCandidate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"confirmUnbondedCandidate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"}],\"name\":\"confirmWithdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"updateSidechainAddr\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_candidateAddr\",\"type\":\"address\"},{\"name\":\"_delegatorAddr\",\"type\":\"address\"}],\"name\":\"getDelegatorInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"isValidator\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"contributor\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"contribution\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"miningPoolSize\",\"type\":\"uint256\"}],\"name\":\"MiningPoolContribution\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"minSelfStake\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sidechainAddr\",\"type\":\"bytes\"}],\"name\":\"InitializeCandidate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"newStake\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"stakingPool\",\"type\":\"uint256\"}],\"name\":\"Delegate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"oldSidechainAddr\",\"type\":\"bytes\"},{\"indexed\":true,\"name\":\"newSidechainAddr\",\"type\":\"bytes\"}],\"name\":\"UpdateSidechainAddr\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"ethAddr\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"changeType\",\"type\":\"uint8\"}],\"name\":\"ValidatorChange\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"WithdrawFromUnbondedCandidate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"withdrawAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"intendTime\",\"type\":\"uint256\"}],\"name\":\"IntendWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ConfirmWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"consumer\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"AddSubscriptionBalance\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"validator\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"delegator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Punish\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"indemnitee\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Indemnify\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"candidate\",\"type\":\"address\"}],\"name\":\"CandidateUnbonded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"miningReward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"serviceReward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"miningPool\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"servicePool\",\"type\":\"uint256\"}],\"name\":\"RedeemReward\",\"type\":\"event\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/zhuxuefeng/mygit/celer/sgn-contract/contracts/lib/interface/IGuard.sol\":\"IGuard\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/zhuxuefeng/mygit/celer/sgn-contract/contracts/lib/interface/IGuard.sol\":{\"keccak256\":\"0xff215f9a33aa233ac6d4d9c4b1b44f123b468577b2d5833ec0e8aa5666c0e39c\",\"urls\":[\"bzzr://69cfce74928d516e350aca908c2b490fba5ba09ab4269ae39f7d40120c1dc533\",\"dweb:/ipfs/QmZLhF1jS8zUt2neNjbWEJMaEx1jm3Fg4agtihyRyM6jDC\"]}},\"version\":1}",
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "sourceMap": "",
   "deployedSourceMap": "",
-  "source": "pragma solidity ^0.5.0;\n\ninterface IGuard {\n    enum ValidatorChangeType { Add, Removal }\n\n    // functions\n    function contributeToMiningPool(uint _amount) external;\n\n    function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;\n\n    function delegate(address _candidate, uint _amount) external;\n\n    function updateSidechainAddr(bytes calldata _sidechainAddr) external;\n\n    function claimValidator() external;\n\n    function confirmUnbondedCandidate(address _candidateAddr) external;\n\n    function withdrawFromUnbondedCandidate(address _candidateAddr, uint _amount) external;\n\n    function intendWithdraw(address _candidate, uint _amount) external;\n\n    function confirmWithdraw(address _candidateAddr) external;\n\n    function subscribe(uint _amount) external;\n\n    function punish(bytes calldata _penaltyRequest) external;\n\n    function redeemReward(bytes calldata _rewardRequest) external;\n\n    function isValidator(address _addr) external view returns (bool);\n\n    function getValidatorNum() external view returns (uint);\n\n    function getMinStakingPool() external view returns (uint);\n\n    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, uint, uint);\n\n    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);\n\n    function getMinQuorumStakingPool() external view returns(uint);\n\n    // events\n    event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);\n\n    event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);\n\n    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);\n\n    event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);\n\n    event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);\n    \n    event WithdrawFromUnbondedCandidate(address indexed delegator, address indexed candidate, uint amount);\n\n    event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint intendTime);\n\n    event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);\n\n    event AddSubscriptionBalance(address indexed consumer, uint amount);\n\n    event Punish(address indexed validator, address indexed delegator, uint amount);\n\n    event Indemnify(address indexed indemnitee, uint amount);\n\n    event CandidateUnbonded(address indexed candidate);\n\n    event RedeemReward(address indexed receiver, uint miningReward, uint serviceReward, uint miningPool, uint servicePool);\n}",
+  "source": "pragma solidity ^0.5.0;\n\ninterface IGuard {\n    enum ValidatorChangeType { Add, Removal }\n\n    // functions\n    function contributeToMiningPool(uint _amount) external;\n\n    function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;\n\n    function delegate(address _candidate, uint _amount) external;\n\n    function updateSidechainAddr(bytes calldata _sidechainAddr) external;\n\n    function claimValidator() external;\n\n    function confirmUnbondedCandidate(address _candidateAddr) external;\n\n    function withdrawFromUnbondedCandidate(address _candidateAddr, uint _amount) external;\n\n    function intendWithdraw(address _candidate, uint _amount) external;\n\n    function confirmWithdraw(address _candidateAddr) external;\n\n    function subscribe(uint _amount) external;\n\n    function punish(bytes calldata _penaltyRequest) external;\n\n    function redeemReward(bytes calldata _rewardRequest) external;\n\n    function isValidator(address _addr) external view returns (bool);\n\n    function getValidatorNum() external view returns (uint);\n\n    function getMinStakingPool() external view returns (uint);\n\n    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, uint, uint);\n\n    function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);\n\n    function getMinQuorumStakingPool() external view returns(uint);\n\n    // events\n    event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);\n\n    event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes sidechainAddr);\n\n    event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);\n\n    event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);\n\n    event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);\n\n    event WithdrawFromUnbondedCandidate(address indexed delegator, address indexed candidate, uint amount);\n\n    event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint intendTime);\n\n    event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);\n\n    event AddSubscriptionBalance(address indexed consumer, uint amount);\n\n    event Punish(address indexed validator, address indexed delegator, uint amount);\n\n    event Indemnify(address indexed indemnitee, uint amount);\n\n    event CandidateUnbonded(address indexed candidate);\n\n    event RedeemReward(address indexed receiver, uint miningReward, uint serviceReward, uint miningPool, uint servicePool);\n}",
   "sourcePath": "/Users/zhuxuefeng/mygit/celer/sgn-contract/contracts/lib/interface/IGuard.sol",
   "ast": {
     "absolutePath": "/Users/zhuxuefeng/mygit/celer/sgn-contract/contracts/lib/interface/IGuard.sol",
@@ -2217,11 +2217,11 @@
                 {
                   "constant": false,
                   "id": 3384,
-                  "indexed": true,
+                  "indexed": false,
                   "name": "sidechainAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3386,
-                  "src": "1656:27:4",
+                  "src": "1656:19:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2242,9 +2242,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1609:75:4"
+              "src": "1609:67:4"
             },
-            "src": "1584:101:4"
+            "src": "1584:93:4"
           },
           {
             "anonymous": false,
@@ -2263,7 +2263,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1706:25:4",
+                  "src": "1698:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2274,7 +2274,7 @@
                     "id": 3387,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1706:7:4",
+                    "src": "1698:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2291,7 +2291,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1733:25:4",
+                  "src": "1725:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2302,7 +2302,7 @@
                     "id": 3389,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1733:7:4",
+                    "src": "1725:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2319,7 +2319,7 @@
                   "name": "newStake",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1760:13:4",
+                  "src": "1752:13:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2330,7 +2330,7 @@
                     "id": 3391,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1760:4:4",
+                    "src": "1752:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2346,7 +2346,7 @@
                   "name": "stakingPool",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1775:16:4",
+                  "src": "1767:16:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2357,7 +2357,7 @@
                     "id": 3393,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1775:4:4",
+                    "src": "1767:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2367,9 +2367,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1705:87:4"
+              "src": "1697:87:4"
             },
-            "src": "1691:102:4"
+            "src": "1683:102:4"
           },
           {
             "anonymous": false,
@@ -2388,7 +2388,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3404,
-                  "src": "1825:25:4",
+                  "src": "1817:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2399,7 +2399,7 @@
                     "id": 3397,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1825:7:4",
+                    "src": "1817:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2416,7 +2416,7 @@
                   "name": "oldSidechainAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3404,
-                  "src": "1852:30:4",
+                  "src": "1844:30:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2427,7 +2427,7 @@
                     "id": 3399,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1852:5:4",
+                    "src": "1844:5:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -2443,7 +2443,7 @@
                   "name": "newSidechainAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3404,
-                  "src": "1884:30:4",
+                  "src": "1876:30:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2454,7 +2454,7 @@
                     "id": 3401,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1884:5:4",
+                    "src": "1876:5:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -2464,9 +2464,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1824:91:4"
+              "src": "1816:91:4"
             },
-            "src": "1799:117:4"
+            "src": "1791:117:4"
           },
           {
             "anonymous": false,
@@ -2485,7 +2485,7 @@
                   "name": "ethAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3410,
-                  "src": "1944:23:4",
+                  "src": "1936:23:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2496,7 +2496,7 @@
                     "id": 3405,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1944:7:4",
+                    "src": "1936:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2513,7 +2513,7 @@
                   "name": "changeType",
                   "nodeType": "VariableDeclaration",
                   "scope": 3410,
-                  "src": "1969:38:4",
+                  "src": "1961:38:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2526,7 +2526,7 @@
                     "name": "ValidatorChangeType",
                     "nodeType": "UserDefinedTypeName",
                     "referencedDeclaration": 3248,
-                    "src": "1969:19:4",
+                    "src": "1961:19:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_enum$_ValidatorChangeType_$3248",
                       "typeString": "enum IGuard.ValidatorChangeType"
@@ -2536,9 +2536,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1943:65:4"
+              "src": "1935:65:4"
             },
-            "src": "1922:87:4"
+            "src": "1914:87:4"
           },
           {
             "anonymous": false,
@@ -2557,7 +2557,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3418,
-                  "src": "2055:25:4",
+                  "src": "2043:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2568,7 +2568,7 @@
                     "id": 3411,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2055:7:4",
+                    "src": "2043:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2585,7 +2585,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3418,
-                  "src": "2082:25:4",
+                  "src": "2070:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2596,7 +2596,7 @@
                     "id": 3413,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2082:7:4",
+                    "src": "2070:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2613,7 +2613,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3418,
-                  "src": "2109:11:4",
+                  "src": "2097:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2624,7 +2624,7 @@
                     "id": 3415,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2109:4:4",
+                    "src": "2097:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2634,9 +2634,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2054:67:4"
+              "src": "2042:67:4"
             },
-            "src": "2019:103:4"
+            "src": "2007:103:4"
           },
           {
             "anonymous": false,
@@ -2655,7 +2655,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2149:25:4",
+                  "src": "2137:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2666,7 +2666,7 @@
                     "id": 3419,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2149:7:4",
+                    "src": "2137:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2683,7 +2683,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2176:25:4",
+                  "src": "2164:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2694,7 +2694,7 @@
                     "id": 3421,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2176:7:4",
+                    "src": "2164:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2711,7 +2711,7 @@
                   "name": "withdrawAmount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2203:19:4",
+                  "src": "2191:19:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2722,7 +2722,7 @@
                     "id": 3423,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2203:4:4",
+                    "src": "2191:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2738,7 +2738,7 @@
                   "name": "intendTime",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2224:15:4",
+                  "src": "2212:15:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2749,7 +2749,7 @@
                     "id": 3425,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2224:4:4",
+                    "src": "2212:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2759,9 +2759,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2148:92:4"
+              "src": "2136:92:4"
             },
-            "src": "2128:113:4"
+            "src": "2116:113:4"
           },
           {
             "anonymous": false,
@@ -2780,7 +2780,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3436,
-                  "src": "2269:25:4",
+                  "src": "2257:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2791,7 +2791,7 @@
                     "id": 3429,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2269:7:4",
+                    "src": "2257:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2808,7 +2808,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3436,
-                  "src": "2296:25:4",
+                  "src": "2284:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2819,7 +2819,7 @@
                     "id": 3431,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2296:7:4",
+                    "src": "2284:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2836,7 +2836,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3436,
-                  "src": "2323:11:4",
+                  "src": "2311:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2847,7 +2847,7 @@
                     "id": 3433,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2323:4:4",
+                    "src": "2311:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2857,9 +2857,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2268:67:4"
+              "src": "2256:67:4"
             },
-            "src": "2247:89:4"
+            "src": "2235:89:4"
           },
           {
             "anonymous": false,
@@ -2878,7 +2878,7 @@
                   "name": "consumer",
                   "nodeType": "VariableDeclaration",
                   "scope": 3442,
-                  "src": "2371:24:4",
+                  "src": "2359:24:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2889,7 +2889,7 @@
                     "id": 3437,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2371:7:4",
+                    "src": "2359:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2906,7 +2906,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3442,
-                  "src": "2397:11:4",
+                  "src": "2385:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2917,7 +2917,7 @@
                     "id": 3439,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2397:4:4",
+                    "src": "2385:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -2927,9 +2927,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2370:39:4"
+              "src": "2358:39:4"
             },
-            "src": "2342:68:4"
+            "src": "2330:68:4"
           },
           {
             "anonymous": false,
@@ -2948,7 +2948,7 @@
                   "name": "validator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3450,
-                  "src": "2429:25:4",
+                  "src": "2417:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2959,7 +2959,7 @@
                     "id": 3443,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2429:7:4",
+                    "src": "2417:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2976,7 +2976,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3450,
-                  "src": "2456:25:4",
+                  "src": "2444:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2987,7 +2987,7 @@
                     "id": 3445,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2456:7:4",
+                    "src": "2444:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -3004,7 +3004,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3450,
-                  "src": "2483:11:4",
+                  "src": "2471:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3015,7 +3015,7 @@
                     "id": 3447,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2483:4:4",
+                    "src": "2471:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3025,9 +3025,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2428:67:4"
+              "src": "2416:67:4"
             },
-            "src": "2416:80:4"
+            "src": "2404:80:4"
           },
           {
             "anonymous": false,
@@ -3046,7 +3046,7 @@
                   "name": "indemnitee",
                   "nodeType": "VariableDeclaration",
                   "scope": 3456,
-                  "src": "2518:26:4",
+                  "src": "2506:26:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3057,7 +3057,7 @@
                     "id": 3451,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2518:7:4",
+                    "src": "2506:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -3074,7 +3074,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3456,
-                  "src": "2546:11:4",
+                  "src": "2534:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3085,7 +3085,7 @@
                     "id": 3453,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2546:4:4",
+                    "src": "2534:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3095,9 +3095,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2517:41:4"
+              "src": "2505:41:4"
             },
-            "src": "2502:57:4"
+            "src": "2490:57:4"
           },
           {
             "anonymous": false,
@@ -3116,7 +3116,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3460,
-                  "src": "2589:25:4",
+                  "src": "2577:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3127,7 +3127,7 @@
                     "id": 3457,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2589:7:4",
+                    "src": "2577:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -3138,9 +3138,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2588:27:4"
+              "src": "2576:27:4"
             },
-            "src": "2565:51:4"
+            "src": "2553:51:4"
           },
           {
             "anonymous": false,
@@ -3159,7 +3159,7 @@
                   "name": "receiver",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2641:24:4",
+                  "src": "2629:24:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3170,7 +3170,7 @@
                     "id": 3461,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2641:7:4",
+                    "src": "2629:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -3187,7 +3187,7 @@
                   "name": "miningReward",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2667:17:4",
+                  "src": "2655:17:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3198,7 +3198,7 @@
                     "id": 3463,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2667:4:4",
+                    "src": "2655:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3214,7 +3214,7 @@
                   "name": "serviceReward",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2686:18:4",
+                  "src": "2674:18:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3225,7 +3225,7 @@
                     "id": 3465,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2686:4:4",
+                    "src": "2674:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3241,7 +3241,7 @@
                   "name": "miningPool",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2706:15:4",
+                  "src": "2694:15:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3252,7 +3252,7 @@
                     "id": 3467,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2706:4:4",
+                    "src": "2694:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3268,7 +3268,7 @@
                   "name": "servicePool",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2723:16:4",
+                  "src": "2711:16:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -3279,7 +3279,7 @@
                     "id": 3469,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2723:4:4",
+                    "src": "2711:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -3289,16 +3289,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2640:100:4"
+              "src": "2628:100:4"
             },
-            "src": "2622:119:4"
+            "src": "2610:119:4"
           }
         ],
         "scope": 3474,
-        "src": "25:2718:4"
+        "src": "25:2706:4"
       }
     ],
-    "src": "0:2743:4"
+    "src": "0:2731:4"
   },
   "legacyAST": {
     "absolutePath": "/Users/zhuxuefeng/mygit/celer/sgn-contract/contracts/lib/interface/IGuard.sol",
@@ -4913,11 +4913,11 @@
                 {
                   "constant": false,
                   "id": 3384,
-                  "indexed": true,
+                  "indexed": false,
                   "name": "sidechainAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3386,
-                  "src": "1656:27:4",
+                  "src": "1656:19:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -4938,9 +4938,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1609:75:4"
+              "src": "1609:67:4"
             },
-            "src": "1584:101:4"
+            "src": "1584:93:4"
           },
           {
             "anonymous": false,
@@ -4959,7 +4959,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1706:25:4",
+                  "src": "1698:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -4970,7 +4970,7 @@
                     "id": 3387,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1706:7:4",
+                    "src": "1698:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -4987,7 +4987,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1733:25:4",
+                  "src": "1725:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -4998,7 +4998,7 @@
                     "id": 3389,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1733:7:4",
+                    "src": "1725:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5015,7 +5015,7 @@
                   "name": "newStake",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1760:13:4",
+                  "src": "1752:13:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5026,7 +5026,7 @@
                     "id": 3391,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1760:4:4",
+                    "src": "1752:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5042,7 +5042,7 @@
                   "name": "stakingPool",
                   "nodeType": "VariableDeclaration",
                   "scope": 3396,
-                  "src": "1775:16:4",
+                  "src": "1767:16:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5053,7 +5053,7 @@
                     "id": 3393,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1775:4:4",
+                    "src": "1767:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5063,9 +5063,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1705:87:4"
+              "src": "1697:87:4"
             },
-            "src": "1691:102:4"
+            "src": "1683:102:4"
           },
           {
             "anonymous": false,
@@ -5084,7 +5084,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3404,
-                  "src": "1825:25:4",
+                  "src": "1817:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5095,7 +5095,7 @@
                     "id": 3397,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1825:7:4",
+                    "src": "1817:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5112,7 +5112,7 @@
                   "name": "oldSidechainAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3404,
-                  "src": "1852:30:4",
+                  "src": "1844:30:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5123,7 +5123,7 @@
                     "id": 3399,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1852:5:4",
+                    "src": "1844:5:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -5139,7 +5139,7 @@
                   "name": "newSidechainAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3404,
-                  "src": "1884:30:4",
+                  "src": "1876:30:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5150,7 +5150,7 @@
                     "id": 3401,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1884:5:4",
+                    "src": "1876:5:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -5160,9 +5160,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1824:91:4"
+              "src": "1816:91:4"
             },
-            "src": "1799:117:4"
+            "src": "1791:117:4"
           },
           {
             "anonymous": false,
@@ -5181,7 +5181,7 @@
                   "name": "ethAddr",
                   "nodeType": "VariableDeclaration",
                   "scope": 3410,
-                  "src": "1944:23:4",
+                  "src": "1936:23:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5192,7 +5192,7 @@
                     "id": 3405,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1944:7:4",
+                    "src": "1936:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5209,7 +5209,7 @@
                   "name": "changeType",
                   "nodeType": "VariableDeclaration",
                   "scope": 3410,
-                  "src": "1969:38:4",
+                  "src": "1961:38:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5222,7 +5222,7 @@
                     "name": "ValidatorChangeType",
                     "nodeType": "UserDefinedTypeName",
                     "referencedDeclaration": 3248,
-                    "src": "1969:19:4",
+                    "src": "1961:19:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_enum$_ValidatorChangeType_$3248",
                       "typeString": "enum IGuard.ValidatorChangeType"
@@ -5232,9 +5232,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1943:65:4"
+              "src": "1935:65:4"
             },
-            "src": "1922:87:4"
+            "src": "1914:87:4"
           },
           {
             "anonymous": false,
@@ -5253,7 +5253,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3418,
-                  "src": "2055:25:4",
+                  "src": "2043:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5264,7 +5264,7 @@
                     "id": 3411,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2055:7:4",
+                    "src": "2043:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5281,7 +5281,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3418,
-                  "src": "2082:25:4",
+                  "src": "2070:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5292,7 +5292,7 @@
                     "id": 3413,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2082:7:4",
+                    "src": "2070:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5309,7 +5309,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3418,
-                  "src": "2109:11:4",
+                  "src": "2097:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5320,7 +5320,7 @@
                     "id": 3415,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2109:4:4",
+                    "src": "2097:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5330,9 +5330,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2054:67:4"
+              "src": "2042:67:4"
             },
-            "src": "2019:103:4"
+            "src": "2007:103:4"
           },
           {
             "anonymous": false,
@@ -5351,7 +5351,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2149:25:4",
+                  "src": "2137:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5362,7 +5362,7 @@
                     "id": 3419,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2149:7:4",
+                    "src": "2137:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5379,7 +5379,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2176:25:4",
+                  "src": "2164:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5390,7 +5390,7 @@
                     "id": 3421,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2176:7:4",
+                    "src": "2164:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5407,7 +5407,7 @@
                   "name": "withdrawAmount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2203:19:4",
+                  "src": "2191:19:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5418,7 +5418,7 @@
                     "id": 3423,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2203:4:4",
+                    "src": "2191:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5434,7 +5434,7 @@
                   "name": "intendTime",
                   "nodeType": "VariableDeclaration",
                   "scope": 3428,
-                  "src": "2224:15:4",
+                  "src": "2212:15:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5445,7 +5445,7 @@
                     "id": 3425,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2224:4:4",
+                    "src": "2212:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5455,9 +5455,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2148:92:4"
+              "src": "2136:92:4"
             },
-            "src": "2128:113:4"
+            "src": "2116:113:4"
           },
           {
             "anonymous": false,
@@ -5476,7 +5476,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3436,
-                  "src": "2269:25:4",
+                  "src": "2257:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5487,7 +5487,7 @@
                     "id": 3429,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2269:7:4",
+                    "src": "2257:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5504,7 +5504,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3436,
-                  "src": "2296:25:4",
+                  "src": "2284:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5515,7 +5515,7 @@
                     "id": 3431,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2296:7:4",
+                    "src": "2284:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5532,7 +5532,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3436,
-                  "src": "2323:11:4",
+                  "src": "2311:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5543,7 +5543,7 @@
                     "id": 3433,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2323:4:4",
+                    "src": "2311:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5553,9 +5553,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2268:67:4"
+              "src": "2256:67:4"
             },
-            "src": "2247:89:4"
+            "src": "2235:89:4"
           },
           {
             "anonymous": false,
@@ -5574,7 +5574,7 @@
                   "name": "consumer",
                   "nodeType": "VariableDeclaration",
                   "scope": 3442,
-                  "src": "2371:24:4",
+                  "src": "2359:24:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5585,7 +5585,7 @@
                     "id": 3437,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2371:7:4",
+                    "src": "2359:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5602,7 +5602,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3442,
-                  "src": "2397:11:4",
+                  "src": "2385:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5613,7 +5613,7 @@
                     "id": 3439,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2397:4:4",
+                    "src": "2385:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5623,9 +5623,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2370:39:4"
+              "src": "2358:39:4"
             },
-            "src": "2342:68:4"
+            "src": "2330:68:4"
           },
           {
             "anonymous": false,
@@ -5644,7 +5644,7 @@
                   "name": "validator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3450,
-                  "src": "2429:25:4",
+                  "src": "2417:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5655,7 +5655,7 @@
                     "id": 3443,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2429:7:4",
+                    "src": "2417:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5672,7 +5672,7 @@
                   "name": "delegator",
                   "nodeType": "VariableDeclaration",
                   "scope": 3450,
-                  "src": "2456:25:4",
+                  "src": "2444:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5683,7 +5683,7 @@
                     "id": 3445,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2456:7:4",
+                    "src": "2444:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5700,7 +5700,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3450,
-                  "src": "2483:11:4",
+                  "src": "2471:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5711,7 +5711,7 @@
                     "id": 3447,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2483:4:4",
+                    "src": "2471:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5721,9 +5721,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2428:67:4"
+              "src": "2416:67:4"
             },
-            "src": "2416:80:4"
+            "src": "2404:80:4"
           },
           {
             "anonymous": false,
@@ -5742,7 +5742,7 @@
                   "name": "indemnitee",
                   "nodeType": "VariableDeclaration",
                   "scope": 3456,
-                  "src": "2518:26:4",
+                  "src": "2506:26:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5753,7 +5753,7 @@
                     "id": 3451,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2518:7:4",
+                    "src": "2506:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5770,7 +5770,7 @@
                   "name": "amount",
                   "nodeType": "VariableDeclaration",
                   "scope": 3456,
-                  "src": "2546:11:4",
+                  "src": "2534:11:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5781,7 +5781,7 @@
                     "id": 3453,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2546:4:4",
+                    "src": "2534:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5791,9 +5791,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2517:41:4"
+              "src": "2505:41:4"
             },
-            "src": "2502:57:4"
+            "src": "2490:57:4"
           },
           {
             "anonymous": false,
@@ -5812,7 +5812,7 @@
                   "name": "candidate",
                   "nodeType": "VariableDeclaration",
                   "scope": 3460,
-                  "src": "2589:25:4",
+                  "src": "2577:25:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5823,7 +5823,7 @@
                     "id": 3457,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2589:7:4",
+                    "src": "2577:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5834,9 +5834,9 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2588:27:4"
+              "src": "2576:27:4"
             },
-            "src": "2565:51:4"
+            "src": "2553:51:4"
           },
           {
             "anonymous": false,
@@ -5855,7 +5855,7 @@
                   "name": "receiver",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2641:24:4",
+                  "src": "2629:24:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5866,7 +5866,7 @@
                     "id": 3461,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2641:7:4",
+                    "src": "2629:7:4",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -5883,7 +5883,7 @@
                   "name": "miningReward",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2667:17:4",
+                  "src": "2655:17:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5894,7 +5894,7 @@
                     "id": 3463,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2667:4:4",
+                    "src": "2655:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5910,7 +5910,7 @@
                   "name": "serviceReward",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2686:18:4",
+                  "src": "2674:18:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5921,7 +5921,7 @@
                     "id": 3465,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2686:4:4",
+                    "src": "2674:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5937,7 +5937,7 @@
                   "name": "miningPool",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2706:15:4",
+                  "src": "2694:15:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5948,7 +5948,7 @@
                     "id": 3467,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2706:4:4",
+                    "src": "2694:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5964,7 +5964,7 @@
                   "name": "servicePool",
                   "nodeType": "VariableDeclaration",
                   "scope": 3472,
-                  "src": "2723:16:4",
+                  "src": "2711:16:4",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -5975,7 +5975,7 @@
                     "id": 3469,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2723:4:4",
+                    "src": "2711:4:4",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -5985,16 +5985,16 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2640:100:4"
+              "src": "2628:100:4"
             },
-            "src": "2622:119:4"
+            "src": "2610:119:4"
           }
         ],
         "scope": 3474,
-        "src": "25:2718:4"
+        "src": "25:2706:4"
       }
     ],
-    "src": "0:2743:4"
+    "src": "0:2731:4"
   },
   "compiler": {
     "name": "solc",
@@ -6002,7 +6002,7 @@
   },
   "networks": {},
   "schemaVersion": "3.0.16",
-  "updatedAt": "2019-11-12T19:07:35.014Z",
+  "updatedAt": "2019-11-14T00:28:16.927Z",
   "devdoc": {
     "methods": {}
   },

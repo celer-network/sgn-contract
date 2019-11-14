@@ -1368,15 +1368,33 @@
     "version": "0.5.10+commit.5a6ea5b1.Emscripten.clang"
   },
   "networks": {
+    "5777": {
+      "events": {},
+      "links": {},
+      "address": "0xcE6311521F71cA55edf12a76c6FB13DcbdCe6bd9",
+      "transactionHash": "0x8f3376c5b1a0d2dacd80c583bc2421f960ae3c9a36d2345a382dacced2d27eac"
+    },
     "1573585284520": {
       "events": {},
       "links": {},
       "address": "0xA57B8a5584442B467b4689F1144D269d096A3daF",
       "transactionHash": "0x243752022f62816460f0943638fab5ac2c3bcfe3cce224f469993f7ce48706a9"
+    },
+    "1573675268285": {
+      "events": {},
+      "links": {},
+      "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab",
+      "transactionHash": "0x5f8c0038894c294ca2da80b6e713dd684244519dc91d5f00352455750890b4e5"
+    },
+    "1573684612940": {
+      "events": {},
+      "links": {},
+      "address": "0xD86C8F0327494034F60e25074420BcCF560D5610",
+      "transactionHash": "0x59b25442d7836a9027689a847ab86c3838da88fd0d10060f1e6ad7cc21aff669"
     }
   },
   "schemaVersion": "3.0.16",
-  "updatedAt": "2019-11-12T19:07:35.884Z",
+  "updatedAt": "2019-11-14T00:28:17.899Z",
   "devdoc": {
     "details": "Used for Truffle framework. Do not edit.",
     "methods": {}
