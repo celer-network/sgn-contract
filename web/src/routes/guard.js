@@ -6,30 +6,26 @@ import { Link } from 'dva/router';
 import { Button, Card, List, Statistic, Row, Col, Icon } from 'antd';
 
 import CandidateForm from '../components/guard/candidate-form';
-import { getUnitByAddress, formatCurrencyValue } from '../utils/unit';
+import { CANDIDATE_STATUS } from '../utils/guard';
+import { formatCurrencyValue } from '../utils/unit';
+import { CELR } from '../utils/constant';
 
 class Guard extends React.Component {
   constructor(props, context) {
     super(props);
 
-    this.state = { isModalVisible: false, tab: 'all' };
+    this.state = { isCandidateModalVisible: false };
     this.contracts = context.drizzle.contracts;
   }
 
-  onTabChange = tab => {
-    this.setState({ tab });
-  };
-
-  toggleModal = () => {
+  toggleCandidateModal = () => {
     this.setState(prevState => ({
-      isModalVisible: !prevState.isModalVisible
+      isCandidateModalVisible: !prevState.isCandidateModalVisible
     }));
   };
 
   renderCandidate = candidate => {
-    const { network, Guard } = this.props;
-    const { asker, value, duration, tokenAddress } = candidate.value;
-    const unit = getUnitByAddress(network.supportedTokens, tokenAddress);
+    const { minSelfStake, stakingPool, status } = candidate.value;
 
     return (
       <List.Item>
@@ -42,19 +38,22 @@ class Guard extends React.Component {
         >
           <Row>
             <Col span={12}>
-              <Statistic title="Asker" value={asker} />
+              <Statistic title="Address" value={candidate.args[0]} />
             </Col>
             <Col span={12}>
-              <Statistic title="Period" value={1} />
+              <Statistic title="Status" value={CANDIDATE_STATUS[status]} />
             </Col>
             <Col span={12}>
               <Statistic
-                title="Value"
-                value={formatCurrencyValue(value, unit)}
+                title="Min Self Stake"
+                value={formatCurrencyValue(minSelfStake, CELR)}
               />
             </Col>
             <Col span={12}>
-              <Statistic title="Duration" value={`${duration} Day`} />
+              <Statistic
+                title="Staking Pool"
+                value={formatCurrencyValue(stakingPool, CELR)}
+              />
             </Col>
           </Row>
         </Card>
@@ -63,11 +62,9 @@ class Guard extends React.Component {
   };
 
   renderCandidates = () => {
-    const { accounts, Guard } = this.props;
-    const { tab } = this.state;
-
-    let data = _.values(Guard.getAuction);
-
+    const { Guard } = this.props;
+    const data = _.values(Guard.getCandidateInfo);
+    // console.log(Guard);
     return (
       <List
         grid={{ gutter: 16, column: 3 }}
@@ -78,23 +75,21 @@ class Guard extends React.Component {
   };
 
   render() {
-    const { isModalVisible, tab } = this.state;
-    const { network } = this.props;
+    const { isCandidateModalVisible } = this.state;
 
     return (
       <Card
         title="Guard"
         extra={
-          <Button type="primary" onClick={this.toggleModal}>
-            Launch candidate
+          <Button type="primary" onClick={this.toggleCandidateModal}>
+            Initialize Candidate
           </Button>
         }
       >
         {this.renderCandidates()}
         <CandidateForm
-          network={network}
-          visible={isModalVisible}
-          onClose={this.toggleModal}
+          visible={isCandidateModalVisible}
+          onClose={this.toggleCandidateModal}
         />
       </Card>
     );
@@ -110,11 +105,9 @@ Guard.contextTypes = {
 };
 
 function mapStateToProps(state) {
-  const { contracts, accounts, Guard, network } = state;
+  const { contracts, Guard } = state;
 
   return {
-    accounts,
-    network,
     Guard: { ...Guard, ...contracts.Guard }
   };
 }

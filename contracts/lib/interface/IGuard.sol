@@ -43,14 +43,14 @@ interface IGuard {
     // events
     event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);
 
-    event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes indexed sidechainAddr);
+    event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes sidechainAddr);
 
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);
 
     event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
     event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);
-    
+
     event WithdrawFromUnbondedCandidate(address indexed delegator, address indexed candidate, uint amount);
 
     event IntendWithdraw(address indexed delegator, address indexed candidate, uint withdrawAmount, uint intendTime);

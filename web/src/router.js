@@ -31,7 +31,7 @@ function RouterConfig({ history, app }) {
           <App>
             <Switch>
               <Route exact path="/guard" component={Guard} />
-              <Route exact path="/guard/:id" component={Candidate} />
+              <Route exact path="/candidate/:id" component={Candidate} />
               <Route exact path="/" render={redirectToHome} />
             </Switch>
           </App>
