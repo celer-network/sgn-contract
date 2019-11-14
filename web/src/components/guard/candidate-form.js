@@ -5,7 +5,7 @@ import { Modal } from 'antd';
 
 import Form from '../form';
 import { minValueRule, currencyFieldOptions } from '../../utils/form';
-import { CELR } from '../../utils/constant';
+import { CELR } from '../../utils/unit';
 
 class AuctionForm extends React.Component {
   constructor(props, context) {

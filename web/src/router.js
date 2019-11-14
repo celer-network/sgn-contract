@@ -21,7 +21,7 @@ function RouterConfig({ history, app }) {
   });
   const Candidate = Dynamic({
     app,
-    component: () => import('./routes/auction')
+    component: () => import('./routes/candidate')
   });
 
   return (
