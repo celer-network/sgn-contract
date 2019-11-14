@@ -24,7 +24,7 @@ contract Guard is IGuard {
 
     struct WithdrawIntent {
         uint amount;
-        uint intendTime;
+        uint proposedTime;
     }
 
     struct Delegator {
@@ -224,14 +224,14 @@ contract Guard is IGuard {
 
         WithdrawIntent storage withdrawIntent = delegator.withdrawIntents[delegator.intentEndIndex];
         withdrawIntent.amount = _amount;
-        withdrawIntent.intendTime = block.number;
+        withdrawIntent.proposedTime = block.number;
         delegator.intentEndIndex++;
 
         emit IntendWithdraw(
             msgSender,
             _candidateAddr,
             _amount,
-            withdrawIntent.intendTime
+            withdrawIntent.proposedTime
         );
     }
 
@@ -246,7 +246,7 @@ contract Guard is IGuard {
         // for all undelegated withdraw intents
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];
-            if (isUnbonded || wi.intendTime.add(blameTimeout) <= bn) {
+            if (isUnbonded || wi.proposedTime.add(blameTimeout) <= bn) {
                 // withdraw intent is undelegated when the validator becomes unbonded or the blameTimeout
                 // for the withdraw intent is up.
                 delete delegator.withdrawIntents[i];
@@ -421,17 +421,17 @@ contract Guard is IGuard {
         uint delegatedStake,
         uint undelegatingStake,
         uint[] memory intentAmounts,
-        uint[] memory intentIntendTimes
+        uint[] memory intentProposedTimes
     )
     {
         Delegator storage d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
 
         uint len = d.intentEndIndex.sub(d.intentStartIndex);
         intentAmounts = new uint[](len);
-        intentIntendTimes = new uint[](len);
+        intentProposedTimes = new uint[](len);
         for (uint i = d.intentStartIndex; i < d.intentEndIndex; i++) {
             intentAmounts[i] = d.withdrawIntents[i].amount;
-            intentIntendTimes[i] = d.withdrawIntents[i].intendTime;
+            intentProposedTimes[i] = d.withdrawIntents[i].proposedTime;
         }
 
         delegatedStake = d.delegatedStake;

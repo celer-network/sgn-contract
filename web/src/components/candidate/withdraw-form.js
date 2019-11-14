@@ -6,7 +6,7 @@ import { Modal } from 'antd';
 import Form from '../form';
 import { celrFieldOptions } from '../../utils/form';
 
-class DelegateForm extends React.Component {
+class WithdrawForm extends React.Component {
   constructor(props, context) {
     super(props);
 
@@ -24,7 +24,7 @@ class DelegateForm extends React.Component {
 
       const { value } = values;
 
-      this.contracts.Guard.methods.delegate.cacheSend(
+      this.contracts.Guard.methods.intendWithdraw.cacheSend(
         candidate,
         web3.utils.toWei(value.toString(), 'ether')
       );
@@ -41,7 +41,7 @@ class DelegateForm extends React.Component {
         field: 'number',
         fieldOptions: {
           ...celrFieldOptions,
-          placeholder: 'The amount of CELR to delegate'
+          placeholder: 'The amount of CELR to withdraw'
         },
         rules: [
           {
@@ -54,7 +54,7 @@ class DelegateForm extends React.Component {
 
     return (
       <Modal
-        title="Delegate Stake"
+        title="Withdraw Stake"
         visible={visible}
         onOk={this.onSubmit}
         onCancel={onClose}
@@ -65,13 +65,13 @@ class DelegateForm extends React.Component {
   }
 }
 
-DelegateForm.propTypes = {
+WithdrawForm.propTypes = {
   visible: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired
 };
 
-DelegateForm.contextTypes = {
+WithdrawForm.contextTypes = {
   drizzle: PropTypes.object
 };
 
-export default DelegateForm;
+export default WithdrawForm;

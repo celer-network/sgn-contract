@@ -385,7 +385,7 @@
       },
       {
         "indexed": false,
-        "name": "intendTime",
+        "name": "proposedTime",
         "type": "uint256"
       }
     ],
@@ -806,7 +806,7 @@
         "type": "uint256[]"
       },
       {
-        "name": "intentIntendTimes",
+        "name": "intentProposedTimes",
         "type": "uint256[]"
       }
     ],
