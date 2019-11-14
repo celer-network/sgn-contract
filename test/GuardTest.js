@@ -275,7 +275,7 @@ contract('SGN Guard contract', async accounts => {
             assert.equal(args.delegator, DELEGATOR);
             assert.equal(args.candidate, CANDIDATE);
             assert.equal(args.withdrawAmount.toNumber(), smallAmount);
-            assert.equal(args.intendTime.toNumber(), block.number);
+            assert.equal(args.proposedTime.toNumber(), block.number);
           });
 
           it('should remove the validator after validator intendWithdraw to an amount under minSelfStake', async () => {
@@ -299,7 +299,7 @@ contract('SGN Guard contract', async accounts => {
               tx.logs[1].args.withdrawAmount,
               CANDIDATE_WITHDRAW_UNDER_MIN
             );
-            assert.equal(tx.logs[1].args.intendTime.toNumber(), block.number);
+            assert.equal(tx.logs[1].args.proposedTime.toNumber(), block.number);
           });
 
           it('should remove the validator after delegator intendWithdraw to an amount under minStakingPool', async () => {
@@ -317,7 +317,7 @@ contract('SGN Guard contract', async accounts => {
             assert.equal(tx.logs[1].args.delegator, DELEGATOR);
             assert.equal(tx.logs[1].args.candidate, CANDIDATE);
             assert.equal(tx.logs[1].args.withdrawAmount, DELEGATOR_WITHDRAW);
-            assert.equal(tx.logs[1].args.intendTime.toNumber(), block.number);
+            assert.equal(tx.logs[1].args.proposedTime.toNumber(), block.number);
           });
 
           // TODO: add a test of "fail to confirmWithdraw because penalty slashes all undelegating stake"

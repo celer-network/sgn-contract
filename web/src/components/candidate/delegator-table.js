@@ -27,8 +27,8 @@ const nestedColumns = [
     dataIndex: 'intentAmount'
   },
   {
-    title: 'Intent Intend Time',
-    dataIndex: 'intentIntendTime'
+    title: 'Intent Proposed Time',
+    dataIndex: 'intentProposedTime'
   }
 ];
 
@@ -36,10 +36,10 @@ class DelegatorTable extends React.Component {
   expandedRowRender = record => {
     const dataSource = _.zip(
       record.intentAmounts,
-      record.intentIntendTimes
-    ).map(([intentAmount, intentIntendTime]) => ({
+      record.intentProposedTimes
+    ).map(([intentAmount, intentProposedTime]) => ({
       intentAmount: formatCelrValue(intentAmount),
-      intentIntendTime
+      intentProposedTime
     }));
 
     return (

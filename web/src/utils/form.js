@@ -3,7 +3,7 @@ export const currencyFieldOptions = unit => ({
   parser: value => value.replace(/[A-Z]/g, '')
 });
 
-export const celerFieldOptions = currencyFieldOptions('CELR');
+export const celrFieldOptions = currencyFieldOptions('CELR');
 
 export const dayFieldOptions = {
   formatter: value => (value ? `${value}day` : ''),

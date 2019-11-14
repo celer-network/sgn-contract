@@ -4,7 +4,7 @@ import web3 from 'web3';
 import { Modal } from 'antd';
 
 import Form from './form';
-import { celerFieldOptions } from '../utils/form';
+import { celrFieldOptions } from '../utils/form';
 
 class ApproveCelrForm extends React.Component {
   constructor(props, context) {
@@ -42,7 +42,7 @@ class ApproveCelrForm extends React.Component {
         name: 'value',
         field: 'number',
         fieldOptions: {
-          ...celerFieldOptions,
+          ...celrFieldOptions,
           placeholder: 'The amount of CELR allowance Guard has'
         },
         rules: [
