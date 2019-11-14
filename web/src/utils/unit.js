@@ -3,6 +3,8 @@ import web3 from 'web3';
 
 import './network';
 
+export const CELR = 'CELR';
+
 export const getUnitByAddress = (supportedTokens, address) => {
   const token = _.find(
     supportedTokens,

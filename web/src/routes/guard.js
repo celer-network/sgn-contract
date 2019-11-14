@@ -7,8 +7,7 @@ import { Button, Card, List, Statistic, Row, Col, Icon } from 'antd';
 
 import CandidateForm from '../components/guard/candidate-form';
 import { CANDIDATE_STATUS } from '../utils/guard';
-import { formatCurrencyValue } from '../utils/unit';
-import { CELR } from '../utils/constant';
+import { formatCurrencyValue, CELR } from '../utils/unit';
 
 class Guard extends React.Component {
   constructor(props, context) {
@@ -64,7 +63,7 @@ class Guard extends React.Component {
   renderCandidates = () => {
     const { Guard } = this.props;
     const data = _.values(Guard.getCandidateInfo);
-    // console.log(Guard);
+
     return (
       <List
         grid={{ gutter: 16, column: 3 }}
