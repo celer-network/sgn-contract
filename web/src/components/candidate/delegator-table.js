@@ -27,7 +27,7 @@ const nestedColumns = [
     dataIndex: 'intentAmount'
   },
   {
-    title: 'IntentIntendTime',
+    title: 'Intent Intend Time',
     dataIndex: 'intentIntendTime'
   }
 ];
@@ -38,7 +38,7 @@ class DelegatorTable extends React.Component {
       record.intentAmounts,
       record.intentIntendTimes
     ).map(([intentAmount, intentIntendTime]) => ({
-      intentAmount,
+      intentAmount: formatCelrValue(intentAmount),
       intentIntendTime
     }));
 

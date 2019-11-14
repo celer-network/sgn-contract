@@ -14,6 +14,7 @@ import {
 } from 'antd';
 
 import DelegateForm from '../components/candidate/delegate-form';
+import WithdrawForm from '../components/candidate/withdraw-form';
 import DelegatorTable from '../components/candidate/delegator-table';
 import { formatCurrencyValue, CELR } from '../utils/unit';
 import { CANDIDATE_STATUS } from '../utils/guard';
@@ -25,7 +26,8 @@ class Candidate extends React.Component {
     this.contracts = context.drizzle.contracts;
     this.state = {
       candidate: null,
-      isDelegateModalVisible: false
+      isDelegateModalVisible: false,
+      isWithdrawModalVisible: false
     };
 
     this.contracts.Guard.events.Delegate(
@@ -59,7 +61,7 @@ class Candidate extends React.Component {
       delegator => delegator.args[1] === candidateId
     );
 
-    return { candidate, delegators };
+    return { candidate, candidateId, delegators };
   }
 
   toggleDelegateModal = () => {
@@ -68,12 +70,26 @@ class Candidate extends React.Component {
     }));
   };
 
+  toggleWithdrawModal = () => {
+    this.setState(prevState => ({
+      isWithdrawModalVisible: !prevState.isWithdrawModalVisible
+    }));
+  };
+
+  confirmWithdraw = () => {
+    const { candidateId } = this.state;
+
+    this.contracts.Guard.methods.confirmWithdraw.cacheSend(candidateId);
+  };
+
   renderAction = () => {
     const menu = (
       <Menu>
         <Menu.Item onClick={this.toggleDelegateModal}>Delegate</Menu.Item>
-        <Menu.Item>Intend Withdraw</Menu.Item>
-        <Menu.Item>Confirm Withdraw</Menu.Item>
+        <Menu.Item onClick={this.toggleWithdrawModal}>
+          Intend Withdraw
+        </Menu.Item>
+        <Menu.Item onClick={this.confirmWithdraw}>Confirm Withdraw</Menu.Item>
       </Menu>
     );
 
@@ -118,7 +134,12 @@ class Candidate extends React.Component {
   };
 
   render() {
-    const { candidate, isDelegateModalVisible } = this.state;
+    const {
+      candidate,
+      candidateId,
+      isDelegateModalVisible,
+      isWithdrawModalVisible
+    } = this.state;
 
     if (!candidate) {
       return <Skeleton />;
@@ -128,9 +149,14 @@ class Candidate extends React.Component {
       <Card title="Candidate" extra={this.renderAction()}>
         {this.renderCandidateDetail()}
         <DelegateForm
-          candidate={candidate.args[0]}
+          candidate={candidateId}
           visible={isDelegateModalVisible}
           onClose={this.toggleDelegateModal}
+        />
+        <WithdrawForm
+          candidate={candidateId}
+          visible={isWithdrawModalVisible}
+          onClose={this.toggleWithdrawModal}
         />
       </Card>
     );
