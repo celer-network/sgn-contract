@@ -28,5 +28,5 @@ export const formatCurrencyValue = (value, unit) => {
 };
 
 export const formatCelrValue = value => {
-  return formatCurrencyValue(value, 'CELR');
+  return formatCurrencyValue(value, CELR);
 };

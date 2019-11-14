@@ -14,7 +14,6 @@ export const subscribeEvent = contracts => {
         return;
       }
 
-      console.log(event);
       const { candidate } = event.returnValues;
       Guard.methods.getCandidateInfo.cacheCall(candidate);
     }
