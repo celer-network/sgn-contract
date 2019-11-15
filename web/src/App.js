@@ -54,6 +54,9 @@ class App extends React.Component {
             <Menu.Item key="guard">
               <Link to="/guard">Guard</Link>
             </Menu.Item>
+            <Menu.Item key="reward">
+              <Link to="/reward">Reward</Link>
+            </Menu.Item>
             <Menu.Item className="approve-celr">
               <Button type="primary" block onClick={this.toggleModal}>
                 Approve CELR

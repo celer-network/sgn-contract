@@ -23,6 +23,10 @@ function RouterConfig({ history, app }) {
     app,
     component: () => import('./routes/candidate')
   });
+  const Reward = Dynamic({
+    app,
+    component: () => import('./routes/reward')
+  });
 
   return (
     <DrizzleProvider options={contractOptions} store={app._store}>
@@ -31,6 +35,7 @@ function RouterConfig({ history, app }) {
           <App>
             <Switch>
               <Route exact path="/guard" component={Guard} />
+              <Route exact path="/reward" component={Reward} />
               <Route exact path="/candidate/:id" component={Candidate} />
               <Route exact path="/" render={redirectToHome} />
             </Switch>

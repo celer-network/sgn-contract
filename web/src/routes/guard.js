@@ -7,7 +7,7 @@ import { Button, Card, List, Statistic, Row, Col, Icon } from 'antd';
 
 import CandidateForm from '../components/guard/candidate-form';
 import { CANDIDATE_STATUS } from '../utils/guard';
-import { formatCurrencyValue, CELR } from '../utils/unit';
+import { formatCelrValue } from '../utils/unit';
 
 class Guard extends React.Component {
   constructor(props, context) {
@@ -45,13 +45,13 @@ class Guard extends React.Component {
             <Col span={12}>
               <Statistic
                 title="Min Self Stake"
-                value={formatCurrencyValue(minSelfStake, CELR)}
+                value={formatCelrValue(minSelfStake)}
               />
             </Col>
             <Col span={12}>
               <Statistic
                 title="Staking Pool"
-                value={formatCurrencyValue(stakingPool, CELR)}
+                value={formatCelrValue(stakingPool)}
               />
             </Col>
           </Row>

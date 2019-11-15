@@ -16,7 +16,7 @@ import {
 import DelegateForm from '../components/candidate/delegate-form';
 import WithdrawForm from '../components/candidate/withdraw-form';
 import DelegatorTable from '../components/candidate/delegator-table';
-import { formatCurrencyValue, CELR } from '../utils/unit';
+import { formatCelrValue } from '../utils/unit';
 import { CANDIDATE_STATUS } from '../utils/guard';
 
 class Candidate extends React.Component {
@@ -117,13 +117,13 @@ class Candidate extends React.Component {
         <Col span={12}>
           <Statistic
             title="Min Self Stake"
-            value={formatCurrencyValue(minSelfStake, CELR)}
+            value={formatCelrValue(minSelfStake)}
           />
         </Col>
         <Col span={12}>
           <Statistic
             title="Staking Pool"
-            value={formatCurrencyValue(stakingPool, CELR)}
+            value={formatCelrValue(stakingPool)}
           />
         </Col>
         <Col span={24}>
@@ -172,10 +172,9 @@ Candidate.contextTypes = {
 };
 
 function mapStateToProps(state) {
-  const { accounts, contracts, Guard } = state;
+  const { contracts, Guard } = state;
 
   return {
-    accounts,
     Guard: { ...Guard, ...contracts.Guard }
   };
 }
