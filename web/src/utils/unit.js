@@ -18,6 +18,10 @@ export const getUnitByAddress = (supportedTokens, address) => {
 };
 
 export const formatCurrencyValue = (value, unit) => {
+  if (!value) {
+    return;
+  }
+
   const num = _.toNumber(value);
 
   if (num < 100000) {
