@@ -651,7 +651,6 @@ contract('SGN Guard contract', async accounts => {
           from: addr
         });
       } catch (error) {
-        console.log(error.message);
         assert.isAbove(
           error.message.search('Stake is less than all validators'),
           -1
