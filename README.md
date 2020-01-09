@@ -16,7 +16,7 @@ npm install -g truffle ganache-cli
 </pre> 
 5. Run ganache-cli
 <pre>
-ganache-cli -l 8000000 -a 20
+ganache-cli --gasLimit 8000000 --accounts 20
 </pre>
 6. Use truffle to run tests of sgn-contract contracts. 
 <pre>
