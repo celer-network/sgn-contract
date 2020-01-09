@@ -68,6 +68,8 @@ contract Guard is IGuard {
     mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
+    // used in _checkValidatorSigs(). mapping has to be storage type.
+    mapping (address => bool) private checkedValidators;
     uint totalValidatorStakingPool;
 
     modifier onlyNonZeroAddr(address _addr) {
@@ -501,6 +503,30 @@ contract Guard is IGuard {
         }
     }
 
+    // validators with more than 2/3 total validators' staking pool need to sign this hash
+    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private returns(bool) {
+        uint minQuorumStakingPool = getMinQuorumStakingPool();
+
+        bytes32 hash = _h.toEthSignedMessageHash();
+        address addr;
+        uint quorumStakingPool = 0;
+        for (uint i = 0; i < _sigs.length; i++) {
+            addr = hash.recover(_sigs[i]);
+            if (checkedValidators[addr] || candidateProfiles[addr].status != CandidateStatus.Bonded) {
+                continue;
+            }
+
+            quorumStakingPool = quorumStakingPool.add(candidateProfiles[addr].stakingPool);
+            checkedValidators[addr] = true;
+        }
+
+        for (uint i = 0; i < _sigs.length; i++) {
+            checkedValidators[addr] = false;
+        }
+
+        return quorumStakingPool >= minQuorumStakingPool;
+    }
+
     function _getValidatorIdx(address _addr) private view returns (uint) {
         for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
             if (validatorSet[i] == _addr) {
@@ -509,22 +535,5 @@ contract Guard is IGuard {
         }
 
         revert("No such a validator");
-    }
-
-    // validators with more than 2/3 total validators' staking pool need to sign this hash
-    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private view returns(bool) {
-        uint minQuorumStakingPool = getMinQuorumStakingPool();
-
-        bytes32 hash = _h.toEthSignedMessageHash();
-        address addr;
-        uint quorumStakingPool = 0;
-        for (uint i = 0; i < _sigs.length; i++) {
-            addr = hash.recover(_sigs[i]);
-            if (candidateProfiles[addr].status == CandidateStatus.Bonded) {
-                quorumStakingPool = quorumStakingPool.add(candidateProfiles[addr].stakingPool);
-            }
-        }
-
-        return quorumStakingPool >= minQuorumStakingPool;
     }
 }
