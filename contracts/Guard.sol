@@ -512,7 +512,10 @@ contract Guard is IGuard {
         uint quorumStakingPool = 0;
         for (uint i = 0; i < _sigs.length; i++) {
             addr = hash.recover(_sigs[i]);
-            if (checkedValidators[addr] || candidateProfiles[addr].status != CandidateStatus.Bonded) {
+            if (checkedValidators[addr]) {
+                return false;
+            }
+            if (candidateProfiles[addr].status != CandidateStatus.Bonded) {
                 continue;
             }
 
