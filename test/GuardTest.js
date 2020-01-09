@@ -581,7 +581,85 @@ contract('SGN Guard contract', async accounts => {
     });
   });
 
-  describe('after max number of validators join the validator set', async () => {
+  describe('after multiple number of validators join the validator set', async () => {
+    const VALIDATORS = [
+      accounts[1],
+      accounts[2],
+      accounts[3],
+      accounts[4]
+    ];
+
+    // validators self delegates 2 * max(MIN_SELF_STAKE, MIN_STAKING_POOL)
+    const SELF_STAKE = 2 * Math.max(MIN_SELF_STAKE, MIN_STAKING_POOL);
+
+    beforeEach(async () => {
+      for (let i = 0; i < VALIDATORS.length; i++) {
+        // validators finish initialization
+        const sidechainAddr = sha3(VALIDATORS[i]);
+        await instance.initializeCandidate(MIN_SELF_STAKE, sidechainAddr, {
+          from: VALIDATORS[i]
+        });
+
+        await celerToken.approve(instance.address, SELF_STAKE, {
+          from: VALIDATORS[i]
+        });
+        await instance.delegate(VALIDATORS[i], SELF_STAKE, {
+          from: VALIDATORS[i]
+        });
+
+        // validators claimValidator
+        await instance.claimValidator({
+          from: VALIDATORS[i]
+        });
+      }
+
+      await Timetravel.advanceBlocks(SIDECHAIN_GO_LIVE_TIMEOUT);
+    });
+
+    it('should call punish successfully with sufficient delegation', async () => {
+      const request = await getPenaltyRequestBytes({
+        nonce: 1,
+        expireTime: 1000000,
+        validatorAddr: [VALIDATORS[0]],
+        delegatorAddrs: [VALIDATORS[0]],
+        delegatorAmts: [10],
+        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAmts: [10],
+        signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
+      });
+
+      const tx = await instance.punish(request);
+
+      assert.equal(tx.logs[0].event, 'Punish');
+      assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
+      assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
+      assert.equal(tx.logs[0].args.amount, 10);
+    });
+
+    it('should fail to call punish with duplicate signatures and insufficient delegation', async () => {
+      const request = await getPenaltyRequestBytes({
+        nonce: 1,
+        expireTime: 1000000,
+        validatorAddr: [VALIDATORS[0]],
+        delegatorAddrs: [VALIDATORS[0]],
+        delegatorAmts: [10],
+        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAmts: [10],
+        signers: [VALIDATORS[1], VALIDATORS[1], VALIDATORS[1], VALIDATORS[1]]
+      });
+
+      try {
+        await instance.punish(request);
+      } catch (error) {
+        assert.isAbove(error.message.search('Fail to check validator sigs'), -1);
+        return;
+      }
+
+      assert.fail('should have thrown before');
+    });
+  });
+
+  describe('after max number of validators join the validator set and sidechain goes live', async () => {
     const VALIDATORS = [
       accounts[1],
       accounts[2],
