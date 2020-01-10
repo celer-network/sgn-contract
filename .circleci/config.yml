@@ -39,7 +39,7 @@ jobs:
       - run:
           name: run truffle test
           command: |
-            node_modules/.bin/ganache-cli -l 8000000 -a 20 2> /dev/null 1> /dev/null &
+            node_modules/.bin/ganache-cli --gasLimit 8000000 --accounts 20 2> /dev/null 1> /dev/null &
             GANACHE_PID=$!
             node_modules/.bin/truffle test
             kill -9 $GANACHE_PID
