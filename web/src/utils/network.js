@@ -2,12 +2,12 @@ import { Modal } from 'antd';
 import axios from 'axios';
 
 const MAINNET = '1';
-const ROPSTEN = '3';
+const RINKEBY = '4';
 
 const networkConfigs = {};
 
 const localNetworkConfig = {
-  sgnGateway: 'http://127.0.0.1:1317'
+  sgnGateway: 'http://44.230.157.100:1317'
 };
 
 export const getNetworkConfig = networkID => {
@@ -30,7 +30,7 @@ export const checkNetworkCompatbility = () => {
   }
 
   const networkVersion = window.web3.currentProvider.networkVersion;
-  if (networkVersion !== MAINNET && networkVersion !== ROPSTEN) {
+  if (networkVersion !== MAINNET && networkVersion !== RINKEBY) {
     Modal.error({
       title: 'Current network is not supported',
       content: 'Please switch to mainnet or ropsten'
