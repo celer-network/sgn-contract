@@ -508,23 +508,23 @@ contract Guard is IGuard {
         uint minQuorumStakingPool = getMinQuorumStakingPool();
 
         bytes32 hash = _h.toEthSignedMessageHash();
-        address addr;
+        address[] memory addrs = new address[](_sigs.length);
         uint quorumStakingPool = 0;
         for (uint i = 0; i < _sigs.length; i++) {
-            addr = hash.recover(_sigs[i]);
-            if (checkedValidators[addr]) {
+            addrs[i] = hash.recover(_sigs[i]);
+            if (checkedValidators[addrs[i]]) {
                 return false;
             }
-            if (candidateProfiles[addr].status != CandidateStatus.Bonded) {
+            if (candidateProfiles[addrs[i]].status != CandidateStatus.Bonded) {
                 continue;
             }
 
-            quorumStakingPool = quorumStakingPool.add(candidateProfiles[addr].stakingPool);
-            checkedValidators[addr] = true;
+            quorumStakingPool = quorumStakingPool.add(candidateProfiles[addrs[i]].stakingPool);
+            checkedValidators[addrs[i]] = true;
         }
 
         for (uint i = 0; i < _sigs.length; i++) {
-            checkedValidators[addr] = false;
+            checkedValidators[addrs[i]] = false;
         }
 
         return quorumStakingPool >= minQuorumStakingPool;

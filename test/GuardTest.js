@@ -657,6 +657,44 @@ contract('SGN Guard contract', async accounts => {
 
       assert.fail('should have thrown before');
     });
+
+    it('should call punish twice successfully with the same group of signers', async () => {
+      let request = await getPenaltyRequestBytes({
+        nonce: 1,
+        expireTime: 1000000,
+        validatorAddr: [VALIDATORS[0]],
+        delegatorAddrs: [VALIDATORS[0]],
+        delegatorAmts: [10],
+        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAmts: [10],
+        signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
+      });
+
+      let tx = await instance.punish(request);
+
+      assert.equal(tx.logs[0].event, 'Punish');
+      assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
+      assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
+      assert.equal(tx.logs[0].args.amount, 10);
+
+      request = await getPenaltyRequestBytes({
+        nonce: 2,
+        expireTime: 1000000,
+        validatorAddr: [VALIDATORS[0]],
+        delegatorAddrs: [VALIDATORS[0]],
+        delegatorAmts: [10],
+        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAmts: [10],
+        signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
+      });
+
+      tx = await instance.punish(request);
+
+      assert.equal(tx.logs[0].event, 'Punish');
+      assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
+      assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
+      assert.equal(tx.logs[0].args.amount, 10);
+    });
   });
 
   describe('after max number of validators join the validator set and sidechain goes live', async () => {
