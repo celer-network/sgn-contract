@@ -155,7 +155,7 @@ contract Guard is IGuard {
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, "Candidate is not initialized");
         // TODO: decide whether Unbonding status is valid to claimValidator or not
-        require(candidate.status == CandidateStatus.Unbonded);
+        require(candidate.status == CandidateStatus.Unbonded || candidate.status == CandidateStatus.Unbonding);
         require(candidate.stakingPool >= minStakeInPool, "Insufficient staking pool");
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
