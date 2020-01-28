@@ -48,12 +48,11 @@ contract Guard is IGuard {
         uint unbondTime;
     }
 
-    uint public constant VALIDATOR_SET_MAX_SIZE = 11;
-
     IERC20 public celerToken;
     // timeout to blame (claim responsibility of) undelegating delegators or unbonding validators
     uint public blameTimeout;
     uint public minValidatorNum;
+    uint public maxValidatorNum;
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
     uint public sidechainGoLiveTime;
@@ -64,7 +63,7 @@ contract Guard is IGuard {
     mapping (address => uint) public redeemedServiceReward;
     uint public miningPool;
     mapping (address => uint) public redeemedMiningReward;
-    address[VALIDATOR_SET_MAX_SIZE] public validatorSet;
+    mapping (uint => address) public validatorSet;
     mapping (uint => bool) public usedPenaltyNonce;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
@@ -89,7 +88,8 @@ contract Guard is IGuard {
         uint _blameTimeout,
         uint _minValidatorNum,
         uint _minStakeInPool,
-        uint _sidechainGoLiveTimeout
+        uint _sidechainGoLiveTimeout,
+        uint _maxValidatorNum
     )
         public
     {
@@ -98,6 +98,7 @@ contract Guard is IGuard {
         minValidatorNum = _minValidatorNum;
         minStakeInPool = _minStakeInPool;
         sidechainGoLiveTime = block.number.add(_sidechainGoLiveTimeout);
+        maxValidatorNum = _maxValidatorNum;
     }
 
     function contributeToMiningPool(uint _amount) public {
@@ -165,7 +166,7 @@ contract Guard is IGuard {
         uint minStakingPoolIndex = 0;
         uint minStakingPool = candidateProfiles[validatorSet[0]].stakingPool;
         require(validatorSet[0] != msgSender, "Already in validator set");
-        for (uint i = 1; i < VALIDATOR_SET_MAX_SIZE; i++) {
+        for (uint i = 1; i < maxValidatorNum; i++) {
             require(validatorSet[i] != msgSender, "Already in validator set");
             if (candidateProfiles[validatorSet[i]].stakingPool < minStakingPool) {
                 minStakingPoolIndex = i;
@@ -370,7 +371,7 @@ contract Guard is IGuard {
 
     function getValidatorNum() public view returns (uint) {
         uint num = 0;
-        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+        for (uint i = 0; i < maxValidatorNum; i++) {
             if (validatorSet[i] != address(0)) {
                 num++;
             }
@@ -381,7 +382,7 @@ contract Guard is IGuard {
     function getMinStakingPool() public view returns (uint) {
         uint minStakingPool = 0;
         uint i = 0;
-        for (; i < VALIDATOR_SET_MAX_SIZE; i++) {
+        for (; i < maxValidatorNum; i++) {
             if (validatorSet[i] == address(0)) {
                 continue;
             }
@@ -390,7 +391,7 @@ contract Guard is IGuard {
             break;
         }
 
-        for (i++; i < VALIDATOR_SET_MAX_SIZE; i++) {
+        for (i++; i < maxValidatorNum; i++) {
             if (candidateProfiles[validatorSet[i]].stakingPool < minStakingPool) {
                 minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
             }
@@ -531,7 +532,7 @@ contract Guard is IGuard {
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
-        for (uint i = 0; i < VALIDATOR_SET_MAX_SIZE; i++) {
+        for (uint i = 0; i < maxValidatorNum; i++) {
             if (validatorSet[i] == _addr) {
                 return i;
             }
