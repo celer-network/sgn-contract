@@ -32,6 +32,7 @@ contract('SGN Guard contract', async accounts => {
   const CANDIDATE_WITHDRAW_UNDER_MIN = 30;
   const SUBSCRIBER = accounts[2];
   const SUB_FEE = 100;
+  const MAX_VALIDATOR_NUM = 11;
 
   let celerToken;
   let instance;
@@ -52,7 +53,8 @@ contract('SGN Guard contract', async accounts => {
       BLAME_TIMEOUT,
       MIN_VALIDATOR_NUM,
       MIN_STAKING_POOL,
-      SIDECHAIN_GO_LIVE_TIMEOUT
+      SIDECHAIN_GO_LIVE_TIMEOUT,
+      MAX_VALIDATOR_NUM
     );
 
     // give enough money to other accounts

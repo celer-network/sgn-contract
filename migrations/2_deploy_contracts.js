@@ -1,7 +1,7 @@
 const ERC20ExampleToken = artifacts.require('ERC20ExampleToken');
 const Guard = artifacts.require('Guard');
 
-module.exports = function(deployer, network, accounts) {
+module.exports = function (deployer, network, accounts) {
   return deployer
     .deploy(ERC20ExampleToken)
     .then(() => {
@@ -12,6 +12,6 @@ module.exports = function(deployer, network, accounts) {
         token.transfer(accounts[1], '100000000000000000000000');
       }
 
-      return deployer.deploy(Guard, ERC20ExampleToken.address, 0, 0, 0, 0);
+      return deployer.deploy(Guard, ERC20ExampleToken.address, 0, 0, 0, 0, 11);
     });
 };
