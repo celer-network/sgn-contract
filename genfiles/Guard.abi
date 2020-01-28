@@ -35,20 +35,6 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "VALIDATOR_SET_MAX_SIZE",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
     "name": "miningPool",
     "outputs": [
       {
@@ -207,6 +193,20 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "maxValidatorNum",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "name": "_celerTokenAddress",
@@ -226,6 +226,10 @@
       },
       {
         "name": "_sidechainGoLiveTimeout",
+        "type": "uint256"
+      },
+      {
+        "name": "_maxValidatorNum",
         "type": "uint256"
       }
     ],
