@@ -1,11 +1,13 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
+import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
 import { withRouter, Link } from 'dva/router';
 import { Card, Layout, Menu, Button } from 'antd';
 import { AccountData } from 'drizzle-react-components';
 
 import ApproveCELRForm from './components/approve-celr';
+import AccountInfo from './components/account-info';
 import { subscribeEvent, subscribeChainInfo } from './utils/subscribe';
 import { getNetworkConfig } from './utils/network';
 
@@ -23,8 +25,8 @@ class App extends React.Component {
   }
 
   componentWillMount() {
-    const { dispatch } = this.props;
-    subscribeEvent(this.contracts);
+    const { accounts, dispatch } = this.props;
+    subscribeEvent(accounts[0], this.contracts);
     subscribeChainInfo(this.web3, dispatch);
 
     dispatch({
@@ -41,15 +43,14 @@ class App extends React.Component {
 
   render() {
     const { isModalVisible } = this.state;
-    const { children, location } = this.props;
+    const { children, location, CELRToken } = this.props;
     const { pathname } = location;
+    const celerAllowance = _.values(CELRToken.allowance)[0] || {};
 
     return (
       <Layout>
         <Sider>
-          <Card className="account-data" title="Account info">
-            <AccountData accountIndex={0} units={'ether'} />
-          </Card>
+          <AccountInfo celrValue={celerAllowance.value} />
           <Menu theme="dark" mode="inline" selectedKeys={[pathname.slice(1)]}>
             <Menu.Item key="guard">
               <Link to="/guard">Guard</Link>
@@ -91,10 +92,12 @@ App.contextTypes = {
 };
 
 function mapStateToProps(state) {
-  const { accounts } = state;
+  const { accounts, contracts } = state;
 
+  console.log(contracts);
   return {
-    accounts
+    accounts,
+    CELRToken: contracts.CELRToken
   };
 }
 
