@@ -1,5 +1,5 @@
 import Guard from './../contracts/Guard.json';
-import ERC20 from './../contracts/ERC20ExampleToken.json';
+import CELRToken from './../contracts/CELRToken.json';
 
 // let drizzle know what contracts we want
 const contractOptions = {
@@ -10,7 +10,7 @@ const contractOptions = {
       url: 'ws://localhost:8545'
     }
   },
-  contracts: [Guard, ERC20],
+  contracts: [Guard, CELRToken],
   polls: {
     accounts: 1000,
     blocks: 1000

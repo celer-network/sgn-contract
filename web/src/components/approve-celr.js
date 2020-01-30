@@ -24,7 +24,7 @@ class ApproveCelrForm extends React.Component {
 
       const { value } = values;
 
-      this.contracts.ERC20ExampleToken.methods
+      this.contracts.CELRToken.methods
         .approve(
           this.contracts.Guard.address,
           web3.utils.toWei(value.toString(), 'ether')
