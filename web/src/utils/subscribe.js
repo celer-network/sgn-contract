@@ -1,8 +1,7 @@
 const POLL_INTERVAL = 1000;
 
-export const subscribeEvent = contracts => {
-  const { Guard } = contracts;
-  console.log(Guard);
+export const subscribeEvent = (account, contracts) => {
+  const { Guard, CELRToken } = contracts;
 
   Guard.events.InitializeCandidate(
     {
@@ -18,6 +17,24 @@ export const subscribeEvent = contracts => {
       Guard.methods.getCandidateInfo.cacheCall(candidate);
     }
   );
+
+  CELRToken.events.Approval(
+    {
+      filter: {
+        owner: account,
+        spender: Guard.address
+      }
+    },
+    (err, event) => {
+      if (err) {
+        return;
+      }
+
+      getCelrAllowance(account, contracts);
+    }
+  );
+
+  getCelrAllowance(account, contracts);
 };
 
 export const subscribeChainInfo = (web3, dispatch) => {
@@ -39,4 +56,9 @@ export const subscribeChainInfo = (web3, dispatch) => {
       }
     });
   }, POLL_INTERVAL);
+};
+
+const getCelrAllowance = (account, contracts) => {
+  const { CELRToken, Guard } = contracts;
+  CELRToken.methods.allowance.cacheCall(account, Guard.address);
 };
