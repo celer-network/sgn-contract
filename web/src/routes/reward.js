@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
-import { Skeleton, Card, Statistic, Row, Col, Button } from 'antd';
+import { Skeleton, Card, Statistic, Row, Col, Button, message } from 'antd';
 
 import { formatCelrValue } from '../utils/unit';
 
@@ -28,9 +28,15 @@ class Reward extends React.Component {
   indendWithdraw = () => {
     const { accounts, network } = this.props;
 
-    network.axiosInstance.post('/validator/withdrawReward', {
-      ethAddr: accounts[0]
-    });
+    network.axiosInstance
+      .post('/validator/withdrawReward', {
+        ethAddr: accounts[0]
+      })
+      .then(() => {
+        message.success(
+          'Success! Please wait a few seconds to trigger redeem.'
+        );
+      });
   };
 
   redeemReward = () => {
@@ -39,7 +45,9 @@ class Reward extends React.Component {
     network.axiosInstance
       .get(`/validator/rewardRequest/${accounts[0]}`)
       .then(res => {
-        this.contracts.Guard.methods.redeemReward.cacheSend(res.data.result);
+        this.contracts.Guard.methods.redeemReward.cacheSend(
+          '0x' + res.data.result
+        );
       });
   };
 
@@ -56,7 +64,7 @@ class Reward extends React.Component {
 
   render() {
     const { Guard } = this.props;
-    const { cumulativeMiningReward, cumulativeServiceReward } = this.state;
+    const { miningReward, serviceReward } = this.state;
     const { redeemedServiceReward, redeemedMiningReward } = Guard;
 
     if (_.isEmpty(redeemedServiceReward) || _.isEmpty(redeemedMiningReward)) {
@@ -69,25 +77,25 @@ class Reward extends React.Component {
           <Col span={12}>
             <Statistic
               title="Cumulative Mining Reward"
-              value={formatCelrValue(cumulativeMiningReward)}
+              value={formatCelrValue(miningReward)}
             />
           </Col>
           <Col span={12}>
             <Statistic
               title="Cumulative Service Reward"
-              value={formatCelrValue(cumulativeServiceReward)}
-            />
-          </Col>
-          <Col span={12}>
-            <Statistic
-              title="Redeemed Service Reward"
-              value={formatCelrValue(_.values(redeemedServiceReward)[0].value)}
+              value={formatCelrValue(serviceReward)}
             />
           </Col>
           <Col span={12}>
             <Statistic
               title="Redeemed Mining Reward"
               value={formatCelrValue(_.values(redeemedMiningReward)[0].value)}
+            />
+          </Col>
+          <Col span={12}>
+            <Statistic
+              title="Redeemed Service Reward"
+              value={formatCelrValue(_.values(redeemedServiceReward)[0].value)}
             />
           </Col>
         </Row>

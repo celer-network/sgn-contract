@@ -94,7 +94,6 @@ App.contextTypes = {
 function mapStateToProps(state) {
   const { accounts, contracts } = state;
 
-  console.log(contracts);
   return {
     accounts,
     CELRToken: contracts.CELRToken
