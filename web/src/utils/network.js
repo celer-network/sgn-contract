@@ -7,7 +7,7 @@ const RINKEBY = '4';
 const networkConfigs = {};
 
 const localNetworkConfig = {
-  sgnGateway: 'http://44.230.157.100:1317'
+  sgnGateway: 'http://127.0.0.1:1317'
 };
 
 export const getNetworkConfig = networkID => {

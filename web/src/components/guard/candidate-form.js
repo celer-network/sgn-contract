@@ -24,7 +24,11 @@ class AuctionForm extends React.Component {
         return;
       }
 
-      const { minSelfStake = 0, sidechainAddr } = values;
+      let { minSelfStake = 0, sidechainAddr } = values;
+      if (!sidechainAddr.startsWith('0x')) {
+        sidechainAddr = '0x' + sidechainAddr;
+      }
+
       this.contracts.Guard.methods.initializeCandidate.cacheSend(
         web3.utils.toWei(minSelfStake.toString(), 'ether'),
         sidechainAddr
