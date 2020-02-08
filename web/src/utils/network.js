@@ -1,25 +1,17 @@
 import { Modal } from 'antd';
-import axios from 'axios';
 
 const MAINNET = '1';
 const RINKEBY = '4';
 
 const networkConfigs = {};
 
-const localNetworkConfig = {
-  sgnGateway: 'http://127.0.0.1:1317'
-};
+const localNetworkConfig = {};
 
 export const getNetworkConfig = networkID => {
   let networkConfig = localNetworkConfig;
   if (networkConfigs[networkID]) {
     networkConfig = networkConfigs[networkID];
   }
-
-  networkConfig.axiosInstance = axios.create({
-    baseURL: networkConfig.sgnGateway,
-    timeout: 1000
-  });
 
   return networkConfig;
 };

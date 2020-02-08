@@ -2,35 +2,59 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
-import { Skeleton, Card, Statistic, Row, Col, Button, message } from 'antd';
+import {
+  Skeleton,
+  Card,
+  Statistic,
+  Row,
+  Col,
+  Button,
+  Input,
+  message
+} from 'antd';
+import axios from 'axios';
 
 import { formatCelrValue } from '../utils/unit';
+
+const GATEWAY_KEY = 'gateway';
 
 class Reward extends React.Component {
   constructor(props, context) {
     super(props);
 
-    const { accounts, network } = props;
-    const currentUser = accounts[0];
+    const { accounts } = props;
+    this.currentUser = accounts[0];
     this.contracts = context.drizzle.contracts;
     this.state = {};
 
-    this.contracts.Guard.methods.redeemedServiceReward.cacheCall(currentUser);
-    this.contracts.Guard.methods.redeemedMiningReward.cacheCall(currentUser);
+    this.contracts.Guard.methods.redeemedServiceReward.cacheCall(
+      this.currentUser
+    );
+    this.contracts.Guard.methods.redeemedMiningReward.cacheCall(
+      this.currentUser
+    );
 
-    network.axiosInstance.get(`/validator/reward/${currentUser}`).then(res => {
+    this.setGateway(localStorage.getItem(GATEWAY_KEY));
+  }
+
+  setGateway = value => {
+    localStorage.setItem(GATEWAY_KEY, value);
+    this.gateway = axios.create({
+      baseURL: value,
+      timeout: 1000
+    });
+
+    this.gateway.get(`/validator/reward/${this.currentUser}`).then(res => {
       this.setState({
         ...res.data.result
       });
     });
-  }
+  };
 
   indendWithdraw = () => {
-    const { accounts, network } = this.props;
-
-    network.axiosInstance
+    this.gateway
       .post('/validator/withdrawReward', {
-        ethAddr: accounts[0]
+        ethAddr: this.currentUser
       })
       .then(() => {
         message.success(
@@ -40,15 +64,25 @@ class Reward extends React.Component {
   };
 
   redeemReward = () => {
-    const { accounts, network } = this.props;
-
-    network.axiosInstance
-      .get(`/validator/rewardRequest/${accounts[0]}`)
+    this.gateway
+      .get(`/validator/rewardRequest/${this.currentUser}`)
       .then(res => {
         this.contracts.Guard.methods.redeemReward.cacheSend(
           '0x' + res.data.result
         );
       });
+  };
+
+  renderGateway = () => {
+    return (
+      <Input.Search
+        defaultValue={this.gateway.defaults.baseURL}
+        placeholder="Gateway url"
+        enterButton="Save"
+        onSearch={this.setGateway}
+        style={{ width: 500 }}
+      />
+    );
   };
 
   renderActions = () => {
@@ -72,7 +106,11 @@ class Reward extends React.Component {
     }
 
     return (
-      <Card title="Reward" actions={this.renderActions()}>
+      <Card
+        title="Reward"
+        actions={this.renderActions()}
+        extra={this.renderGateway()}
+      >
         <Row style={{ marginTop: '10px' }}>
           <Col span={12}>
             <Statistic
