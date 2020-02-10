@@ -88,7 +88,7 @@ class Reward extends React.Component {
   renderActions = () => {
     return [
       <Button type="primary" onClick={this.indendWithdraw}>
-        Intend Redeem
+        Initialize Redeem
       </Button>,
       <Button type="primary" onClick={this.redeemReward}>
         Redeem Reward
