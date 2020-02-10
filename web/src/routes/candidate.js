@@ -87,7 +87,7 @@ class Candidate extends React.Component {
       <Menu>
         <Menu.Item onClick={this.toggleDelegateModal}>Delegate</Menu.Item>
         <Menu.Item onClick={this.toggleWithdrawModal}>
-          Intend Withdraw
+          Initialize Withdraw
         </Menu.Item>
         <Menu.Item onClick={this.confirmWithdraw}>Confirm Withdraw</Menu.Item>
       </Menu>
