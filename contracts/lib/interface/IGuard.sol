@@ -40,6 +40,8 @@ interface IGuard {
 
     function getMinQuorumStakingPool() external view returns(uint);
 
+    function getTotalValidatorStakingPool() external view returns(uint);
+
     // events
     event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);
 
