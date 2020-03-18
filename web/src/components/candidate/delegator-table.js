@@ -54,12 +54,16 @@ class DelegatorTable extends React.Component {
   render() {
     const { delegators } = this.props;
 
-    const dataSource = delegators.map(delegator => ({
-      ...delegator.value,
-      delegator: delegator.args[0],
-      delegatedStake: formatCelrValue(delegator.value.delegatedStake),
-      undelegatingStake: formatCelrValue(delegator.value.undelegatingStake)
-    }));
+    const dataSource = delegators
+      .sort((delegator0, delegator1) => {
+        return delegator0.args[1] > delegator1.args[1];
+      })
+      .map(delegator => ({
+        ...delegator.value,
+        delegator: delegator.args[1],
+        delegatedStake: formatCelrValue(delegator.value.delegatedStake),
+        undelegatingStake: formatCelrValue(delegator.value.undelegatingStake)
+      }));
 
     return (
       <Table
