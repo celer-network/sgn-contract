@@ -441,12 +441,16 @@ contract Guard is IGuard {
     }
 
     function getMinQuorumStakingPool() public view returns(uint) {
+        return getTotalValidatorStakingPool().mul(2).div(3).add(1);
+    }
+
+    function getTotalValidatorStakingPool() public view returns(uint) {
         uint totalValidatorStakingPool = 0;
         for (uint i = 0; i < maxValidatorNum; i++) {
             totalValidatorStakingPool = totalValidatorStakingPool.add(candidateProfiles[validatorSet[i]].stakingPool);
         }
 
-        return totalValidatorStakingPool.mul(2).div(3).add(1);
+        return totalValidatorStakingPool;
     }
 
     function _updateDelegatedStake(
