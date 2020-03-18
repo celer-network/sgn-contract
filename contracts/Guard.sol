@@ -69,7 +69,6 @@ contract Guard is IGuard {
     mapping (address => ValidatorCandidate) private candidateProfiles;
     // used in _checkValidatorSigs(). mapping has to be storage type.
     mapping (address => bool) private checkedValidators;
-    uint totalValidatorStakingPool;
 
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
@@ -442,6 +441,11 @@ contract Guard is IGuard {
     }
 
     function getMinQuorumStakingPool() public view returns(uint) {
+        uint totalValidatorStakingPool = 0;
+        for (uint i = 0; i < maxValidatorNum; i++) {
+            totalValidatorStakingPool = totalValidatorStakingPool.add(candidateProfiles[validatorSet[i]].stakingPool);
+        }
+
         return totalValidatorStakingPool.mul(2).div(3).add(1);
     }
 
@@ -472,7 +476,6 @@ contract Guard is IGuard {
         validatorSet[_setIndex] = _validatorAddr;
         candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
         delete candidateProfiles[_validatorAddr].unbondTime;
-        totalValidatorStakingPool = totalValidatorStakingPool.add(candidateProfiles[_validatorAddr].stakingPool);
         emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
     }
 
@@ -485,7 +488,6 @@ contract Guard is IGuard {
         delete validatorSet[_setIndex];
         candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
         candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
-        totalValidatorStakingPool = totalValidatorStakingPool.sub(candidateProfiles[removedValidator].stakingPool);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
