@@ -41,9 +41,10 @@ class Candidate extends React.Component {
         }
 
         const { delegator, candidate } = event.returnValues;
+
         this.contracts.Guard.methods.getDelegatorInfo.cacheCall(
-          delegator,
-          candidate
+          candidate,
+          delegator
         );
       }
     );
@@ -58,7 +59,7 @@ class Candidate extends React.Component {
       candidate => candidate.args[0] === candidateId
     );
     const delegators = _.values(Guard.getDelegatorInfo).filter(
-      delegator => delegator.args[1] === candidateId
+      delegator => delegator.args[0] === candidateId
     );
 
     return { candidate, candidateId, delegators };

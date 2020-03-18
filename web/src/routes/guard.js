@@ -62,7 +62,11 @@ class Guard extends React.Component {
 
   renderCandidates = () => {
     const { Guard } = this.props;
-    const data = _.values(Guard.getCandidateInfo);
+    const data = _.values(Guard.getCandidateInfo).sort(
+      (candidate0, candidate1) => {
+        return candidate0.args[0] > candidate1.args[0];
+      }
+    );
 
     return (
       <List
