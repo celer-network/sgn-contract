@@ -10,12 +10,14 @@ import {
   Col,
   Menu,
   Dropdown,
-  Icon
+  Icon,
+  Tabs
 } from 'antd';
 
 import DelegateForm from '../components/candidate/delegate-form';
 import WithdrawForm from '../components/candidate/withdraw-form';
 import DelegatorTable from '../components/candidate/delegator-table';
+import PunishTable from '../components/candidate/punish-table';
 import { formatCelrValue } from '../utils/unit';
 import { CANDIDATE_STATUS } from '../utils/guard';
 
@@ -26,6 +28,7 @@ class Candidate extends React.Component {
     this.contracts = context.drizzle.contracts;
     this.state = {
       candidate: null,
+      punishes: [],
       isDelegateModalVisible: false,
       isWithdrawModalVisible: false
     };
@@ -46,6 +49,22 @@ class Candidate extends React.Component {
           candidate,
           delegator
         );
+      }
+    );
+
+    this.contracts.Guard.events.Punish(
+      {
+        fromBlock: 0,
+        filter: { validator: props.match.params.id }
+      },
+      (err, event) => {
+        if (err) {
+          return;
+        }
+
+        this.setState({
+          punishes: [...this.state.punishes, event.returnValues]
+        });
       }
     );
   }
@@ -104,7 +123,7 @@ class Candidate extends React.Component {
   };
 
   renderCandidateDetail = () => {
-    const { candidate, delegators } = this.state;
+    const { candidate, delegators, punishes } = this.state;
     const { minSelfStake, stakingPool, status } = candidate.value;
 
     return (
@@ -128,7 +147,14 @@ class Candidate extends React.Component {
           />
         </Col>
         <Col span={24}>
-          <DelegatorTable delegators={delegators} />
+          <Tabs>
+            <Tabs.TabPane tab="Delegators" key="delegators">
+              <DelegatorTable delegators={delegators} />
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Punishes" key="punishes">
+              <PunishTable punishes={punishes} />
+            </Tabs.TabPane>
+          </Tabs>
         </Col>
       </Row>
     );
