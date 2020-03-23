@@ -53,8 +53,8 @@ class DelegatorTable extends React.Component {
 
   render() {
     const { delegators } = this.props;
-
     const dataSource = delegators
+      .filter(delegator => delegator.value)
       .sort((delegator0, delegator1) => {
         return delegator0.args[1] > delegator1.args[1];
       })
