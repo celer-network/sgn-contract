@@ -476,10 +476,12 @@ contract DPoS is IDPoS, Ownable {
         bytes32 hash = _h.toEthSignedMessageHash();
         address[] memory addrs = new address[](_sigs.length);
         uint quorumStakingPool = 0;
+        bool hasDuplicatedSig = false;
         for (uint i = 0; i < _sigs.length; i++) {
             addrs[i] = hash.recover(_sigs[i]);
             if (checkedValidators[addrs[i]]) {
-                return false;
+                hasDuplicatedSig = true;
+                break;
             }
             if (candidateProfiles[addrs[i]].status != DPoSCommon.CandidateStatus.Bonded) {
                 continue;
@@ -493,7 +495,7 @@ contract DPoS is IDPoS, Ownable {
             checkedValidators[addrs[i]] = false;
         }
 
-        return quorumStakingPool >= minQuorumStakingPool;
+        return !hasDuplicatedSig && quorumStakingPool >= minQuorumStakingPool;
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
