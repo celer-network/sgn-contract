@@ -1,4 +1,3 @@
-pragma experimental ABIEncoderV2;
 pragma solidity ^0.5.0;
 
 interface IDPoS {

@@ -49,8 +49,6 @@ contract SGN is ISGN {
             status == uint(DPoSCommon.CandidateStatus.Unbonded),
             "msg.sender is not unbonded"
         );
-        // bool initialized;
-        // (bool initialized, , , , ) = DPoSContract.getCandidateInfo(msgSender);
         require(initialized, "Candidate is not initialized");
 
         bytes memory oldSidechainAddr = sidechainAddrMap[msgSender];
