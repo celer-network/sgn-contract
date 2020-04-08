@@ -1,3 +1,4 @@
+pragma experimental ABIEncoderV2;
 pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -7,6 +8,7 @@ import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./lib/interface/IDPoS.sol";
 import "./lib/data/PbSgn.sol";
+import "./lib/DPoSCommon.sol";
 
 // Ownable is only used to add the whitelist of sidechain addresses
 // Ownable should be removed after enabling governance module
@@ -16,14 +18,6 @@ contract DPoS is IDPoS, Ownable {
     using ECDSA for bytes32;
 
     enum MathOperation { Add, Sub }
-
-    // Unbonded: not a validator and not responsible for previous validator behaviors if any.
-    //   Delegators now are free to withdraw stakes (directly).
-    // Bonded: active validator. Delegators has to wait for blameTimeout to withdraw stakes.
-    // Unbonding: transitional status from Bonded to Unbonded. Candidate has lost the right of
-    //   validator but is still responsible for any misbehavors done during being validator.
-    //   Delegators should wait until candidate's unbondTime to freely withdraw stakes.
-    enum CandidateStatus { Unbonded, Bonded, Unbonding }
 
     struct WithdrawIntent {
         uint amount;
@@ -46,7 +40,7 @@ contract DPoS is IDPoS, Ownable {
         // delegatedStake sum of all delegators to this candidate
         uint stakingPool;
         mapping (address => Delegator) delegatorProfiles;
-        CandidateStatus status;
+        DPoSCommon.CandidateStatus status;
         uint unbondTime;
     }
 
@@ -62,11 +56,14 @@ contract DPoS is IDPoS, Ownable {
     uint public minStakeInPool;
     mapping (uint => address) public validatorSet;
     mapping (uint => bool) public usedPenaltyNonce;
-    // used in _checkValidatorSigs(). mapping has to be storage type.
+    // used in checkValidatorSigs(). mapping has to be storage type.
     mapping (address => bool) public checkedValidators;
     mapping (address => bool) public registeredSidechains;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
+
+    uint public miningPool;
+    mapping (address => uint) public redeemedMiningReward;
 
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
@@ -75,13 +72,13 @@ contract DPoS is IDPoS, Ownable {
 
     // check this before DPoS's operation
     modifier onlyValidDPoS() {
-        require(block.number >= dposGoLiveTime, "Sidechain is not live");
-        require(getValidatorNum() >= minValidatorNum, "Too few validators");
+        require(isValidDPoS(), "DPoS is not valid");
         _;
     }
 
     modifier onlyRegisteredSidechains() {
         require(registeredSidechains[msg.sender]);
+        _;
     }
 
     constructor(
@@ -102,8 +99,26 @@ contract DPoS is IDPoS, Ownable {
         maxValidatorNum = _maxValidatorNum;
     }
 
+    function contributeToMiningPool(uint _amount) public {
+        address msgSender = msg.sender;
+        miningPool = miningPool.add(_amount);
+        celerToken.safeTransferFrom(msgSender, address(this), _amount);
+
+        emit MiningPoolContribution(msgSender, _amount, miningPool);
+    }
+
+    function redeemMiningReward(address _receiver, uint _cumulativeReward) public onlyRegisteredSidechains {
+        uint newReward = _cumulativeReward.sub(redeemedMiningReward[_receiver]);
+        redeemedMiningReward[_receiver] = _cumulativeReward;
+
+        miningPool = miningPool.sub(newReward);
+        celerToken.safeTransfer(_receiver, newReward);
+
+        emit RedeemMiningReward(_receiver, newReward, miningPool);
+    }
+
     // TODO: remove onlyOwner after using governance
-    function registerSidechain(address _addr) onlyOwner {
+    function registerSidechain(address _addr) external onlyOwner {
         registeredSidechains[_addr] = true;
     }
 
@@ -138,7 +153,7 @@ contract DPoS is IDPoS, Ownable {
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, "Candidate is not initialized");
         // TODO: decide whether Unbonding status is valid to claimValidator or not
-        require(candidate.status == CandidateStatus.Unbonded || candidate.status == CandidateStatus.Unbonding);
+        require(candidate.status == DPoSCommon.CandidateStatus.Unbonded || candidate.status == DPoSCommon.CandidateStatus.Unbonding);
         require(candidate.stakingPool >= minStakeInPool, "Insufficient staking pool");
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
@@ -166,10 +181,10 @@ contract DPoS is IDPoS, Ownable {
 
     function confirmUnbondedCandidate(address _candidateAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
-        require(candidate.status == CandidateStatus.Unbonding);
+        require(candidate.status == DPoSCommon.CandidateStatus.Unbonding);
         require(block.number >= candidate.unbondTime);
 
-        candidate.status = CandidateStatus.Unbonded;
+        candidate.status = DPoSCommon.CandidateStatus.Unbonded;
         delete candidate.unbondTime;
         emit CandidateUnbonded(_candidateAddr);
     }
@@ -183,7 +198,7 @@ contract DPoS is IDPoS, Ownable {
         onlyNonZeroAddr(_candidateAddr)
     {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
-        require(candidate.status == CandidateStatus.Unbonded);
+        require(candidate.status == DPoSCommon.CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
@@ -227,7 +242,7 @@ contract DPoS is IDPoS, Ownable {
 
         uint bn = block.number;
         uint i;
-        bool isUnbonded = candidateProfiles[_candidateAddr].status == CandidateStatus.Unbonded;
+        bool isUnbonded = candidateProfiles[_candidateAddr].status == DPoSCommon.CandidateStatus.Unbonded;
         // for all undelegated withdraw intents
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];
@@ -264,7 +279,7 @@ contract DPoS is IDPoS, Ownable {
 
         bytes32 h = keccak256(penaltyRequest.penalty);
         require(
-            _checkValidatorSigs(h, penaltyRequest.sigs),
+            checkValidatorSigs(h, penaltyRequest.sigs),
             "Fail to check validator sigs"
         );
         require(!usedPenaltyNonce[penalty.nonce], "Used penalty nonce");
@@ -307,8 +322,12 @@ contract DPoS is IDPoS, Ownable {
         require(totalSubAmt == totalAddAmt, "Amount doesn't match");
     }
 
+    function isValidDPoS() public view returns (bool) {
+        return block.number >= dposGoLiveTime && getValidatorNum() >= minValidatorNum;
+    }
+
     function isValidator(address _addr) public view returns (bool) {
-        return candidateProfiles[_addr].status == CandidateStatus.Bonded;
+        return candidateProfiles[_addr].status == DPoSCommon.CandidateStatus.Bonded;
     }
 
     function getValidatorNum() public view returns (uint) {
@@ -419,7 +438,7 @@ contract DPoS is IDPoS, Ownable {
         require(validatorSet[_setIndex] == address(0));
 
         validatorSet[_setIndex] = _validatorAddr;
-        candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
+        candidateProfiles[_validatorAddr].status = DPoSCommon.CandidateStatus.Bonded;
         delete candidateProfiles[_validatorAddr].unbondTime;
         emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
     }
@@ -431,14 +450,14 @@ contract DPoS is IDPoS, Ownable {
         }
 
         delete validatorSet[_setIndex];
-        candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
+        candidateProfiles[removedValidator].status = DPoSCommon.CandidateStatus.Unbonding;
         candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
     function _validateValidator(address _validatorAddr) private {
         ValidatorCandidate storage v = candidateProfiles[_validatorAddr];
-        if (v.status != CandidateStatus.Bonded) {
+        if (v.status != DPoSCommon.CandidateStatus.Bonded) {
             // no need to validate the stake of a non-validator
             return;
         }
@@ -452,7 +471,7 @@ contract DPoS is IDPoS, Ownable {
     }
 
     // validators with more than 2/3 total validators' staking pool need to sign this hash
-    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private returns(bool) {
+    function checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) public onlyRegisteredSidechains returns(bool) {
         uint minQuorumStakingPool = getMinQuorumStakingPool();
 
         bytes32 hash = _h.toEthSignedMessageHash();
@@ -463,7 +482,7 @@ contract DPoS is IDPoS, Ownable {
             if (checkedValidators[addrs[i]]) {
                 return false;
             }
-            if (candidateProfiles[addrs[i]].status != CandidateStatus.Bonded) {
+            if (candidateProfiles[addrs[i]].status != DPoSCommon.CandidateStatus.Bonded) {
                 continue;
             }
 

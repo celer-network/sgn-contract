@@ -7,6 +7,7 @@ import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./lib/interface/ISGN.sol";
 import "./lib/interface/IDPoS.sol";
 import "./lib/data/PbSgn.sol";
+import "./lib/DPoSCommon.sol";
 
 contract SGN is ISGN {
     using SafeMath for uint;
@@ -18,12 +19,10 @@ contract SGN is ISGN {
     }
 
     IERC20 public celerToken;
-    address public DPoSContract;
+    IDPoS public DPoSContract;
     mapping (address => uint) public subscriptionDeposits;
     uint public servicePool;
     mapping (address => uint) public redeemedServiceReward;
-    uint public miningPool;
-    mapping (address => uint) public redeemedMiningReward;
     mapping (address => bytes) public sidechainAddrMap;
 
     modifier onlyNonZeroAddr(address _addr) {
@@ -33,38 +32,26 @@ contract SGN is ISGN {
 
     // check this before sidechain's operation
     modifier onlyValidSidechain() {
-        // TODO: call DPoS to check the validity. DPoS needs to add a view function
+        require(DPoSContract.isValidDPoS(), "DPoS is not valid");
         _;
     }
 
-    constructor(
-        address _celerTokenAddress,
-        address _DPoSAddress,
-    )
-        public
-    {
+    constructor(address _celerTokenAddress, address _DPoSAddress) public {
         celerToken = IERC20(_celerTokenAddress);
         DPoSContract = IDPoS(_DPoSAddress);
-    }
-
-    function contributeToMiningPool(uint _amount) public {
-        address msgSender = msg.sender;
-        miningPool = miningPool.add(_amount);
-        celerToken.safeTransferFrom(msgSender, address(this), _amount);
-
-        emit MiningPoolContribution(msgSender, _amount, miningPool);
     }
 
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
 
-        // TODO: call DPoS view function to check candidate status
+        (bool initialized, , , uint status, ) = DPoSContract.getCandidateInfo(msgSender);
         require(
-            // candidateProfiles[msgSender].status == CandidateStatus.Unbonded,
+            status == uint(DPoSCommon.CandidateStatus.Unbonded),
             "msg.sender is not unbonded"
         );
-        ValidatorCandidate storage candidate = candidateProfiles[msgSender];
-        require(candidate.initialized, "Candidate is not initialized");
+        // bool initialized;
+        // (bool initialized, , , , ) = DPoSContract.getCandidateInfo(msgSender);
+        require(initialized, "Candidate is not initialized");
 
         bytes memory oldSidechainAddr = sidechainAddrMap[msgSender];
         sidechainAddrMap[msgSender] = _sidechainAddr;
@@ -95,22 +82,19 @@ contract SGN is ISGN {
         // bytes [] might be an issue
         bytes32 h = keccak256(rewardRequest.reward);
         require(
-            _checkValidatorSigs(h, rewardRequest.sigs),
+            DPoSContract.checkValidatorSigs(h, rewardRequest.sigs),
             "Fail to check validator sigs"
         );
 
-        uint newMiningReward =
-            reward.cumulativeMiningReward.sub(redeemedMiningReward[reward.receiver]);
-        redeemedMiningReward[reward.receiver] = reward.cumulativeMiningReward;
         uint newServiceReward =
             reward.cumulativeServiceReward.sub(redeemedServiceReward[reward.receiver]);
         redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;
 
-        miningPool = miningPool.sub(newMiningReward);
         servicePool = servicePool.sub(newServiceReward);
 
-        celerToken.safeTransfer(reward.receiver, newMiningReward.add(newServiceReward));
+        DPoSContract.redeemMiningReward(reward.receiver, reward.cumulativeMiningReward);
+        celerToken.safeTransfer(reward.receiver, newServiceReward);
 
-        emit RedeemReward(reward.receiver, newMiningReward, newServiceReward, miningPool, servicePool);
+        emit RedeemReward(reward.receiver, reward.cumulativeMiningReward, newServiceReward, servicePool);
     }
 }
