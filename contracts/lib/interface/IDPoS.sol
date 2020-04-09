@@ -26,7 +26,7 @@ interface IDPoS {
 
     function redeemMiningReward(address _receiver, uint _cumulativeReward) external;
 
-    function checkValidatorSigs(bytes32 _h, bytes[] calldata _sigs) external returns(bool);
+    function validateMultiSigMessage(bytes calldata _request) external returns(bool);
 
     function isValidDPoS() external view returns (bool);
 
@@ -43,8 +43,6 @@ interface IDPoS {
     function getMinQuorumStakingPool() external view returns(uint);
 
     function getTotalValidatorStakingPool() external view returns(uint);
-
-    function validateMultiSigMessage(bytes calldata _request) external view returns(bool);
 
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake);

@@ -278,7 +278,7 @@ contract DPoS is IDPoS, Ownable {
 
         bytes32 h = keccak256(penaltyRequest.penalty);
         require(
-            checkValidatorSigs(h, penaltyRequest.sigs),
+            _checkValidatorSigs(h, penaltyRequest.sigs),
             "Fail to check validator sigs"
         );
         require(!usedPenaltyNonce[penalty.nonce], "Used penalty nonce");
@@ -319,6 +319,14 @@ contract DPoS is IDPoS, Ownable {
         }
 
         require(totalSubAmt == totalAddAmt, "Amount doesn't match");
+    }
+
+    // Can't use view here because _checkValidatorSigs is not a view function
+    function validateMultiSigMessage(bytes calldata _request) external returns(bool) {
+        PbSgn.MultiSigMessage memory request = PbSgn.decMultiSigMessage(_request);
+        bytes32 h = keccak256(request.msg);
+
+        return _checkValidatorSigs(h, request.sigs);
     }
 
     function isValidDPoS() public view returns (bool) {
@@ -410,13 +418,6 @@ contract DPoS is IDPoS, Ownable {
         }
 
         return totalValidatorStakingPool;
-    }
-
-    function validateMultiSigMessage(bytes calldata _request) public view returns(bool) {
-        PbSgn.MultiSigMessage memory request = PbSgn.decMultiSigMessage(_request);
-        bytes32 h = keccak256(request.msg);
-
-        return _checkValidatorSigs(h, request.sigs);
     }
 
     function _updateDelegatedStake(
