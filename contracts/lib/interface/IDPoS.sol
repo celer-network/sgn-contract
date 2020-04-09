@@ -44,6 +44,8 @@ interface IDPoS {
 
     function getTotalValidatorStakingPool() external view returns(uint);
 
+    function validateMultiSigMessage(bytes calldata _request) external view returns(bool);
+
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake);
 

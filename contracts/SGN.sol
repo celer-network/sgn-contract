@@ -73,17 +73,13 @@ contract SGN is ISGN {
     }
 
     function redeemReward(bytes calldata _rewardRequest) external onlyValidSidechain {
-        PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(_rewardRequest);
-        PbSgn.Reward memory reward = PbSgn.decReward(rewardRequest.reward);
-
-        // TODO: call DPoS view function to check sigs
-        // bytes [] might be an issue
-        bytes32 h = keccak256(rewardRequest.reward);
         require(
-            DPoSContract.checkValidatorSigs(h, rewardRequest.sigs),
+            DPoSContract.validateMultiSigMessage(_rewardRequest),
             "Fail to check validator sigs"
         );
 
+        PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(_rewardRequest);
+        PbSgn.Reward memory reward = PbSgn.decReward(rewardRequest.reward);
         uint newServiceReward =
             reward.cumulativeServiceReward.sub(redeemedServiceReward[reward.receiver]);
         redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;

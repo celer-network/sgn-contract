@@ -412,6 +412,13 @@ contract DPoS is IDPoS, Ownable {
         return totalValidatorStakingPool;
     }
 
+    function validateMultiSigMessage(bytes calldata _request) public view returns(bool) {
+        PbSgn.MultiSigMessage memory request = PbSgn.decMultiSigMessage(_request);
+        bytes32 h = keccak256(request.msg);
+
+        return _checkValidatorSigs(h, request.sigs);
+    }
+
     function _updateDelegatedStake(
         ValidatorCandidate storage _candidate,
         address _delegatorAddr,
@@ -470,7 +477,7 @@ contract DPoS is IDPoS, Ownable {
     }
 
     // validators with more than 2/3 total validators' staking pool need to sign this hash
-    function checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) public onlyRegisteredSidechains returns(bool) {
+    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private onlyRegisteredSidechains returns(bool) {
         uint minQuorumStakingPool = getMinQuorumStakingPool();
 
         bytes32 hash = _h.toEthSignedMessageHash();
