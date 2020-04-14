@@ -53,8 +53,9 @@ sync_go_binding() {
   REPO=https://${GH_TOKEN}@github.com/celer-network/sgn.git
   git clone $REPO
   pushd sgn
+  git checkout develop  # based on develop branch of sgn repo
   git fetch
-  git checkout $BRANCH || git checkout -b $BRANCH develop # based on develop branch of sgn repo
+  git checkout $BRANCH || git checkout -b $BRANCH
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
   if [[ `git status --porcelain` ]]; then
