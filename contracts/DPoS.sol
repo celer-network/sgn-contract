@@ -322,7 +322,7 @@ contract DPoS is IDPoS, Ownable {
     }
 
     // Can't use view here because _checkValidatorSigs is not a view function
-    function validateMultiSigMessage(bytes calldata _request) external returns(bool) {
+    function validateMultiSigMessage(bytes calldata _request) external onlyRegisteredSidechains returns(bool) {
         PbSgn.MultiSigMessage memory request = PbSgn.decMultiSigMessage(_request);
         bytes32 h = keccak256(request.msg);
 
@@ -478,7 +478,7 @@ contract DPoS is IDPoS, Ownable {
     }
 
     // validators with more than 2/3 total validators' staking pool need to sign this hash
-    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private onlyRegisteredSidechains returns(bool) {
+    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private returns(bool) {
         uint minQuorumStakingPool = getMinQuorumStakingPool();
 
         bytes32 hash = _h.toEthSignedMessageHash();

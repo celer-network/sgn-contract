@@ -6,9 +6,11 @@ interface IDPoS {
     // functions
     function contributeToMiningPool(uint _amount) external;
 
+    function redeemMiningReward(address _receiver, uint _cumulativeReward) external;
+
     function registerSidechain(address _addr) external;
 
-    function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;
+    function initializeCandidate(uint _minSelfStake) external;
 
     function delegate(address _candidate, uint _amount) external;
 
@@ -23,8 +25,6 @@ interface IDPoS {
     function confirmWithdraw(address _candidateAddr) external;
 
     function punish(bytes calldata _penaltyRequest) external;
-
-    function redeemMiningReward(address _receiver, uint _cumulativeReward) external;
 
     function validateMultiSigMessage(bytes calldata _request) external returns(bool);
 
