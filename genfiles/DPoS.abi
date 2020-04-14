@@ -1,13 +1,8 @@
 [
   {
     "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "subscriptionDeposits",
+    "inputs": [],
+    "name": "blameTimeout",
     "outputs": [
       {
         "name": "",
@@ -20,8 +15,27 @@
   },
   {
     "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "checkedValidators",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [],
-    "name": "blameTimeout",
+    "name": "dposGoLiveTime",
     "outputs": [
       {
         "name": "",
@@ -30,6 +44,34 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "registeredSidechains",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -68,11 +110,11 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "sidechainGoLiveTime",
+    "name": "owner",
     "outputs": [
       {
         "name": "",
-        "type": "uint256"
+        "type": "address"
       }
     ],
     "payable": false,
@@ -81,17 +123,12 @@
   },
   {
     "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "redeemedServiceReward",
+    "inputs": [],
+    "name": "isOwner",
     "outputs": [
       {
         "name": "",
-        "type": "uint256"
+        "type": "bool"
       }
     ],
     "payable": false,
@@ -116,20 +153,6 @@
     "constant": true,
     "inputs": [],
     "name": "minStakeInPool",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "servicePool",
     "outputs": [
       {
         "name": "",
@@ -171,6 +194,20 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -225,7 +262,7 @@
         "type": "uint256"
       },
       {
-        "name": "_sidechainGoLiveTimeout",
+        "name": "_dposGoLiveTimeout",
         "type": "uint256"
       },
       {
@@ -242,21 +279,16 @@
     "inputs": [
       {
         "indexed": true,
-        "name": "contributor",
+        "name": "previousOwner",
         "type": "address"
       },
       {
-        "indexed": false,
-        "name": "contribution",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "miningPoolSize",
-        "type": "uint256"
+        "indexed": true,
+        "name": "newOwner",
+        "type": "address"
       }
     ],
-    "name": "MiningPoolContribution",
+    "name": "OwnershipTransferred",
     "type": "event"
   },
   {
@@ -271,11 +303,6 @@
         "indexed": false,
         "name": "minSelfStake",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "sidechainAddr",
-        "type": "bytes"
       }
     ],
     "name": "InitializeCandidate",
@@ -306,28 +333,6 @@
       }
     ],
     "name": "Delegate",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "oldSidechainAddr",
-        "type": "bytes"
-      },
-      {
-        "indexed": true,
-        "name": "newSidechainAddr",
-        "type": "bytes"
-      }
-    ],
-    "name": "UpdateSidechainAddr",
     "type": "event"
   },
   {
@@ -423,23 +428,6 @@
     "inputs": [
       {
         "indexed": true,
-        "name": "consumer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "AddSubscriptionBalance",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "name": "validator",
         "type": "address"
       },
@@ -496,26 +484,38 @@
       },
       {
         "indexed": false,
-        "name": "miningReward",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "serviceReward",
+        "name": "reward",
         "type": "uint256"
       },
       {
         "indexed": false,
         "name": "miningPool",
         "type": "uint256"
+      }
+    ],
+    "name": "RedeemMiningReward",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "contributor",
+        "type": "address"
       },
       {
         "indexed": false,
-        "name": "servicePool",
+        "name": "contribution",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "miningPoolSize",
         "type": "uint256"
       }
     ],
-    "name": "RedeemReward",
+    "name": "MiningPoolContribution",
     "type": "event"
   },
   {
@@ -536,12 +536,40 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_minSelfStake",
-        "type": "uint256"
+        "name": "_receiver",
+        "type": "address"
       },
       {
-        "name": "_sidechainAddr",
-        "type": "bytes"
+        "name": "_cumulativeReward",
+        "type": "uint256"
+      }
+    ],
+    "name": "redeemMiningReward",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "registerSidechain",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_minSelfStake",
+        "type": "uint256"
       }
     ],
     "name": "initializeCandidate",
@@ -563,20 +591,6 @@
       }
     ],
     "name": "delegate",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_sidechainAddr",
-        "type": "bytes"
-      }
-    ],
-    "name": "updateSidechainAddr",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -659,20 +673,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "subscribe",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "_penaltyRequest",
         "type": "bytes"
       }
@@ -687,14 +687,33 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_rewardRequest",
+        "name": "_request",
         "type": "bytes"
       }
     ],
-    "name": "redeemReward",
-    "outputs": [],
+    "name": "validateMultiSigMessage",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "isValidDPoS",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -761,10 +780,6 @@
       {
         "name": "minSelfStake",
         "type": "uint256"
-      },
-      {
-        "name": "sidechainAddr",
-        "type": "bytes"
       },
       {
         "name": "stakingPool",

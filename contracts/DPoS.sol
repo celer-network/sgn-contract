@@ -4,23 +4,19 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
-import "./lib/interface/IGuard.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./lib/interface/IDPoS.sol";
 import "./lib/data/PbSgn.sol";
+import "./lib/DPoSCommon.sol";
 
-contract Guard is IGuard {
+// Ownable is only used to add the whitelist of sidechain addresses
+// Ownable should be removed after enabling governance module
+contract DPoS is IDPoS, Ownable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
 
     enum MathOperation { Add, Sub }
-
-    // Unbonded: not a validator and not responsible for previous validator behaviors if any.
-    //   Delegators now are free to withdraw stakes (directly).
-    // Bonded: active validator. Delegators has to wait for blameTimeout to withdraw stakes.
-    // Unbonding: transitional status from Bonded to Unbonded. Candidate has lost the right of
-    //   validator but is still responsible for any misbehavors done during being validator.
-    //   Delegators should wait until candidate's unbondTime to freely withdraw stakes.
-    enum CandidateStatus { Unbonded, Bonded, Unbonding }
 
     struct WithdrawIntent {
         uint amount;
@@ -39,12 +35,11 @@ contract Guard is IGuard {
     struct ValidatorCandidate {
         bool initialized;
         uint minSelfStake;
-        bytes sidechainAddr;
 
         // delegatedStake sum of all delegators to this candidate
         uint stakingPool;
         mapping (address => Delegator) delegatorProfiles;
-        CandidateStatus status;
+        DPoSCommon.CandidateStatus status;
         uint unbondTime;
     }
 
@@ -55,30 +50,33 @@ contract Guard is IGuard {
     uint public maxValidatorNum;
     // used for bootstrap: there should be enough time for delegating and
     // claim the initial validators
-    uint public sidechainGoLiveTime;
+    uint public dposGoLiveTime;
     // universal requirement for minimum staking pool of each validator
     uint public minStakeInPool;
-    mapping (address => uint) public subscriptionDeposits;
-    uint public servicePool;
-    mapping (address => uint) public redeemedServiceReward;
-    uint public miningPool;
-    mapping (address => uint) public redeemedMiningReward;
     mapping (uint => address) public validatorSet;
     mapping (uint => bool) public usedPenaltyNonce;
+    // used in checkValidatorSigs(). mapping has to be storage type.
+    mapping (address => bool) public checkedValidators;
+    mapping (address => bool) public registeredSidechains;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
-    // used in _checkValidatorSigs(). mapping has to be storage type.
-    mapping (address => bool) private checkedValidators;
+
+    uint public miningPool;
+    mapping (address => uint) public redeemedMiningReward;
 
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
         _;
     }
 
-    // check this before sidechain's operation
-    modifier onlyValidSidechain() {
-        require(block.number >= sidechainGoLiveTime, "Sidechain is not live");
-        require(getValidatorNum() >= minValidatorNum, "Too few validators");
+    // check this before DPoS's operation
+    modifier onlyValidDPoS() {
+        require(isValidDPoS(), "DPoS is not valid");
+        _;
+    }
+
+    modifier onlyRegisteredSidechains() {
+        require(registeredSidechains[msg.sender]);
         _;
     }
 
@@ -87,7 +85,7 @@ contract Guard is IGuard {
         uint _blameTimeout,
         uint _minValidatorNum,
         uint _minStakeInPool,
-        uint _sidechainGoLiveTimeout,
+        uint _dposGoLiveTimeout,
         uint _maxValidatorNum
     )
         public
@@ -96,7 +94,7 @@ contract Guard is IGuard {
         blameTimeout = _blameTimeout;
         minValidatorNum = _minValidatorNum;
         minStakeInPool = _minStakeInPool;
-        sidechainGoLiveTime = block.number.add(_sidechainGoLiveTimeout);
+        dposGoLiveTime = block.number.add(_dposGoLiveTimeout);
         maxValidatorNum = _maxValidatorNum;
     }
 
@@ -108,15 +106,29 @@ contract Guard is IGuard {
         emit MiningPoolContribution(msgSender, _amount, miningPool);
     }
 
-    function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external {
+    function redeemMiningReward(address _receiver, uint _cumulativeReward) public onlyRegisteredSidechains {
+        uint newReward = _cumulativeReward.sub(redeemedMiningReward[_receiver]);
+        redeemedMiningReward[_receiver] = _cumulativeReward;
+
+        miningPool = miningPool.sub(newReward);
+        celerToken.safeTransfer(_receiver, newReward);
+
+        emit RedeemMiningReward(_receiver, newReward, miningPool);
+    }
+
+    // TODO: remove onlyOwner after using governance
+    function registerSidechain(address _addr) external onlyOwner {
+        registeredSidechains[_addr] = true;
+    }
+
+    function initializeCandidate(uint _minSelfStake) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(!candidate.initialized, "Candidate is initialized");
 
         candidate.initialized = true;
         candidate.minSelfStake = _minSelfStake;
-        candidate.sidechainAddr = _sidechainAddr;
 
-        emit InitializeCandidate(msg.sender, _minSelfStake, _sidechainAddr);
+        emit InitializeCandidate(msg.sender, _minSelfStake);
     }
 
     function delegate(address _candidateAddr, uint _amount) external onlyNonZeroAddr(_candidateAddr) {
@@ -135,27 +147,12 @@ contract Guard is IGuard {
         emit Delegate(msgSender, _candidateAddr, _amount, candidate.stakingPool);
     }
 
-    function updateSidechainAddr(bytes calldata _sidechainAddr) external {
-        address msgSender = msg.sender;
-        require(
-            candidateProfiles[msgSender].status == CandidateStatus.Unbonded,
-            "msg.sender is not unbonded"
-        );
-        ValidatorCandidate storage candidate = candidateProfiles[msgSender];
-        require(candidate.initialized, "Candidate is not initialized");
-
-        bytes memory oldSidechainAddr = candidate.sidechainAddr;
-        candidate.sidechainAddr = _sidechainAddr;
-
-        emit UpdateSidechainAddr(msgSender, oldSidechainAddr, _sidechainAddr);
-    }
-
     function claimValidator() external {
         address msgSender = msg.sender;
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, "Candidate is not initialized");
         // TODO: decide whether Unbonding status is valid to claimValidator or not
-        require(candidate.status == CandidateStatus.Unbonded || candidate.status == CandidateStatus.Unbonding);
+        require(candidate.status == DPoSCommon.CandidateStatus.Unbonded || candidate.status == DPoSCommon.CandidateStatus.Unbonding);
         require(candidate.stakingPool >= minStakeInPool, "Insufficient staking pool");
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
@@ -183,10 +180,10 @@ contract Guard is IGuard {
 
     function confirmUnbondedCandidate(address _candidateAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
-        require(candidate.status == CandidateStatus.Unbonding);
+        require(candidate.status == DPoSCommon.CandidateStatus.Unbonding);
         require(block.number >= candidate.unbondTime);
 
-        candidate.status = CandidateStatus.Unbonded;
+        candidate.status = DPoSCommon.CandidateStatus.Unbonded;
         delete candidate.unbondTime;
         emit CandidateUnbonded(_candidateAddr);
     }
@@ -200,7 +197,7 @@ contract Guard is IGuard {
         onlyNonZeroAddr(_candidateAddr)
     {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
-        require(candidate.status == CandidateStatus.Unbonded);
+        require(candidate.status == DPoSCommon.CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
@@ -244,7 +241,7 @@ contract Guard is IGuard {
 
         uint bn = block.number;
         uint i;
-        bool isUnbonded = candidateProfiles[_candidateAddr].status == CandidateStatus.Unbonded;
+        bool isUnbonded = candidateProfiles[_candidateAddr].status == DPoSCommon.CandidateStatus.Unbonded;
         // for all undelegated withdraw intents
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];
@@ -275,22 +272,7 @@ contract Guard is IGuard {
         emit ConfirmWithdraw(msgSender, _candidateAddr, withdrawAmt);
     }
 
-    function subscribe(uint _amount) external onlyValidSidechain {
-        address msgSender = msg.sender;
-
-        servicePool = servicePool.add(_amount);
-        subscriptionDeposits[msgSender] = subscriptionDeposits[msgSender].add(_amount);
-
-        celerToken.safeTransferFrom(
-            msgSender,
-            address(this),
-            _amount
-        );
-
-        emit AddSubscriptionBalance(msgSender, _amount);
-    }
-
-    function punish(bytes calldata _penaltyRequest) external onlyValidSidechain {
+    function punish(bytes calldata _penaltyRequest) external onlyValidDPoS {
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
 
@@ -339,33 +321,20 @@ contract Guard is IGuard {
         require(totalSubAmt == totalAddAmt, "Amount doesn't match");
     }
 
-    function redeemReward(bytes calldata _rewardRequest) external onlyValidSidechain {
-        PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(_rewardRequest);
-        PbSgn.Reward memory reward = PbSgn.decReward(rewardRequest.reward);
+    // Can't use view here because _checkValidatorSigs is not a view function
+    function validateMultiSigMessage(bytes calldata _request) external onlyRegisteredSidechains returns(bool) {
+        PbSgn.MultiSigMessage memory request = PbSgn.decMultiSigMessage(_request);
+        bytes32 h = keccak256(request.msg);
 
-        bytes32 h = keccak256(rewardRequest.reward);
-        require(
-            _checkValidatorSigs(h, rewardRequest.sigs),
-            "Fail to check validator sigs"
-        );
+        return _checkValidatorSigs(h, request.sigs);
+    }
 
-        uint newMiningReward =
-            reward.cumulativeMiningReward.sub(redeemedMiningReward[reward.receiver]);
-        redeemedMiningReward[reward.receiver] = reward.cumulativeMiningReward;
-        uint newServiceReward =
-            reward.cumulativeServiceReward.sub(redeemedServiceReward[reward.receiver]);
-        redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;
-
-        miningPool = miningPool.sub(newMiningReward);
-        servicePool = servicePool.sub(newServiceReward);
-
-        celerToken.safeTransfer(reward.receiver, newMiningReward.add(newServiceReward));
-
-        emit RedeemReward(reward.receiver, newMiningReward, newServiceReward, miningPool, servicePool);
+    function isValidDPoS() public view returns (bool) {
+        return block.number >= dposGoLiveTime && getValidatorNum() >= minValidatorNum;
     }
 
     function isValidator(address _addr) public view returns (bool) {
-        return candidateProfiles[_addr].status == CandidateStatus.Bonded;
+        return candidateProfiles[_addr].status == DPoSCommon.CandidateStatus.Bonded;
     }
 
     function getValidatorNum() public view returns (uint) {
@@ -402,7 +371,6 @@ contract Guard is IGuard {
     function getCandidateInfo(address _candidateAddr) public view returns (
         bool initialized,
         uint minSelfStake,
-        bytes memory sidechainAddr,
         uint stakingPool,
         uint status,
         uint unbondTime
@@ -412,7 +380,6 @@ contract Guard is IGuard {
 
         initialized = c.initialized;
         minSelfStake = c.minSelfStake;
-        sidechainAddr = c.sidechainAddr;
         stakingPool = c.stakingPool;
         status = uint(c.status);
         unbondTime = c.unbondTime;
@@ -478,7 +445,7 @@ contract Guard is IGuard {
         require(validatorSet[_setIndex] == address(0));
 
         validatorSet[_setIndex] = _validatorAddr;
-        candidateProfiles[_validatorAddr].status = CandidateStatus.Bonded;
+        candidateProfiles[_validatorAddr].status = DPoSCommon.CandidateStatus.Bonded;
         delete candidateProfiles[_validatorAddr].unbondTime;
         emit ValidatorChange(_validatorAddr, ValidatorChangeType.Add);
     }
@@ -490,14 +457,14 @@ contract Guard is IGuard {
         }
 
         delete validatorSet[_setIndex];
-        candidateProfiles[removedValidator].status = CandidateStatus.Unbonding;
+        candidateProfiles[removedValidator].status = DPoSCommon.CandidateStatus.Unbonding;
         candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
     function _validateValidator(address _validatorAddr) private {
         ValidatorCandidate storage v = candidateProfiles[_validatorAddr];
-        if (v.status != CandidateStatus.Bonded) {
+        if (v.status != DPoSCommon.CandidateStatus.Bonded) {
             // no need to validate the stake of a non-validator
             return;
         }
@@ -517,12 +484,14 @@ contract Guard is IGuard {
         bytes32 hash = _h.toEthSignedMessageHash();
         address[] memory addrs = new address[](_sigs.length);
         uint quorumStakingPool = 0;
+        bool hasDuplicatedSig = false;
         for (uint i = 0; i < _sigs.length; i++) {
             addrs[i] = hash.recover(_sigs[i]);
             if (checkedValidators[addrs[i]]) {
-                return false;
+                hasDuplicatedSig = true;
+                break;
             }
-            if (candidateProfiles[addrs[i]].status != CandidateStatus.Bonded) {
+            if (candidateProfiles[addrs[i]].status != DPoSCommon.CandidateStatus.Bonded) {
                 continue;
             }
 
@@ -534,7 +503,7 @@ contract Guard is IGuard {
             checkedValidators[addrs[i]] = false;
         }
 
-        return quorumStakingPool >= minQuorumStakingPool;
+        return !hasDuplicatedSig && quorumStakingPool >= minQuorumStakingPool;
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {

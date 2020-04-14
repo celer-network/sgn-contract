@@ -9,6 +9,15 @@ extend google.protobuf.FieldOptions { string soltype = 1004; }
 
 /********** mainchain only **********/
 // Next Tag: 3
+// This is a generic multi-sig message for DPoS contract to validate any
+// types of request messages
+message MultiSigMessage {
+  // serialized message
+  bytes msg = 1;
+  repeated bytes sigs = 2;
+}
+
+// Next Tag: 3
 message PenaltyRequest {
   // serialized Penalty message
   bytes penalty = 1;

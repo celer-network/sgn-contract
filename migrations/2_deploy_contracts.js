@@ -1,5 +1,6 @@
 const ERC20ExampleToken = artifacts.require('ERC20ExampleToken');
-const Guard = artifacts.require('Guard');
+const DPoS = artifacts.require('DPoS');
+const SGN = artifacts.require('SGN');
 
 module.exports = function (deployer, network, accounts) {
   return deployer
@@ -12,6 +13,9 @@ module.exports = function (deployer, network, accounts) {
         token.transfer(accounts[1], '100000000000000000000000');
       }
 
-      return deployer.deploy(Guard, ERC20ExampleToken.address, 0, 0, 0, 0, 11);
+      return deployer.deploy(DPoS, ERC20ExampleToken.address, 0, 0, 0, 0, 11);
+      // TODO (if needed):
+      // 1. deploy sgn contract
+      // 2. register sgn address in DPoS contract
     });
 };

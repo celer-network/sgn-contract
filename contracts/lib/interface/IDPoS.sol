@@ -1,16 +1,18 @@
 pragma solidity ^0.5.0;
 
-interface IGuard {
+interface IDPoS {
     enum ValidatorChangeType { Add, Removal }
 
     // functions
     function contributeToMiningPool(uint _amount) external;
 
-    function initializeCandidate(uint _minSelfStake, bytes calldata _sidechainAddr) external;
+    function redeemMiningReward(address _receiver, uint _cumulativeReward) external;
+
+    function registerSidechain(address _addr) external;
+
+    function initializeCandidate(uint _minSelfStake) external;
 
     function delegate(address _candidate, uint _amount) external;
-
-    function updateSidechainAddr(bytes calldata _sidechainAddr) external;
 
     function claimValidator() external;
 
@@ -22,11 +24,11 @@ interface IGuard {
 
     function confirmWithdraw(address _candidateAddr) external;
 
-    function subscribe(uint _amount) external;
-
     function punish(bytes calldata _penaltyRequest) external;
 
-    function redeemReward(bytes calldata _rewardRequest) external;
+    function validateMultiSigMessage(bytes calldata _request) external returns(bool);
+
+    function isValidDPoS() external view returns (bool);
 
     function isValidator(address _addr) external view returns (bool);
 
@@ -34,7 +36,7 @@ interface IGuard {
 
     function getMinStakingPool() external view returns (uint);
 
-    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, bytes memory, uint, uint, uint);
+    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, uint, uint, uint);
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);
 
@@ -43,13 +45,9 @@ interface IGuard {
     function getTotalValidatorStakingPool() external view returns(uint);
 
     // events
-    event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);
-
-    event InitializeCandidate(address indexed candidate, uint minSelfStake, bytes sidechainAddr);
+    event InitializeCandidate(address indexed candidate, uint minSelfStake);
 
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);
-
-    event UpdateSidechainAddr(address indexed candidate, bytes indexed oldSidechainAddr, bytes indexed newSidechainAddr);
 
     event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);
 
@@ -59,13 +57,13 @@ interface IGuard {
 
     event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
-    event AddSubscriptionBalance(address indexed consumer, uint amount);
-
     event Punish(address indexed validator, address indexed delegator, uint amount);
 
     event Indemnify(address indexed indemnitee, uint amount);
 
     event CandidateUnbonded(address indexed candidate);
 
-    event RedeemReward(address indexed receiver, uint miningReward, uint serviceReward, uint miningPool, uint servicePool);
+    event RedeemMiningReward(address indexed receiver, uint reward, uint miningPool);
+
+    event MiningPoolContribution(address indexed contributor, uint contribution, uint miningPoolSize);
 }
