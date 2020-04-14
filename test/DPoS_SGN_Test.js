@@ -25,7 +25,7 @@ const HASHED_NULL = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
-contract('DPoS and SGN contract', async accounts => {
+contract('DPoS and SGN contracts', async accounts => {
     const DELEGATOR = accounts[0];
     const DELEGATOR_STAKE = 100;
     const DELEGATOR_WITHDRAW = 80;
