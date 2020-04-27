@@ -6,6 +6,9 @@
     },
     "devDependencies": {
         "babel-eslint": "8",
-        "eslint": "4.19.1"
+        "eslint": "4.19.1",
+        "minimist": ">=0.2.1",
+        "acorn": ">=5.7.4",
+        "kind-of": ">=6.0.3"
     }
 }
