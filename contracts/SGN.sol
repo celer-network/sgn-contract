@@ -44,7 +44,7 @@ contract SGN is ISGN {
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
 
-        (bool initialized, , , uint status, ) = DPoSContract.getCandidateInfo(msgSender);
+        (bool initialized, , , uint status, , , ) = DPoSContract.getCandidateInfo(msgSender);
         require(
             status == uint(DPoSCommon.CandidateStatus.Unbonded),
             "msg.sender is not unbonded"

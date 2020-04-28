@@ -23,6 +23,14 @@ const ZERO_BYTES = '0x0000000000000000000000000000000000000000000000000000000000
 // value of an indexed null bytes
 const HASHED_NULL = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';
 
+const COMMISSION_RATE = 100;
+const RATE_LOCK_END_TIME = 100000;
+const HIGHER_RATE = 200;
+const LARGER_LOCK_END_TIME = 200000;
+const LOWER_RATE = 50;
+const SMALLER_LOCK_END_TIME = 50000;
+const NEW_RATE_TAKES_EFFECT_WAIT_TIME = 1344;
+
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
 contract('DPoS and SGN contracts', async accounts => {
@@ -127,11 +135,15 @@ contract('DPoS and SGN contracts', async accounts => {
     it('should initialize a candidate successfully', async () => {
         let tx = await dposInstance.initializeCandidate(
             MIN_SELF_STAKE,
+            COMMISSION_RATE,
+            RATE_LOCK_END_TIME,
             { from: CANDIDATE }
         );
         assert.equal(tx.logs[0].event, 'InitializeCandidate');
         assert.equal(tx.logs[0].args.candidate, CANDIDATE);
         assert.equal(tx.logs[0].args.minSelfStake, MIN_SELF_STAKE);
+        assert.equal(tx.logs[0].args.commissionRate, COMMISSION_RATE);
+        assert.equal(tx.logs[0].args.rateLockEndTime, RATE_LOCK_END_TIME);
 
         const sidechainAddr = sha3(CANDIDATE);
         tx = await sgnInstance.updateSidechainAddr(
@@ -150,6 +162,8 @@ contract('DPoS and SGN contracts', async accounts => {
         beforeEach(async () => {
             await dposInstance.initializeCandidate(
                 MIN_SELF_STAKE,
+                COMMISSION_RATE,
+                RATE_LOCK_END_TIME,
                 { from: CANDIDATE }
             );
             await sgnInstance.updateSidechainAddr(
@@ -158,10 +172,84 @@ contract('DPoS and SGN contracts', async accounts => {
             );
         });
 
+        it('should increase the rate_lock_end_time successfully', async () => {
+            const tx = await dposInstance.nonIncreaseCommissionRate(
+                COMMISSION_RATE,
+                SMALLER_LOCK_END_TIME,
+                { from: CANDIDATE }
+            );
+            const { event, args } = tx.logs[0];
+
+            assert.equal(event, 'UpdateCommissionRate');
+            assert.equal(args.newRate, COMMISSION_RATE);
+            assert.equal(args.newLockEndTime, SMALLER_LOCK_END_TIME);
+        });
+
+        it('should decrease the commission rate immediately and successfully', async () => {
+            const tx = await dposInstance.nonIncreaseCommissionRate(
+                LOWER_RATE,
+                LARGER_LOCK_END_TIME,
+                { from: CANDIDATE }
+            );
+            const { event, args } = tx.logs[0];
+
+            assert.equal(event, 'UpdateCommissionRate');
+            assert.equal(args.newRate, LOWER_RATE);
+            assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+        });
+
+        it('should announce increase commission rate successfully', async () => {
+            const tx = await dposInstance.announceIncreaseCommissionRate(
+                HIGHER_RATE,
+                LARGER_LOCK_END_TIME,
+                { from: CANDIDATE }
+            );
+            const { event, args } = tx.logs[0];
+
+            assert.equal(event, 'CommissionRateAnnouncement');
+            assert.equal(args.candidate, CANDIDATE);
+            assert.equal(args.announcedRate, HIGHER_RATE);
+            assert.equal(args.announcedLockEndTime, LARGER_LOCK_END_TIME);
+        });
+
+        describe('after one delegator delegates enough stake to the candidate', async () => {
+            beforeEach(async () => {
+                await dposInstance.announceIncreaseCommissionRate(
+                    HIGHER_RATE,
+                    LARGER_LOCK_END_TIME,
+                    { from: CANDIDATE }
+                );
+            });
+
+            it('should fail to confirmIncreaseCommissionRate before new rate can take effect', async () => {
+                try {
+                    await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
+                } catch (error) {
+                    console.log(error.message);
+                    assert.isAbove(error.message.search('new rate hasn\'t taken effect'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should confirmIncreaseCommissionRate successfully after new rate takes effect ', async () => {
+                await Timetravel.advanceBlocks(NEW_RATE_TAKES_EFFECT_WAIT_TIME);
+                const tx = await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
+                const { event, args } = tx.logs[0];
+
+                assert.equal(event, 'UpdateCommissionRate');
+                assert.equal(args.newRate, HIGHER_RATE);
+                assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+            });
+        });
+
         it('should fail to initialize the same candidate twice', async () => {
             try {
                 await dposInstance.initializeCandidate(
                     MIN_SELF_STAKE,
+                    COMMISSION_RATE,
+                    RATE_LOCK_END_TIME,
                     { from: CANDIDATE }
                 );
             } catch (error) {
@@ -622,6 +710,8 @@ contract('DPoS and SGN contracts', async accounts => {
                 const sidechainAddr = sha3(VALIDATORS[i]);
                 await dposInstance.initializeCandidate(
                     MIN_SELF_STAKE,
+                    COMMISSION_RATE,
+                    RATE_LOCK_END_TIME,
                     { from: VALIDATORS[i] }
                 );
                 await sgnInstance.updateSidechainAddr(
@@ -750,6 +840,8 @@ contract('DPoS and SGN contracts', async accounts => {
                 const sidechainAddr = sha3(VALIDATORS[i]);
                 await dposInstance.initializeCandidate(
                     MIN_SELF_STAKE,
+                    COMMISSION_RATE,
+                    RATE_LOCK_END_TIME,
                     { from: VALIDATORS[i] }
                 );
                 await sgnInstance.updateSidechainAddr(
@@ -787,6 +879,8 @@ contract('DPoS and SGN contracts', async accounts => {
             const sidechainAddr = sha3(addr);
             await dposInstance.initializeCandidate(
                 MIN_SELF_STAKE,
+                COMMISSION_RATE,
+                RATE_LOCK_END_TIME,
                 { from: addr }
             );
             await sgnInstance.updateSidechainAddr(
@@ -823,6 +917,8 @@ contract('DPoS and SGN contracts', async accounts => {
             const sidechainAddr = sha3(addr);
             await dposInstance.initializeCandidate(
                 MIN_SELF_STAKE,
+                COMMISSION_RATE,
+                RATE_LOCK_END_TIME,
                 { from: addr }
             );
             await sgnInstance.updateSidechainAddr(
