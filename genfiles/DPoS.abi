@@ -138,6 +138,20 @@
   {
     "constant": true,
     "inputs": [],
+    "name": "COMMISSION_RATE_BASE",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
     "name": "celerToken",
     "outputs": [
       {
@@ -233,6 +247,20 @@
     "constant": true,
     "inputs": [],
     "name": "maxValidatorNum",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "INCREASE_RATE_WAIT_TIME",
     "outputs": [
       {
         "name": "",
