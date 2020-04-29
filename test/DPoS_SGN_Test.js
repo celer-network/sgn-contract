@@ -175,14 +175,29 @@ contract('DPoS and SGN contracts', async accounts => {
         it('should increase the rate_lock_end_time successfully', async () => {
             const tx = await dposInstance.nonIncreaseCommissionRate(
                 COMMISSION_RATE,
-                SMALLER_LOCK_END_TIME,
+                LARGER_LOCK_END_TIME,
                 { from: CANDIDATE }
             );
             const { event, args } = tx.logs[0];
 
             assert.equal(event, 'UpdateCommissionRate');
             assert.equal(args.newRate, COMMISSION_RATE);
-            assert.equal(args.newLockEndTime, SMALLER_LOCK_END_TIME);
+            assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+        });
+
+        it('should fail to decrease the rate_lock_end_time', async () => {
+            try {
+                await dposInstance.nonIncreaseCommissionRate(
+                    COMMISSION_RATE,
+                    SMALLER_LOCK_END_TIME,
+                    { from: CANDIDATE }
+                );
+            } catch (error) {
+                assert.isAbove(error.message.search('invalid new lock_end_time'), -1);
+                return;
+            }
+
+            assert.fail('should have thrown before');
         });
 
         it('should decrease the commission rate immediately and successfully', async () => {
@@ -225,7 +240,6 @@ contract('DPoS and SGN contracts', async accounts => {
                 try {
                     await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
                 } catch (error) {
-                    console.log(error.message);
                     assert.isAbove(error.message.search('new rate hasn\'t taken effect'), -1);
                     return;
                 }

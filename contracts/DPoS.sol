@@ -145,7 +145,6 @@ contract DPoS is IDPoS, Ownable {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(candidate.initialized, "Candidate is not initialized");
         require(_newRate <= candidate.commissionRate, "invalid new rate");
-        require(_newLockEndTime > block.number, "invalid new lock_end_time");
 
         _updateCommissionRate(candidate, _newRate, _newLockEndTime);
     }
@@ -153,8 +152,7 @@ contract DPoS is IDPoS, Ownable {
     function announceIncreaseCommissionRate(uint _newRate, uint _newLockEndTime) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(candidate.initialized, "Candidate is not initialized");
-        require(candidate.commissionRate < _newRate && _newRate <= 10000, "invalid new rate");
-        require(_newLockEndTime > block.number, "invalid new lock_end_time");
+        require(candidate.commissionRate < _newRate, "invalid new rate");
 
         candidate.announcedRate = _newRate;
         candidate.announcedLockEndTime = _newLockEndTime;
@@ -466,7 +464,7 @@ contract DPoS is IDPoS, Ownable {
 
     function _updateCommissionRate(ValidatorCandidate storage _candidate, uint _newRate, uint _newLockEndTime) private {
         require(_newRate <= 10000, "invalid new rate");
-        require(_newLockEndTime > block.number, "invalid new lock_end_time");
+        require(_newLockEndTime > block.number && _newLockEndTime > _candidate.rateLockEndTime, "invalid new lock_end_time");
 
         _candidate.commissionRate = _newRate;
         _candidate.rateLockEndTime = _newLockEndTime;
