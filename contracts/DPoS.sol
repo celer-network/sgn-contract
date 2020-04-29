@@ -42,13 +42,17 @@ contract DPoS is IDPoS, Ownable {
         DPoSCommon.CandidateStatus status;
         uint unbondTime;
 
-        uint commissionRate;  // equal to real commission rate * 10000, namely 1 stands for 0.01% rate
+        uint commissionRate;  // equal to real commission rate * COMMISSION_RATE_BASE
         uint rateLockEndTime;  // must be monotonic increasing. Use block number
         // for the announcement of increasing commission rate 
         uint announcedRate;
         uint announcedLockEndTime;
         uint announcementTime;
     }
+
+    uint constant public COMMISSION_RATE_BASE = 10000;  // 1 commissionRate means 0.01%
+    uint constant public INCREASE_RATE_WAIT_TIME = 1344;  // 1344 blocks = 2 weeks
+
 
     IERC20 public celerToken;
     // timeout to blame (claim responsibility of) undelegating delegators or unbonding validators
@@ -131,7 +135,7 @@ contract DPoS is IDPoS, Ownable {
     function initializeCandidate(uint _minSelfStake, uint _commissionRate, uint _rateLockEndTime) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(!candidate.initialized, "Candidate is initialized");
-        require(_commissionRate <= 10000);
+        require(_commissionRate <= COMMISSION_RATE_BASE);
 
         candidate.initialized = true;
         candidate.minSelfStake = _minSelfStake;
@@ -164,7 +168,7 @@ contract DPoS is IDPoS, Ownable {
     function confirmIncreaseCommissionRate() external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(candidate.initialized, "Candidate is not initialized");
-        require(block.number > candidate.announcementTime + 1344, "new rate hasn't taken effect"); // TODO: use a const (1344 blocks = 2 weeks)
+        require(block.number > candidate.announcementTime + INCREASE_RATE_WAIT_TIME, "new rate hasn't taken effect");
 
         _updateCommissionRate(candidate, candidate.announcedRate, candidate.announcedLockEndTime);
     }
@@ -463,7 +467,7 @@ contract DPoS is IDPoS, Ownable {
     }
 
     function _updateCommissionRate(ValidatorCandidate storage _candidate, uint _newRate, uint _newLockEndTime) private {
-        require(_newRate <= 10000, "invalid new rate");
+        require(_newRate <= COMMISSION_RATE_BASE, "invalid new rate");
         require(_newLockEndTime > block.number && _newLockEndTime > _candidate.rateLockEndTime, "invalid new lock_end_time");
 
         _candidate.commissionRate = _newRate;
