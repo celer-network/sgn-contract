@@ -41,7 +41,18 @@ contract DPoS is IDPoS, Ownable {
         mapping (address => Delegator) delegatorProfiles;
         DPoSCommon.CandidateStatus status;
         uint unbondTime;
+
+        uint commissionRate;  // equal to real commission rate * COMMISSION_RATE_BASE
+        uint rateLockEndTime;  // must be monotonic increasing. Use block number
+        // for the announcement of increasing commission rate 
+        uint announcedRate;
+        uint announcedLockEndTime;
+        uint announcementTime;
     }
+
+    uint constant public COMMISSION_RATE_BASE = 10000;  // 1 commissionRate means 0.01%
+    uint constant public INCREASE_RATE_WAIT_TIME = 1344;  // 1344 blocks = 2 weeks
+
 
     IERC20 public celerToken;
     // timeout to blame (claim responsibility of) undelegating delegators or unbonding validators
@@ -121,14 +132,45 @@ contract DPoS is IDPoS, Ownable {
         registeredSidechains[_addr] = true;
     }
 
-    function initializeCandidate(uint _minSelfStake) external {
+    function initializeCandidate(uint _minSelfStake, uint _commissionRate, uint _rateLockEndTime) external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(!candidate.initialized, "Candidate is initialized");
+        require(_commissionRate <= COMMISSION_RATE_BASE);
 
         candidate.initialized = true;
         candidate.minSelfStake = _minSelfStake;
+        candidate.commissionRate = _commissionRate;
+        candidate.rateLockEndTime = _rateLockEndTime;
 
-        emit InitializeCandidate(msg.sender, _minSelfStake);
+        emit InitializeCandidate(msg.sender, _minSelfStake, _commissionRate, _rateLockEndTime);
+    }
+
+    function nonIncreaseCommissionRate(uint _newRate, uint _newLockEndTime) external {
+        ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+        require(candidate.initialized, "Candidate is not initialized");
+        require(_newRate <= candidate.commissionRate, "invalid new rate");
+
+        _updateCommissionRate(candidate, _newRate, _newLockEndTime);
+    }
+
+    function announceIncreaseCommissionRate(uint _newRate, uint _newLockEndTime) external {
+        ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+        require(candidate.initialized, "Candidate is not initialized");
+        require(candidate.commissionRate < _newRate, "invalid new rate");
+
+        candidate.announcedRate = _newRate;
+        candidate.announcedLockEndTime = _newLockEndTime;
+        candidate.announcementTime = block.number;
+
+        emit CommissionRateAnnouncement(msg.sender, _newRate, _newLockEndTime);
+    }
+
+    function confirmIncreaseCommissionRate() external {
+        ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+        require(candidate.initialized, "Candidate is not initialized");
+        require(block.number > candidate.announcementTime + INCREASE_RATE_WAIT_TIME, "new rate hasn't taken effect");
+
+        _updateCommissionRate(candidate, candidate.announcedRate, candidate.announcedLockEndTime);
     }
 
     function delegate(address _candidateAddr, uint _amount) external onlyNonZeroAddr(_candidateAddr) {
@@ -373,7 +415,9 @@ contract DPoS is IDPoS, Ownable {
         uint minSelfStake,
         uint stakingPool,
         uint status,
-        uint unbondTime
+        uint unbondTime,
+        uint commissionRate,
+        uint rateLockEndTime
     )
     {
         ValidatorCandidate storage c = candidateProfiles[_candidateAddr];
@@ -383,6 +427,8 @@ contract DPoS is IDPoS, Ownable {
         stakingPool = c.stakingPool;
         status = uint(c.status);
         unbondTime = c.unbondTime;
+        commissionRate = c.commissionRate;
+        rateLockEndTime = c.rateLockEndTime;
     }
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) public view
@@ -418,6 +464,20 @@ contract DPoS is IDPoS, Ownable {
         }
 
         return totalValidatorStakingPool;
+    }
+
+    function _updateCommissionRate(ValidatorCandidate storage _candidate, uint _newRate, uint _newLockEndTime) private {
+        require(_newRate <= COMMISSION_RATE_BASE, "invalid new rate");
+        require(_newLockEndTime > block.number && _newLockEndTime > _candidate.rateLockEndTime, "invalid new lock_end_time");
+
+        _candidate.commissionRate = _newRate;
+        _candidate.rateLockEndTime = _newLockEndTime;
+        
+        delete _candidate.announcedRate;
+        delete _candidate.announcedLockEndTime;
+        delete _candidate.announcementTime;
+
+        emit UpdateCommissionRate(_newRate, _newLockEndTime);
     }
 
     function _updateDelegatedStake(

@@ -138,6 +138,20 @@
   {
     "constant": true,
     "inputs": [],
+    "name": "COMMISSION_RATE_BASE",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
     "name": "celerToken",
     "outputs": [
       {
@@ -244,6 +258,20 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "INCREASE_RATE_WAIT_TIME",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "name": "_celerTokenAddress",
@@ -303,9 +331,58 @@
         "indexed": false,
         "name": "minSelfStake",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "commissionRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "rateLockEndTime",
+        "type": "uint256"
       }
     ],
     "name": "InitializeCandidate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "announcedRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "announcedLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "CommissionRateAnnouncement",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "newRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "newLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdateCommissionRate",
     "type": "event"
   },
   {
@@ -570,9 +647,62 @@
       {
         "name": "_minSelfStake",
         "type": "uint256"
+      },
+      {
+        "name": "_commissionRate",
+        "type": "uint256"
+      },
+      {
+        "name": "_rateLockEndTime",
+        "type": "uint256"
       }
     ],
     "name": "initializeCandidate",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_newRate",
+        "type": "uint256"
+      },
+      {
+        "name": "_newLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "nonIncreaseCommissionRate",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_newRate",
+        "type": "uint256"
+      },
+      {
+        "name": "_newLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "announceIncreaseCommissionRate",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "confirmIncreaseCommissionRate",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -791,6 +921,14 @@
       },
       {
         "name": "unbondTime",
+        "type": "uint256"
+      },
+      {
+        "name": "commissionRate",
+        "type": "uint256"
+      },
+      {
+        "name": "rateLockEndTime",
         "type": "uint256"
       }
     ],

@@ -10,7 +10,13 @@ interface IDPoS {
 
     function registerSidechain(address _addr) external;
 
-    function initializeCandidate(uint _minSelfStake) external;
+    function initializeCandidate(uint _minSelfStake, uint _commissionRate, uint _rateLockEndTime) external;
+
+    function announceIncreaseCommissionRate(uint _newRate, uint _newLockEndTime) external;
+
+    function confirmIncreaseCommissionRate() external;
+
+    function nonIncreaseCommissionRate(uint _newRate, uint _newLockEndTime) external;
 
     function delegate(address _candidate, uint _amount) external;
 
@@ -36,7 +42,7 @@ interface IDPoS {
 
     function getMinStakingPool() external view returns (uint);
 
-    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, uint, uint, uint);
+    function getCandidateInfo(address _candidateAddr) external view returns (bool, uint, uint, uint, uint, uint, uint);
 
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr) external view returns (uint, uint, uint[] memory, uint[] memory);
 
@@ -45,7 +51,11 @@ interface IDPoS {
     function getTotalValidatorStakingPool() external view returns(uint);
 
     // events
-    event InitializeCandidate(address indexed candidate, uint minSelfStake);
+    event InitializeCandidate(address indexed candidate, uint minSelfStake, uint commissionRate, uint rateLockEndTime);
+
+    event CommissionRateAnnouncement(address candidate, uint announcedRate, uint announcedLockEndTime);
+
+    event UpdateCommissionRate(uint newRate, uint newLockEndTime);
 
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);
 
