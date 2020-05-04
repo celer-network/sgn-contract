@@ -8,10 +8,11 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./lib/interface/IDPoS.sol";
 import "./lib/data/PbSgn.sol";
 import "./lib/DPoSCommon.sol";
+import "./lib/Govern.sol";
 
 // Ownable is only used to add the whitelist of sidechain addresses
 // Ownable should be removed after enabling governance module
-contract DPoS is IDPoS, Ownable {
+contract DPoS is IDPoS, Ownable, Govern {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
@@ -36,7 +37,7 @@ contract DPoS is IDPoS, Ownable {
         bool initialized;
         uint minSelfStake;
 
-        // delegatedStake sum of all delegators to this candidate
+        // stakingPool sum of all delegations to this candidate
         uint stakingPool;
         mapping (address => Delegator) delegatorProfiles;
         DPoSCommon.CandidateStatus status;
@@ -51,8 +52,8 @@ contract DPoS is IDPoS, Ownable {
     }
 
     uint constant public COMMISSION_RATE_BASE = 10000;  // 1 commissionRate means 0.01%
-    uint constant public INCREASE_RATE_WAIT_TIME = 1344;  // 1344 blocks = 2 weeks
-
+    // TODO: 1 block / 15 seconds
+    uint constant public INCREASE_RATE_WAIT_TIME = 1344;  // 1344 blocks = 2 weeks / 60
 
     IERC20 public celerToken;
     // timeout to blame (claim responsibility of) undelegating delegators or unbonding validators
