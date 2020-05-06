@@ -39,6 +39,8 @@ contract Govern is IGovern {
     )
         public
     {
+        require(_governVoteTimeout < _blameTimeout, "governVoteTimeout should be less than blameTimeout");
+        
         governToken = IERC20(_governTokenAddress);
 
         UIntStorage[uint(ParamNames.GovernProposalDeposit)] = _governProposalDeposit;
@@ -57,12 +59,17 @@ contract Govern is IGovern {
 
     /********** Set functions **********/
     function setUIntValue(uint _record, uint _value) private {
+        if (_record == uint(ParamNames.GovernVoteTimeout)) {
+            require(_value < UIntStorage[uint(ParamNames.BlameTimeout)], "governVoteTimeout should be less than blameTimeout");
+        } else if (_record == uint(ParamNames.BlameTimeout)) {
+            require(UIntStorage[uint(ParamNames.GovernVoteTimeout)] < _value, "governVoteTimeout should be less than blameTimeout");
+        }
+        
         UIntStorage[_record] = _value;
     }
 
     /********** Governance functions **********/
     function createProposal(uint _record, uint _value) public {
-        // TODO: _governVoteTimeout < _blameTimeout
         GovernProposal storage p = proposals[nextProposalId];
         nextProposalId = nextProposalId.add(1);
         address msgSender = msg.sender;

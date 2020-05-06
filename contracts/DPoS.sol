@@ -123,6 +123,11 @@ contract DPoS is IDPoS, Ownable, Govern {
     }
 
     function governConfirmProposal(uint _proposalId) public {
+        // TODO: a potential bug - 
+        // a validator can first vote then intendWithdraw. The intendWithdraw will
+        // decrease the total stake and hence decrease the minQuorumStakingPool, which
+        // essentially is to increase its own original voting power
+        // Potential fix: use lock?
         internalConfirmProposal(_proposalId, getMinQuorumStakingPool());
     }
 
