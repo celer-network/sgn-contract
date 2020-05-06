@@ -114,21 +114,27 @@ contract DPoS is IDPoS, Ownable, Govern {
         dposGoLiveTime = block.number.add(_dposGoLiveTimeout);
     }
 
-    function governVote(uint _proposalId) public {
+    function governVote(uint _proposalId, VoteType _vote) public {
         address msgSender = msg.sender;
         require(isValidator(msgSender), "msg sender is not a validator");
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
 
-        internalVote(_proposalId, msgSender, candidate.stakingPool);
+        internalVote(_proposalId, msgSender, _vote);
     }
 
     function governConfirmProposal(uint _proposalId) public {
-        // TODO: a potential bug - 
-        // a validator can first vote then intendWithdraw. The intendWithdraw will
-        // decrease the total stake and hence decrease the minQuorumStakingPool, which
-        // essentially is to increase its own original voting power
-        // Potential fix: use lock?
-        internalConfirmProposal(_proposalId, getMinQuorumStakingPool());
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+
+        // check Yes votes only now
+        uint yesVotes = 0;
+        for (uint i = 0; i < maxValidatorNum; i++) {
+            if (getProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
+                yesVotes = yesVotes.add(candidateProfiles[validatorSet[i]].stakingPool);
+            }
+        }
+
+        bool passed = yesVotes >= getMinQuorumStakingPool();
+        internalConfirmProposal(_proposalId, passed);
     }
 
     function contributeToMiningPool(uint _amount) public {

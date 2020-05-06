@@ -10,7 +10,7 @@ const ERC20ExampleToken = artifacts.require('ERC20ExampleToken');
 
 const GANACHE_ACCOUNT_NUM = 20; // defined in .circleci/config.yml
 const GOVERN_PROPOSAL_DEPOSIT = 100;
-const GOVERN_VOTE_TIMEOUT = 10;
+const GOVERN_VOTE_TIMEOUT = 20;
 const BLAME_TIMEOUT = 50;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
@@ -30,6 +30,8 @@ const LARGER_LOCK_END_TIME = 200000;
 const LOWER_RATE = 50;
 const SMALLER_LOCK_END_TIME = 50000;
 const INCREASE_RATE_WAIT_TIME = 100;  // in practice, this should be 80640 (2 weeks)
+
+const ENUM_BLAME_TIMEOUT = 2;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
@@ -831,6 +833,25 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.amount, 10);
         });
+
+        it('should createProposal successfully', async () => {
+            const newBlameTimeout = BLAME_TIMEOUT + 1;
+
+            await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+            const tx = await dposInstance.createProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
+            const block = await web3.eth.getBlock('latest');
+            const { event, args } = tx.logs[0];
+
+            assert.equal(event, 'CreateProposal');
+            assert.equal(args.proposalId, 0);
+            assert.equal(args.proposer, accounts[0]);
+            assert.equal(args.deposit, GOVERN_PROPOSAL_DEPOSIT);
+            assert.equal(args.voteDeadline, block.number + GOVERN_VOTE_TIMEOUT);
+            assert.equal(args.record, ENUM_BLAME_TIMEOUT);
+            assert.equal(args.newValue, newBlameTimeout);
+        });
+
+
     });
 
     describe('after max number of validators join the validator set and sidechain goes live', async () => {

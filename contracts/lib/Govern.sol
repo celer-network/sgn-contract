@@ -18,8 +18,7 @@ contract Govern is IGovern {
         uint record;
         uint newValue;
         ProposalStatus status;
-        mapping(address => bool) voted;
-        uint totalVotes;
+        mapping(address => VoteType) votes;
     }
 
     IERC20 public governToken;
@@ -38,9 +37,7 @@ contract Govern is IGovern {
         uint _increaseRateWaitTime
     )
         public
-    {
-        require(_governVoteTimeout < _blameTimeout, "governVoteTimeout should be less than blameTimeout");
-        
+    {        
         governToken = IERC20(_governTokenAddress);
 
         UIntStorage[uint(ParamNames.GovernProposalDeposit)] = _governProposalDeposit;
@@ -57,14 +54,12 @@ contract Govern is IGovern {
         return UIntStorage[_record];
     }
 
+    function getProposalVote(uint _proposalId, address _voter) public view returns (VoteType) {
+        return proposals[_proposalId].votes[_voter];
+    }
+
     /********** Set functions **********/
     function setUIntValue(uint _record, uint _value) private {
-        if (_record == uint(ParamNames.GovernVoteTimeout)) {
-            require(_value < UIntStorage[uint(ParamNames.BlameTimeout)], "governVoteTimeout should be less than blameTimeout");
-        } else if (_record == uint(ParamNames.BlameTimeout)) {
-            require(UIntStorage[uint(ParamNames.GovernVoteTimeout)] < _value, "governVoteTimeout should be less than blameTimeout");
-        }
-        
         UIntStorage[_record] = _value;
     }
 
@@ -87,29 +82,28 @@ contract Govern is IGovern {
         emit CreateProposal(nextProposalId.sub(1), msgSender, deposit, p.voteDeadline, _record, _value);
     }
 
-    function internalVote(uint _proposalId, address _voter, uint _votes) internal {
+    function internalVote(uint _proposalId, address _voter, VoteType _vote) internal {
         GovernProposal storage p = proposals[_proposalId];
         require(block.number < p.voteDeadline, "Vote deadline reached");
         require(p.status == ProposalStatus.Voting, "Invalid proposal status");
-        require(!p.voted[_voter], "Voter has voted");
+        require(p.votes[_voter] == VoteType.Unvoted, "Voter has voted");
 
-        p.totalVotes = p.totalVotes.add(_votes);
+        p.votes[_voter] = _vote;
 
-        emit Vote(_proposalId, _voter, _votes);
+        emit Vote(_proposalId, _voter, _vote);
     }
 
-    function internalConfirmProposal(uint _proposalId, uint _passVotes) internal {
+    function internalConfirmProposal(uint _proposalId, bool _passed) internal {
         GovernProposal storage p = proposals[_proposalId];
         require(block.number >= p.voteDeadline, "Vote deadline not reached");
         require(p.status == ProposalStatus.Voting, "Invalid proposal status");
 
         p.status = ProposalStatus.Closed;
-        bool passed = p.totalVotes >= _passVotes;
-        if (passed) {
+        if (_passed) {
             governToken.safeTransfer(p.proposer, p.deposit);
             UIntStorage[p.record] = p.newValue;
         }
 
-        emit ConfirmProposal(_proposalId, passed, p.record, p.newValue);
+        emit ConfirmProposal(_proposalId, _passed, p.record, p.newValue);
     }
 }
