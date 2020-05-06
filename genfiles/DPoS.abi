@@ -32,10 +32,6 @@
       {
         "name": "status",
         "type": "uint8"
-      },
-      {
-        "name": "totalVotes",
-        "type": "uint256"
       }
     ],
     "payable": false,
@@ -116,6 +112,29 @@
       {
         "name": "",
         "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_proposalId",
+        "type": "uint256"
+      },
+      {
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "getProposalVote",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
       }
     ],
     "payable": false,
@@ -423,8 +442,8 @@
       },
       {
         "indexed": false,
-        "name": "votes",
-        "type": "uint256"
+        "name": "voteType",
+        "type": "uint8"
       }
     ],
     "name": "Vote",
@@ -756,6 +775,10 @@
       {
         "name": "_proposalId",
         "type": "uint256"
+      },
+      {
+        "name": "_vote",
+        "type": "uint8"
       }
     ],
     "name": "governVote",
