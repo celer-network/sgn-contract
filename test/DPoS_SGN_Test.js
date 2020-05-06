@@ -9,8 +9,8 @@ const SGN = artifacts.require('SGN');
 const ERC20ExampleToken = artifacts.require('ERC20ExampleToken');
 
 const GANACHE_ACCOUNT_NUM = 20; // defined in .circleci/config.yml
-const ValidatorAdd = 0;
-const ValidatorRemoval = 1;
+const GOVERN_PROPOSAL_DEPOSIT = 100;
+const GOVERN_VOTE_TIMEOUT = 10;
 const BLAME_TIMEOUT = 50;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
@@ -29,7 +29,7 @@ const HIGHER_RATE = 200;
 const LARGER_LOCK_END_TIME = 200000;
 const LOWER_RATE = 50;
 const SMALLER_LOCK_END_TIME = 50000;
-const NEW_RATE_TAKES_EFFECT_WAIT_TIME = 1344;
+const INCREASE_RATE_WAIT_TIME = 100;  // in practice, this should be 80640 (2 weeks)
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
@@ -64,11 +64,14 @@ contract('DPoS and SGN contracts', async accounts => {
 
         dposInstance = await DPoS.new(
             celerToken.address,
+            GOVERN_PROPOSAL_DEPOSIT,
+            GOVERN_VOTE_TIMEOUT,
             BLAME_TIMEOUT,
             MIN_VALIDATOR_NUM,
+            MAX_VALIDATOR_NUM,
             MIN_STAKING_POOL,
-            DPOS_GO_LIVE_TIMEOUT,
-            MAX_VALIDATOR_NUM
+            INCREASE_RATE_WAIT_TIME,
+            DPOS_GO_LIVE_TIMEOUT
         );
 
         sgnInstance = await SGN.new(
@@ -248,7 +251,7 @@ contract('DPoS and SGN contracts', async accounts => {
             });
 
             it('should confirmIncreaseCommissionRate successfully after new rate takes effect ', async () => {
-                await Timetravel.advanceBlocks(NEW_RATE_TAKES_EFFECT_WAIT_TIME);
+                await Timetravel.advanceBlocks(INCREASE_RATE_WAIT_TIME);
                 const tx = await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
                 const { event, args } = tx.logs[0];
 
@@ -951,10 +954,10 @@ contract('DPoS and SGN contracts', async accounts => {
 
             assert.equal(tx.logs[0].event, 'ValidatorChange');
             assert.equal(tx.logs[0].args.ethAddr, accounts[1]);
-            assert.equal(tx.logs[0].args.changeType, ValidatorRemoval);
+            assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
             assert.equal(tx.logs[1].event, 'ValidatorChange');
             assert.equal(tx.logs[1].args.ethAddr, addr);
-            assert.equal(tx.logs[1].args.changeType, ValidatorAdd);
+            assert.equal(tx.logs[1].args.changeType, VALIDATOR_ADD);
         });
     });
 });
