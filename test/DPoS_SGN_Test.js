@@ -32,6 +32,7 @@ const SMALLER_LOCK_END_TIME = 50000;
 const INCREASE_RATE_WAIT_TIME = 100;  // in practice, this should be 80640 (2 weeks)
 
 const ENUM_BLAME_TIMEOUT = 2;
+const ENUM_VOTE_TYPE_YES = 1;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
@@ -719,6 +720,7 @@ contract('DPoS and SGN contracts', async accounts => {
             accounts[3],
             accounts[4]
         ];
+        const NON_VALIDATOR = accounts[5];
 
         // validators self delegates 2 * max(MIN_SELF_STAKE, MIN_STAKING_POOL)
         const SELF_STAKE = 2 * Math.max(MIN_SELF_STAKE, MIN_STAKING_POOL);
@@ -851,7 +853,174 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(args.newValue, newBlameTimeout);
         });
 
+        describe('after someone createProposal successfully', async () => {
+            const newBlameTimeout = BLAME_TIMEOUT + 1;
+            const proposalId = 0;
 
+            beforeEach(async () => {
+                await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+                await dposInstance.createProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
+            });
+
+            it('should fail to governVote if not validator', async () => {
+                try {
+                    await dposInstance.governVote(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: NON_VALIDATOR }
+                    );
+                } catch (error) {
+                    assert.isAbove(error.message.search('msg sender is not a validator'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should fail to governVote for a proposal with an invalid status', async () => {
+                const invalidProposalId = proposalId + 1;
+                try {
+                    await dposInstance.governVote(
+                        invalidProposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[0] }
+                    );
+                } catch (error) {
+                    assert.isAbove(error.message.search('Invalid proposal status'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should vote successfully as a validator', async () => {
+                const tx = await dposInstance.governVote(
+                    proposalId,
+                    ENUM_VOTE_TYPE_YES,
+                    { from: VALIDATORS[0] }
+                );
+                const { event, args } = tx.logs[0];
+
+                assert.equal(event, 'Vote');
+                assert.equal(args.proposalId, proposalId);
+                assert.equal(args.voter, VALIDATORS[0]);
+                assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+            });
+
+            describe('after a validtor votes successfully', async () => {
+                beforeEach(async () => {
+                    await dposInstance.governVote(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[0] }
+                    );
+                });
+
+                it('should fail to vote for the same proposal twice', async () => {
+                    try {
+                        await dposInstance.governVote(
+                            proposalId,
+                            ENUM_VOTE_TYPE_YES,
+                            { from: VALIDATORS[0] }
+                        );
+                    } catch (error) {
+                        assert.isAbove(error.message.search('Voter has voted'), -1);
+                        return;
+                    }
+
+                    assert.fail('should have thrown before');
+                });
+
+                it('should vote successfully as another validator', async () => {
+                    const tx = await dposInstance.governVote(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[1] }
+                    );
+                    const { event, args } = tx.logs[0];
+
+                    assert.equal(event, 'Vote');
+                    assert.equal(args.proposalId, proposalId);
+                    assert.equal(args.voter, VALIDATORS[1]);
+                    assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+                });
+
+                it('should fail to governConfirmProposal before the vote deadline', async () => {
+                    try {
+                        await dposInstance.governConfirmProposal(proposalId);
+                    } catch (error) {
+                        assert.isAbove(error.message.search('Vote deadline not reached'), -1);
+                        return;
+                    }
+
+                    assert.fail('should have thrown before');
+                });
+
+                describe('after passing the vote deadline', async () => {
+                    beforeEach(async () => {
+                        await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+                    });
+
+                    it('should fail to vote after the vote deadline', async () => {
+                        try {
+                            await dposInstance.governVote(
+                                proposalId,
+                                ENUM_VOTE_TYPE_YES,
+                                { from: VALIDATORS[2] }
+                            );
+                        } catch (error) {
+                            assert.isAbove(error.message.search('Vote deadline reached'), -1);
+                            return;
+                        }
+
+                        assert.fail('should have thrown before');
+                    });
+
+                    it('should governConfirmProposal (reject proposal case) successfully', async () => {
+                        const tx = await dposInstance.governConfirmProposal(proposalId);
+                        const { event, args } = tx.logs[0];
+
+                        assert.equal(event, 'ConfirmProposal');
+                        assert.equal(args.proposalId, proposalId);
+                        assert.equal(args.passed, false);
+                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
+                        assert.equal(args.newValue, newBlameTimeout);
+                    });
+                });
+            });
+
+            describe('after over 2/3 voting power votes for Yes', async () => {
+                beforeEach(async () => {
+                    const majorNum = Math.ceil(VALIDATORS.length * 2 / 3);
+                    for (let i = 0; i < majorNum; i++) {
+                        await dposInstance.governVote(
+                            proposalId,
+                            ENUM_VOTE_TYPE_YES,
+                            { from: VALIDATORS[i] }
+                        );
+                    }
+                });
+
+                describe('after passing the vote deadline', async () => {
+                    beforeEach(async () => {
+                        await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+                    });
+
+                    it('should governConfirmProposal (accept proposal case) successfully', async () => {
+                        const tx = await dposInstance.governConfirmProposal(proposalId);
+                        const { event, args } = tx.logs[0];
+                        const queriedNewBlameTimeout = await dposInstance.getUIntValue(ENUM_BLAME_TIMEOUT);
+
+                        assert.equal(event, 'ConfirmProposal');
+                        assert.equal(args.proposalId, proposalId);
+                        assert.equal(args.passed, true);
+                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
+                        assert.equal(args.newValue, newBlameTimeout);
+                        assert.equal(queriedNewBlameTimeout, newBlameTimeout);
+                    });
+                });
+            });
+        });
     });
 
     describe('after max number of validators join the validator set and sidechain goes live', async () => {

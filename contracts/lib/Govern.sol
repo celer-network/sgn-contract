@@ -84,8 +84,8 @@ contract Govern is IGovern {
 
     function internalVote(uint _proposalId, address _voter, VoteType _vote) internal {
         GovernProposal storage p = proposals[_proposalId];
-        require(block.number < p.voteDeadline, "Vote deadline reached");
         require(p.status == ProposalStatus.Voting, "Invalid proposal status");
+        require(block.number < p.voteDeadline, "Vote deadline reached");
         require(p.votes[_voter] == VoteType.Unvoted, "Voter has voted");
 
         p.votes[_voter] = _vote;
@@ -95,8 +95,8 @@ contract Govern is IGovern {
 
     function internalConfirmProposal(uint _proposalId, bool _passed) internal {
         GovernProposal storage p = proposals[_proposalId];
-        require(block.number >= p.voteDeadline, "Vote deadline not reached");
         require(p.status == ProposalStatus.Voting, "Invalid proposal status");
+        require(block.number >= p.voteDeadline, "Vote deadline not reached");
 
         p.status = ProposalStatus.Closed;
         if (_passed) {
