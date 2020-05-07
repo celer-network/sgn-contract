@@ -4,6 +4,16 @@ interface IDPoS {
     enum ValidatorChangeType { Add, Removal }
 
     // functions
+
+    // TODO: interface can't be inherited, so VoteType is not declared here
+    // function voteParam(uint _proposalId, VoteType _vote) external;
+
+    // function confirmParamProposal(uint _proposalId) external;
+
+    // function voteSidechain(uint _proposalId, VoteType _vote) external;
+
+    // function confirmSidechainProposal(uint _proposalId) external;
+
     function contributeToMiningPool(uint _amount) external;
 
     function redeemMiningReward(address _receiver, uint _cumulativeReward) external;

@@ -4,15 +4,12 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./lib/interface/IDPoS.sol";
 import "./lib/data/PbSgn.sol";
 import "./lib/DPoSCommon.sol";
 import "./lib/Govern.sol";
 
-// Ownable is only used to add the whitelist of sidechain addresses
-// Ownable should be removed after enabling governance module
-contract DPoS is IDPoS, Ownable, Govern {
+contract DPoS is IDPoS, Govern {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
@@ -68,9 +65,6 @@ contract DPoS is IDPoS, Ownable, Govern {
     // used for bootstrap: there should be enough time for delegating and claim the initial validators
     uint public dposGoLiveTime;
 
-    /********** Parameters under governance **********/
-    mapping (address => bool) public registeredSidechains;
-
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
         _;
@@ -83,7 +77,7 @@ contract DPoS is IDPoS, Ownable, Govern {
     }
 
     modifier onlyRegisteredSidechains() {
-        require(registeredSidechains[msg.sender]);
+        require(isSidechainRegistered(msg.sender));
         _;
     }
 
@@ -117,7 +111,6 @@ contract DPoS is IDPoS, Ownable, Govern {
     function voteParam(uint _proposalId, VoteType _vote) public {
         address msgSender = msg.sender;
         require(isValidator(msgSender), "msg sender is not a validator");
-        ValidatorCandidate storage candidate = candidateProfiles[msgSender];
 
         internalVoteParam(_proposalId, msgSender, _vote);
     }
@@ -137,6 +130,28 @@ contract DPoS is IDPoS, Ownable, Govern {
         internalConfirmParamProposal(_proposalId, passed);
     }
 
+    function voteSidechain(uint _proposalId, VoteType _vote) public {
+        address msgSender = msg.sender;
+        require(isValidator(msgSender), "msg sender is not a validator");
+
+        internalVoteSidechain(_proposalId, msgSender, _vote);
+    }
+
+    function confirmSidechainProposal(uint _proposalId) public {
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+
+        // check Yes votes only now
+        uint yesVotes = 0;
+        for (uint i = 0; i < maxValidatorNum; i++) {
+            if (getSidechainProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
+                yesVotes = yesVotes.add(candidateProfiles[validatorSet[i]].stakingPool);
+            }
+        }
+
+        bool passed = yesVotes >= getMinQuorumStakingPool();
+        internalConfirmSidechainProposal(_proposalId, passed);
+    }
+
     function contributeToMiningPool(uint _amount) public {
         address msgSender = msg.sender;
         miningPool = miningPool.add(_amount);
@@ -153,12 +168,6 @@ contract DPoS is IDPoS, Ownable, Govern {
         celerToken.safeTransfer(_receiver, newReward);
 
         emit RedeemMiningReward(_receiver, newReward, miningPool);
-    }
-
-    // TODO: remove onlyOwner after using governance
-    // Maybe can leave it here because owner can renounce ownership
-    function registerSidechain(address _addr) external onlyOwner {
-        registeredSidechains[_addr] = true;
     }
 
     function initializeCandidate(uint _minSelfStake, uint _commissionRate, uint _rateLockEndTime) external {
