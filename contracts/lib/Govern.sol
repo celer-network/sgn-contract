@@ -11,7 +11,7 @@ contract Govern is IGovern {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    struct GovernProposal {
+    struct ParamProposal {
         address proposer;
         uint deposit;
         uint voteDeadline;
@@ -23,8 +23,8 @@ contract Govern is IGovern {
 
     IERC20 public governToken;
     mapping(uint => uint) public UIntStorage;
-    mapping(uint => GovernProposal) public proposals;
-    uint public nextProposalId;
+    mapping(uint => ParamProposal) public paramProposals;
+    uint public nextParamProposalId;
 
     constructor(
         address _governTokenAddress,
@@ -40,7 +40,7 @@ contract Govern is IGovern {
     {        
         governToken = IERC20(_governTokenAddress);
 
-        UIntStorage[uint(ParamNames.GovernProposalDeposit)] = _governProposalDeposit;
+        UIntStorage[uint(ParamNames.ParamProposalDeposit)] = _governProposalDeposit;
         UIntStorage[uint(ParamNames.GovernVoteTimeout)] = _governVoteTimeout;
         UIntStorage[uint(ParamNames.BlameTimeout)] = _blameTimeout;
         UIntStorage[uint(ParamNames.MinValidatorNum)] = _minValidatorNum;
@@ -54,8 +54,8 @@ contract Govern is IGovern {
         return UIntStorage[_record];
     }
 
-    function getProposalVote(uint _proposalId, address _voter) public view returns (VoteType) {
-        return proposals[_proposalId].votes[_voter];
+    function getParamProposalVote(uint _proposalId, address _voter) public view returns (VoteType) {
+        return paramProposals[_proposalId].votes[_voter];
     }
 
     /********** Set functions **********/
@@ -64,11 +64,11 @@ contract Govern is IGovern {
     }
 
     /********** Governance functions **********/
-    function createProposal(uint _record, uint _value) public {
-        GovernProposal storage p = proposals[nextProposalId];
-        nextProposalId = nextProposalId.add(1);
+    function createParamProposal(uint _record, uint _value) public {
+        ParamProposal storage p = paramProposals[nextParamProposalId];
+        nextParamProposalId = nextParamProposalId.add(1);
         address msgSender = msg.sender;
-        uint deposit = UIntStorage[uint(ParamNames.GovernProposalDeposit)];
+        uint deposit = UIntStorage[uint(ParamNames.ParamProposalDeposit)];
         
         p.proposer = msgSender;
         p.deposit = deposit;
@@ -79,22 +79,22 @@ contract Govern is IGovern {
 
         governToken.safeTransferFrom(msgSender, address(this), deposit);
 
-        emit CreateProposal(nextProposalId.sub(1), msgSender, deposit, p.voteDeadline, _record, _value);
+        emit CreateParamProposal(nextParamProposalId.sub(1), msgSender, deposit, p.voteDeadline, _record, _value);
     }
 
-    function internalVote(uint _proposalId, address _voter, VoteType _vote) internal {
-        GovernProposal storage p = proposals[_proposalId];
+    function internalVoteParam(uint _proposalId, address _voter, VoteType _vote) internal {
+        ParamProposal storage p = paramProposals[_proposalId];
         require(p.status == ProposalStatus.Voting, "Invalid proposal status");
         require(block.number < p.voteDeadline, "Vote deadline reached");
         require(p.votes[_voter] == VoteType.Unvoted, "Voter has voted");
 
         p.votes[_voter] = _vote;
 
-        emit Vote(_proposalId, _voter, _vote);
+        emit VoteParam(_proposalId, _voter, _vote);
     }
 
-    function internalConfirmProposal(uint _proposalId, bool _passed) internal {
-        GovernProposal storage p = proposals[_proposalId];
+    function internalConfirmParamProposal(uint _proposalId, bool _passed) internal {
+        ParamProposal storage p = paramProposals[_proposalId];
         require(p.status == ProposalStatus.Voting, "Invalid proposal status");
         require(block.number >= p.voteDeadline, "Vote deadline not reached");
 
@@ -104,6 +104,6 @@ contract Govern is IGovern {
             UIntStorage[p.record] = p.newValue;
         }
 
-        emit ConfirmProposal(_proposalId, _passed, p.record, p.newValue);
+        emit ConfirmParamProposal(_proposalId, _passed, p.record, p.newValue);
     }
 }

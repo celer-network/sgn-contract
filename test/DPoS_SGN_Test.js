@@ -836,15 +836,15 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(tx.logs[0].args.amount, 10);
         });
 
-        it('should createProposal successfully', async () => {
+        it('should createParamProposal successfully', async () => {
             const newBlameTimeout = BLAME_TIMEOUT + 1;
 
             await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
-            const tx = await dposInstance.createProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
+            const tx = await dposInstance.createParamProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
             const block = await web3.eth.getBlock('latest');
             const { event, args } = tx.logs[0];
 
-            assert.equal(event, 'CreateProposal');
+            assert.equal(event, 'CreateParamProposal');
             assert.equal(args.proposalId, 0);
             assert.equal(args.proposer, accounts[0]);
             assert.equal(args.deposit, GOVERN_PROPOSAL_DEPOSIT);
@@ -853,18 +853,18 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(args.newValue, newBlameTimeout);
         });
 
-        describe('after someone createProposal successfully', async () => {
+        describe('after someone createParamProposal successfully', async () => {
             const newBlameTimeout = BLAME_TIMEOUT + 1;
             const proposalId = 0;
 
             beforeEach(async () => {
                 await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
-                await dposInstance.createProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
+                await dposInstance.createParamProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
             });
 
-            it('should fail to governVote if not validator', async () => {
+            it('should fail to voteParam if not validator', async () => {
                 try {
-                    await dposInstance.governVote(
+                    await dposInstance.voteParam(
                         proposalId,
                         ENUM_VOTE_TYPE_YES,
                         { from: NON_VALIDATOR }
@@ -877,10 +877,10 @@ contract('DPoS and SGN contracts', async accounts => {
                 assert.fail('should have thrown before');
             });
 
-            it('should fail to governVote for a proposal with an invalid status', async () => {
+            it('should fail to voteParam for a proposal with an invalid status', async () => {
                 const invalidProposalId = proposalId + 1;
                 try {
-                    await dposInstance.governVote(
+                    await dposInstance.voteParam(
                         invalidProposalId,
                         ENUM_VOTE_TYPE_YES,
                         { from: VALIDATORS[0] }
@@ -894,14 +894,14 @@ contract('DPoS and SGN contracts', async accounts => {
             });
 
             it('should vote successfully as a validator', async () => {
-                const tx = await dposInstance.governVote(
+                const tx = await dposInstance.voteParam(
                     proposalId,
                     ENUM_VOTE_TYPE_YES,
                     { from: VALIDATORS[0] }
                 );
                 const { event, args } = tx.logs[0];
 
-                assert.equal(event, 'Vote');
+                assert.equal(event, 'VoteParam');
                 assert.equal(args.proposalId, proposalId);
                 assert.equal(args.voter, VALIDATORS[0]);
                 assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
@@ -909,7 +909,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
             describe('after a validtor votes successfully', async () => {
                 beforeEach(async () => {
-                    await dposInstance.governVote(
+                    await dposInstance.voteParam(
                         proposalId,
                         ENUM_VOTE_TYPE_YES,
                         { from: VALIDATORS[0] }
@@ -918,7 +918,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
                 it('should fail to vote for the same proposal twice', async () => {
                     try {
-                        await dposInstance.governVote(
+                        await dposInstance.voteParam(
                             proposalId,
                             ENUM_VOTE_TYPE_YES,
                             { from: VALIDATORS[0] }
@@ -932,22 +932,22 @@ contract('DPoS and SGN contracts', async accounts => {
                 });
 
                 it('should vote successfully as another validator', async () => {
-                    const tx = await dposInstance.governVote(
+                    const tx = await dposInstance.voteParam(
                         proposalId,
                         ENUM_VOTE_TYPE_YES,
                         { from: VALIDATORS[1] }
                     );
                     const { event, args } = tx.logs[0];
 
-                    assert.equal(event, 'Vote');
+                    assert.equal(event, 'VoteParam');
                     assert.equal(args.proposalId, proposalId);
                     assert.equal(args.voter, VALIDATORS[1]);
                     assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
                 });
 
-                it('should fail to governConfirmProposal before the vote deadline', async () => {
+                it('should fail to confirmParamProposal before the vote deadline', async () => {
                     try {
-                        await dposInstance.governConfirmProposal(proposalId);
+                        await dposInstance.confirmParamProposal(proposalId);
                     } catch (error) {
                         assert.isAbove(error.message.search('Vote deadline not reached'), -1);
                         return;
@@ -963,7 +963,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
                     it('should fail to vote after the vote deadline', async () => {
                         try {
-                            await dposInstance.governVote(
+                            await dposInstance.voteParam(
                                 proposalId,
                                 ENUM_VOTE_TYPE_YES,
                                 { from: VALIDATORS[2] }
@@ -976,11 +976,11 @@ contract('DPoS and SGN contracts', async accounts => {
                         assert.fail('should have thrown before');
                     });
 
-                    it('should governConfirmProposal (reject proposal case) successfully', async () => {
-                        const tx = await dposInstance.governConfirmProposal(proposalId);
+                    it('should confirmParamProposal (reject proposal case) successfully', async () => {
+                        const tx = await dposInstance.confirmParamProposal(proposalId);
                         const { event, args } = tx.logs[0];
 
-                        assert.equal(event, 'ConfirmProposal');
+                        assert.equal(event, 'ConfirmParamProposal');
                         assert.equal(args.proposalId, proposalId);
                         assert.equal(args.passed, false);
                         assert.equal(args.record, ENUM_BLAME_TIMEOUT);
@@ -993,7 +993,7 @@ contract('DPoS and SGN contracts', async accounts => {
                 beforeEach(async () => {
                     const majorNum = Math.ceil(VALIDATORS.length * 2 / 3);
                     for (let i = 0; i < majorNum; i++) {
-                        await dposInstance.governVote(
+                        await dposInstance.voteParam(
                             proposalId,
                             ENUM_VOTE_TYPE_YES,
                             { from: VALIDATORS[i] }
@@ -1006,12 +1006,12 @@ contract('DPoS and SGN contracts', async accounts => {
                         await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
                     });
 
-                    it('should governConfirmProposal (accept proposal case) successfully', async () => {
-                        const tx = await dposInstance.governConfirmProposal(proposalId);
+                    it('should confirmParamProposal (accept proposal case) successfully', async () => {
+                        const tx = await dposInstance.confirmParamProposal(proposalId);
                         const { event, args } = tx.logs[0];
                         const queriedNewBlameTimeout = await dposInstance.getUIntValue(ENUM_BLAME_TIMEOUT);
 
-                        assert.equal(event, 'ConfirmProposal');
+                        assert.equal(event, 'ConfirmParamProposal');
                         assert.equal(args.proposalId, proposalId);
                         assert.equal(args.passed, true);
                         assert.equal(args.record, ENUM_BLAME_TIMEOUT);
