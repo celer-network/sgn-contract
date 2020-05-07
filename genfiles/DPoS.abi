@@ -1,37 +1,12 @@
 [
   {
     "constant": true,
-    "inputs": [
+    "inputs": [],
+    "name": "nextParamProposalId",
+    "outputs": [
       {
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "name": "proposals",
-    "outputs": [
-      {
-        "name": "proposer",
-        "type": "address"
-      },
-      {
-        "name": "deposit",
-        "type": "uint256"
-      },
-      {
-        "name": "voteDeadline",
-        "type": "uint256"
-      },
-      {
-        "name": "record",
-        "type": "uint256"
-      },
-      {
-        "name": "newValue",
-        "type": "uint256"
-      },
-      {
-        "name": "status",
-        "type": "uint8"
       }
     ],
     "payable": false,
@@ -39,17 +14,21 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "nextProposalId",
-    "outputs": [
+    "constant": false,
+    "inputs": [
       {
-        "name": "",
+        "name": "_record",
+        "type": "uint256"
+      },
+      {
+        "name": "_value",
         "type": "uint256"
       }
     ],
+    "name": "createParamProposal",
+    "outputs": [],
     "payable": false,
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -130,7 +109,7 @@
         "type": "address"
       }
     ],
-    "name": "getProposalVote",
+    "name": "getParamProposalVote",
     "outputs": [
       {
         "name": "",
@@ -181,24 +160,6 @@
   },
   {
     "constant": false,
-    "inputs": [
-      {
-        "name": "_record",
-        "type": "uint256"
-      },
-      {
-        "name": "_value",
-        "type": "uint256"
-      }
-    ],
-    "name": "createProposal",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
     "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
@@ -214,6 +175,45 @@
       {
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "paramProposals",
+    "outputs": [
+      {
+        "name": "proposer",
+        "type": "address"
+      },
+      {
+        "name": "deposit",
+        "type": "uint256"
+      },
+      {
+        "name": "voteDeadline",
+        "type": "uint256"
+      },
+      {
+        "name": "record",
+        "type": "uint256"
+      },
+      {
+        "name": "newValue",
+        "type": "uint256"
+      },
+      {
+        "name": "status",
+        "type": "uint8"
       }
     ],
     "payable": false,
@@ -424,7 +424,7 @@
         "type": "uint256"
       }
     ],
-    "name": "CreateProposal",
+    "name": "CreateParamProposal",
     "type": "event"
   },
   {
@@ -446,7 +446,7 @@
         "type": "uint8"
       }
     ],
-    "name": "Vote",
+    "name": "VoteParam",
     "type": "event"
   },
   {
@@ -473,7 +473,7 @@
         "type": "uint256"
       }
     ],
-    "name": "ConfirmProposal",
+    "name": "ConfirmParamProposal",
     "type": "event"
   },
   {
@@ -781,7 +781,7 @@
         "type": "uint8"
       }
     ],
-    "name": "governVote",
+    "name": "voteParam",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -795,7 +795,7 @@
         "type": "uint256"
       }
     ],
-    "name": "governConfirmProposal",
+    "name": "confirmParamProposal",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
