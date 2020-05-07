@@ -14,6 +14,20 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "nextSidechainProposalId",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -29,6 +43,25 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_sidechainAddr",
+        "type": "address"
+      }
+    ],
+    "name": "isSidechainRegistered",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -224,6 +257,29 @@
     "constant": true,
     "inputs": [
       {
+        "name": "_proposalId",
+        "type": "uint256"
+      },
+      {
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "getSidechainProposalVote",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
         "name": "",
         "type": "address"
       }
@@ -268,6 +324,20 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_addr",
+        "type": "address"
+      }
+    ],
+    "name": "registerSidechain",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
     "inputs": [],
     "name": "COMMISSION_RATE_BASE",
@@ -296,6 +366,24 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_sidechainAddr",
+        "type": "address"
+      },
+      {
+        "name": "_registered",
+        "type": "bool"
+      }
+    ],
+    "name": "createSidechainProposal",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
     "inputs": [
       {
@@ -308,6 +396,45 @@
       {
         "name": "",
         "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "sidechainProposals",
+    "outputs": [
+      {
+        "name": "proposer",
+        "type": "address"
+      },
+      {
+        "name": "deposit",
+        "type": "uint256"
+      },
+      {
+        "name": "voteDeadline",
+        "type": "uint256"
+      },
+      {
+        "name": "sidechainAddr",
+        "type": "address"
+      },
+      {
+        "name": "registered",
+        "type": "bool"
+      },
+      {
+        "name": "status",
+        "type": "uint8"
       }
     ],
     "payable": false,
@@ -389,6 +516,23 @@
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -480,17 +624,86 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "name": "previousOwner",
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "proposer",
         "type": "address"
       },
       {
-        "indexed": true,
-        "name": "newOwner",
+        "indexed": false,
+        "name": "deposit",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "voteDeadline",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "sidechainAddr",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "registered",
+        "type": "bool"
       }
     ],
-    "name": "OwnershipTransferred",
+    "name": "CreateSidechainProposal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "voteType",
+        "type": "uint8"
+      }
+    ],
+    "name": "VoteSidechain",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "passed",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "name": "sidechainAddr",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "registered",
+        "type": "bool"
+      }
+    ],
+    "name": "ConfirmSidechainProposal",
     "type": "event"
   },
   {
@@ -805,6 +1018,38 @@
     "constant": false,
     "inputs": [
       {
+        "name": "_proposalId",
+        "type": "uint256"
+      },
+      {
+        "name": "_vote",
+        "type": "uint8"
+      }
+    ],
+    "name": "voteSidechain",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "confirmSidechainProposal",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "_amount",
         "type": "uint256"
       }
@@ -828,20 +1073,6 @@
       }
     ],
     "name": "redeemMiningReward",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_addr",
-        "type": "address"
-      }
-    ],
-    "name": "registerSidechain",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
