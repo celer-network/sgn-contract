@@ -13,7 +13,7 @@ module.exports = function (deployer, network, accounts) {
         token.transfer(accounts[1], '100000000000000000000000');
       }
 
-      return deployer.deploy(DPoS, ERC20ExampleToken.address, 0, 0, 0, 0, 11);
+      return deployer.deploy(DPoS, ERC20ExampleToken.address, 0, 0, 0, 0, 11, 0, 0, 0);
       // TODO (if needed):
       // 1. deploy sgn contract
       // 2. register sgn address in DPoS contract

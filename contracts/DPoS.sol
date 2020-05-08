@@ -4,14 +4,12 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./lib/interface/IDPoS.sol";
 import "./lib/data/PbSgn.sol";
 import "./lib/DPoSCommon.sol";
+import "./lib/Govern.sol";
 
-// Ownable is only used to add the whitelist of sidechain addresses
-// Ownable should be removed after enabling governance module
-contract DPoS is IDPoS, Ownable {
+contract DPoS is IDPoS, Govern {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
@@ -36,7 +34,7 @@ contract DPoS is IDPoS, Ownable {
         bool initialized;
         uint minSelfStake;
 
-        // delegatedStake sum of all delegators to this candidate
+        // stakingPool sum of all delegations to this candidate
         uint stakingPool;
         mapping (address => Delegator) delegatorProfiles;
         DPoSCommon.CandidateStatus status;
@@ -50,30 +48,22 @@ contract DPoS is IDPoS, Ownable {
         uint announcementTime;
     }
 
-    uint constant public COMMISSION_RATE_BASE = 10000;  // 1 commissionRate means 0.01%
-    uint constant public INCREASE_RATE_WAIT_TIME = 1344;  // 1344 blocks = 2 weeks
-
-
-    IERC20 public celerToken;
-    // timeout to blame (claim responsibility of) undelegating delegators or unbonding validators
-    uint public blameTimeout;
-    uint public minValidatorNum;
-    uint public maxValidatorNum;
-    // used for bootstrap: there should be enough time for delegating and
-    // claim the initial validators
-    uint public dposGoLiveTime;
-    // universal requirement for minimum staking pool of each validator
-    uint public minStakeInPool;
     mapping (uint => address) public validatorSet;
     mapping (uint => bool) public usedPenaltyNonce;
     // used in checkValidatorSigs(). mapping has to be storage type.
     mapping (address => bool) public checkedValidators;
-    mapping (address => bool) public registeredSidechains;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
-
     uint public miningPool;
     mapping (address => uint) public redeemedMiningReward;
+
+    /********** Constants **********/
+    uint constant public COMMISSION_RATE_BASE = 10000;  // 1 commissionRate means 0.01%
+
+    /********** TODO: use Immutable after migrating to Solidity v0.6.5 or higher **********/
+    IERC20 public celerToken;
+    // used for bootstrap: there should be enough time for delegating and claim the initial validators
+    uint public dposGoLiveTime;
 
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
@@ -87,26 +77,79 @@ contract DPoS is IDPoS, Ownable {
     }
 
     modifier onlyRegisteredSidechains() {
-        require(registeredSidechains[msg.sender]);
+        require(isSidechainRegistered(msg.sender));
         _;
     }
 
     constructor(
         address _celerTokenAddress,
+        uint _governProposalDeposit,
+        uint _governVoteTimeout,
         uint _blameTimeout,
         uint _minValidatorNum,
+        uint _maxValidatorNum,
         uint _minStakeInPool,
-        uint _dposGoLiveTimeout,
-        uint _maxValidatorNum
+        uint _increaseRateWaitTime,
+        uint _dposGoLiveTimeout
     )
+        Govern(
+            _celerTokenAddress,
+            _governProposalDeposit,
+            _governVoteTimeout,
+            _blameTimeout,
+            _minValidatorNum,
+            _maxValidatorNum,
+            _minStakeInPool,
+            _increaseRateWaitTime
+        )
         public
     {
         celerToken = IERC20(_celerTokenAddress);
-        blameTimeout = _blameTimeout;
-        minValidatorNum = _minValidatorNum;
-        minStakeInPool = _minStakeInPool;
         dposGoLiveTime = block.number.add(_dposGoLiveTimeout);
-        maxValidatorNum = _maxValidatorNum;
+    }
+
+    function voteParam(uint _proposalId, VoteType _vote) public {
+        address msgSender = msg.sender;
+        require(isValidator(msgSender), "msg sender is not a validator");
+
+        internalVoteParam(_proposalId, msgSender, _vote);
+    }
+
+    function confirmParamProposal(uint _proposalId) public {
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+
+        // check Yes votes only now
+        uint yesVotes = 0;
+        for (uint i = 0; i < maxValidatorNum; i++) {
+            if (getParamProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
+                yesVotes = yesVotes.add(candidateProfiles[validatorSet[i]].stakingPool);
+            }
+        }
+
+        bool passed = yesVotes >= getMinQuorumStakingPool();
+        internalConfirmParamProposal(_proposalId, passed);
+    }
+
+    function voteSidechain(uint _proposalId, VoteType _vote) public {
+        address msgSender = msg.sender;
+        require(isValidator(msgSender), "msg sender is not a validator");
+
+        internalVoteSidechain(_proposalId, msgSender, _vote);
+    }
+
+    function confirmSidechainProposal(uint _proposalId) public {
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+
+        // check Yes votes only now
+        uint yesVotes = 0;
+        for (uint i = 0; i < maxValidatorNum; i++) {
+            if (getSidechainProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
+                yesVotes = yesVotes.add(candidateProfiles[validatorSet[i]].stakingPool);
+            }
+        }
+
+        bool passed = yesVotes >= getMinQuorumStakingPool();
+        internalConfirmSidechainProposal(_proposalId, passed);
     }
 
     function contributeToMiningPool(uint _amount) public {
@@ -125,11 +168,6 @@ contract DPoS is IDPoS, Ownable {
         celerToken.safeTransfer(_receiver, newReward);
 
         emit RedeemMiningReward(_receiver, newReward, miningPool);
-    }
-
-    // TODO: remove onlyOwner after using governance
-    function registerSidechain(address _addr) external onlyOwner {
-        registeredSidechains[_addr] = true;
     }
 
     function initializeCandidate(uint _minSelfStake, uint _commissionRate, uint _rateLockEndTime) external {
@@ -168,7 +206,8 @@ contract DPoS is IDPoS, Ownable {
     function confirmIncreaseCommissionRate() external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(candidate.initialized, "Candidate is not initialized");
-        require(block.number > candidate.announcementTime + INCREASE_RATE_WAIT_TIME, "new rate hasn't taken effect");
+        uint increaseRateWaitTime = getUIntValue(uint(ParamNames.IncreaseRateWaitTime));
+        require(block.number > candidate.announcementTime + increaseRateWaitTime, "new rate hasn't taken effect");
 
         _updateCommissionRate(candidate, candidate.announcedRate, candidate.announcedLockEndTime);
     }
@@ -195,6 +234,7 @@ contract DPoS is IDPoS, Ownable {
         require(candidate.initialized, "Candidate is not initialized");
         // TODO: decide whether Unbonding status is valid to claimValidator or not
         require(candidate.status == DPoSCommon.CandidateStatus.Unbonded || candidate.status == DPoSCommon.CandidateStatus.Unbonding);
+        uint minStakeInPool = getUIntValue(uint(ParamNames.MinStakeInPool));
         require(candidate.stakingPool >= minStakeInPool, "Insufficient staking pool");
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
@@ -204,6 +244,7 @@ contract DPoS is IDPoS, Ownable {
         uint minStakingPoolIndex = 0;
         uint minStakingPool = candidateProfiles[validatorSet[0]].stakingPool;
         require(validatorSet[0] != msgSender, "Already in validator set");
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
         for (uint i = 1; i < maxValidatorNum; i++) {
             require(validatorSet[i] != msgSender, "Already in validator set");
             if (candidateProfiles[validatorSet[i]].stakingPool < minStakingPool) {
@@ -287,6 +328,7 @@ contract DPoS is IDPoS, Ownable {
         // for all undelegated withdraw intents
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];
+            uint blameTimeout = getUIntValue(uint(ParamNames.BlameTimeout));
             if (isUnbonded || wi.proposedTime.add(blameTimeout) <= bn) {
                 // withdraw intent is undelegated when the validator becomes unbonded or the blameTimeout
                 // for the withdraw intent is up.
@@ -372,6 +414,7 @@ contract DPoS is IDPoS, Ownable {
     }
 
     function isValidDPoS() public view returns (bool) {
+        uint minValidatorNum = getUIntValue(uint(ParamNames.MinValidatorNum));
         return block.number >= dposGoLiveTime && getValidatorNum() >= minValidatorNum;
     }
 
@@ -380,6 +423,8 @@ contract DPoS is IDPoS, Ownable {
     }
 
     function getValidatorNum() public view returns (uint) {
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+        
         uint num = 0;
         for (uint i = 0; i < maxValidatorNum; i++) {
             if (validatorSet[i] != address(0)) {
@@ -390,6 +435,8 @@ contract DPoS is IDPoS, Ownable {
     }
 
     function getMinStakingPool() public view returns (uint) {
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+
         uint minStakingPool = 0;
         uint i = 0;
         for (; i < maxValidatorNum; i++) {
@@ -458,6 +505,8 @@ contract DPoS is IDPoS, Ownable {
     }
 
     function getTotalValidatorStakingPool() public view returns(uint) {
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+
         uint totalValidatorStakingPool = 0;
         for (uint i = 0; i < maxValidatorNum; i++) {
             totalValidatorStakingPool = totalValidatorStakingPool.add(candidateProfiles[validatorSet[i]].stakingPool);
@@ -518,6 +567,7 @@ contract DPoS is IDPoS, Ownable {
 
         delete validatorSet[_setIndex];
         candidateProfiles[removedValidator].status = DPoSCommon.CandidateStatus.Unbonding;
+        uint blameTimeout = getUIntValue(uint(ParamNames.BlameTimeout));
         candidateProfiles[removedValidator].unbondTime = block.number.add(blameTimeout);
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
@@ -530,6 +580,7 @@ contract DPoS is IDPoS, Ownable {
         }
 
         bool lowSelfStake = v.delegatorProfiles[_validatorAddr].delegatedStake < v.minSelfStake;
+        uint minStakeInPool = getUIntValue(uint(ParamNames.MinStakeInPool));
         bool lowStakingPool = v.stakingPool < minStakeInPool;
 
         if (lowSelfStake || lowStakingPool) {
@@ -567,6 +618,8 @@ contract DPoS is IDPoS, Ownable {
     }
 
     function _getValidatorIdx(address _addr) private view returns (uint) {
+        uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
+
         for (uint i = 0; i < maxValidatorNum; i++) {
             if (validatorSet[i] == _addr) {
                 return i;

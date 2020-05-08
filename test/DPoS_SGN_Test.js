@@ -9,8 +9,8 @@ const SGN = artifacts.require('SGN');
 const ERC20ExampleToken = artifacts.require('ERC20ExampleToken');
 
 const GANACHE_ACCOUNT_NUM = 20; // defined in .circleci/config.yml
-const ValidatorAdd = 0;
-const ValidatorRemoval = 1;
+const GOVERN_PROPOSAL_DEPOSIT = 100;
+const GOVERN_VOTE_TIMEOUT = 20;
 const BLAME_TIMEOUT = 50;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
@@ -19,6 +19,7 @@ const MIN_VALIDATOR_NUM = 1;
 const MIN_STAKING_POOL = 80;
 const DPOS_GO_LIVE_TIMEOUT = 50;
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+const ONE_ADDR = '0x0000000000000000000000000000000000000001';
 const ZERO_BYTES = '0x0000000000000000000000000000000000000000000000000000000000000000';
 // value of an indexed null bytes
 const HASHED_NULL = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';
@@ -29,7 +30,10 @@ const HIGHER_RATE = 200;
 const LARGER_LOCK_END_TIME = 200000;
 const LOWER_RATE = 50;
 const SMALLER_LOCK_END_TIME = 50000;
-const NEW_RATE_TAKES_EFFECT_WAIT_TIME = 1344;
+const INCREASE_RATE_WAIT_TIME = 100;  // in practice, this should be 80640 (2 weeks)
+
+const ENUM_BLAME_TIMEOUT = 2;
+const ENUM_VOTE_TYPE_YES = 1;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
@@ -64,11 +68,14 @@ contract('DPoS and SGN contracts', async accounts => {
 
         dposInstance = await DPoS.new(
             celerToken.address,
+            GOVERN_PROPOSAL_DEPOSIT,
+            GOVERN_VOTE_TIMEOUT,
             BLAME_TIMEOUT,
             MIN_VALIDATOR_NUM,
+            MAX_VALIDATOR_NUM,
             MIN_STAKING_POOL,
-            DPOS_GO_LIVE_TIMEOUT,
-            MAX_VALIDATOR_NUM
+            INCREASE_RATE_WAIT_TIME,
+            DPOS_GO_LIVE_TIMEOUT
         );
 
         sgnInstance = await SGN.new(
@@ -248,7 +255,7 @@ contract('DPoS and SGN contracts', async accounts => {
             });
 
             it('should confirmIncreaseCommissionRate successfully after new rate takes effect ', async () => {
-                await Timetravel.advanceBlocks(NEW_RATE_TAKES_EFFECT_WAIT_TIME);
+                await Timetravel.advanceBlocks(INCREASE_RATE_WAIT_TIME);
                 const tx = await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
                 const { event, args } = tx.logs[0];
 
@@ -714,6 +721,7 @@ contract('DPoS and SGN contracts', async accounts => {
             accounts[3],
             accounts[4]
         ];
+        const NON_VALIDATOR = accounts[5];
 
         // validators self delegates 2 * max(MIN_SELF_STAKE, MIN_STAKING_POOL)
         const SELF_STAKE = 2 * Math.max(MIN_SELF_STAKE, MIN_STAKING_POOL);
@@ -827,6 +835,418 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.amount, 10);
+        });
+
+        it('should createParamProposal successfully', async () => {
+            const newBlameTimeout = BLAME_TIMEOUT + 1;
+
+            await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+            const tx = await dposInstance.createParamProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
+            const block = await web3.eth.getBlock('latest');
+            const { event, args } = tx.logs[0];
+
+            assert.equal(event, 'CreateParamProposal');
+            assert.equal(args.proposalId, 0);
+            assert.equal(args.proposer, accounts[0]);
+            assert.equal(args.deposit, GOVERN_PROPOSAL_DEPOSIT);
+            assert.equal(args.voteDeadline, block.number + GOVERN_VOTE_TIMEOUT);
+            assert.equal(args.record, ENUM_BLAME_TIMEOUT);
+            assert.equal(args.newValue, newBlameTimeout);
+        });
+
+        describe('after someone createParamProposal successfully', async () => {
+            const newBlameTimeout = BLAME_TIMEOUT + 1;
+            const proposalId = 0;
+
+            beforeEach(async () => {
+                await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+                await dposInstance.createParamProposal(ENUM_BLAME_TIMEOUT, newBlameTimeout);
+            });
+
+            it('should fail to voteParam if not validator', async () => {
+                try {
+                    await dposInstance.voteParam(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: NON_VALIDATOR }
+                    );
+                } catch (error) {
+                    assert.isAbove(error.message.search('msg sender is not a validator'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should fail to voteParam for a proposal with an invalid status', async () => {
+                const invalidProposalId = proposalId + 1;
+                try {
+                    await dposInstance.voteParam(
+                        invalidProposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[0] }
+                    );
+                } catch (error) {
+                    assert.isAbove(error.message.search('Invalid proposal status'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should vote successfully as a validator', async () => {
+                const tx = await dposInstance.voteParam(
+                    proposalId,
+                    ENUM_VOTE_TYPE_YES,
+                    { from: VALIDATORS[0] }
+                );
+                const { event, args } = tx.logs[0];
+
+                assert.equal(event, 'VoteParam');
+                assert.equal(args.proposalId, proposalId);
+                assert.equal(args.voter, VALIDATORS[0]);
+                assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+            });
+
+            describe('after a validtor votes successfully', async () => {
+                beforeEach(async () => {
+                    await dposInstance.voteParam(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[0] }
+                    );
+                });
+
+                it('should fail to vote for the same proposal twice', async () => {
+                    try {
+                        await dposInstance.voteParam(
+                            proposalId,
+                            ENUM_VOTE_TYPE_YES,
+                            { from: VALIDATORS[0] }
+                        );
+                    } catch (error) {
+                        assert.isAbove(error.message.search('Voter has voted'), -1);
+                        return;
+                    }
+
+                    assert.fail('should have thrown before');
+                });
+
+                it('should vote successfully as another validator', async () => {
+                    const tx = await dposInstance.voteParam(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[1] }
+                    );
+                    const { event, args } = tx.logs[0];
+
+                    assert.equal(event, 'VoteParam');
+                    assert.equal(args.proposalId, proposalId);
+                    assert.equal(args.voter, VALIDATORS[1]);
+                    assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+                });
+
+                it('should fail to confirmParamProposal before the vote deadline', async () => {
+                    try {
+                        await dposInstance.confirmParamProposal(proposalId);
+                    } catch (error) {
+                        assert.isAbove(error.message.search('Vote deadline not reached'), -1);
+                        return;
+                    }
+
+                    assert.fail('should have thrown before');
+                });
+
+                describe('after passing the vote deadline', async () => {
+                    beforeEach(async () => {
+                        await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+                    });
+
+                    it('should fail to vote after the vote deadline', async () => {
+                        try {
+                            await dposInstance.voteParam(
+                                proposalId,
+                                ENUM_VOTE_TYPE_YES,
+                                { from: VALIDATORS[2] }
+                            );
+                        } catch (error) {
+                            assert.isAbove(error.message.search('Vote deadline reached'), -1);
+                            return;
+                        }
+
+                        assert.fail('should have thrown before');
+                    });
+
+                    it('should confirmParamProposal (reject proposal case) successfully', async () => {
+                        const tx = await dposInstance.confirmParamProposal(proposalId);
+                        const { event, args } = tx.logs[0];
+
+                        assert.equal(event, 'ConfirmParamProposal');
+                        assert.equal(args.proposalId, proposalId);
+                        assert.equal(args.passed, false);
+                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
+                        assert.equal(args.newValue, newBlameTimeout);
+                    });
+                });
+            });
+
+            describe('after over 2/3 voting power votes for Yes', async () => {
+                beforeEach(async () => {
+                    const majorNum = Math.ceil(VALIDATORS.length * 2 / 3);
+                    for (let i = 0; i < majorNum; i++) {
+                        await dposInstance.voteParam(
+                            proposalId,
+                            ENUM_VOTE_TYPE_YES,
+                            { from: VALIDATORS[i] }
+                        );
+                    }
+                });
+
+                describe('after passing the vote deadline', async () => {
+                    beforeEach(async () => {
+                        await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+                    });
+
+                    it('should confirmParamProposal (accept proposal case) successfully', async () => {
+                        const tx = await dposInstance.confirmParamProposal(proposalId);
+                        const { event, args } = tx.logs[0];
+                        const queriedNewBlameTimeout = await dposInstance.getUIntValue(ENUM_BLAME_TIMEOUT);
+
+                        assert.equal(event, 'ConfirmParamProposal');
+                        assert.equal(args.proposalId, proposalId);
+                        assert.equal(args.passed, true);
+                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
+                        assert.equal(args.newValue, newBlameTimeout);
+                        assert.equal(queriedNewBlameTimeout, newBlameTimeout);
+                    });
+                });
+            });
+        });
+
+        // sidechain governance tests
+        it('should createSidechainProposal successfully', async () => {
+            await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+            const newRegistrationStatus = true;
+            const tx = await dposInstance.createSidechainProposal(ONE_ADDR, newRegistrationStatus);
+            const block = await web3.eth.getBlock('latest');
+            const { event, args } = tx.logs[0];
+
+            assert.equal(event, 'CreateSidechainProposal');
+            assert.equal(args.proposalId, 0);
+            assert.equal(args.proposer, accounts[0]);
+            assert.equal(args.deposit, GOVERN_PROPOSAL_DEPOSIT);
+            assert.equal(args.voteDeadline, block.number + GOVERN_VOTE_TIMEOUT);
+            assert.equal(args.sidechainAddr, ONE_ADDR);
+            assert.equal(args.registered, newRegistrationStatus);
+        });
+
+        describe('after someone createSidechainProposal(register a new sidechain) successfully', async () => {
+            const proposalId = 0;
+            const newRegistrationStatus = true;
+
+            beforeEach(async () => {
+                await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+                await dposInstance.createSidechainProposal(ONE_ADDR, newRegistrationStatus);
+            });
+
+            it('should fail to voteSidechain if not validator', async () => {
+                try {
+                    await dposInstance.voteSidechain(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: NON_VALIDATOR }
+                    );
+                } catch (error) {
+                    assert.isAbove(error.message.search('msg sender is not a validator'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should fail to voteSidechain for a proposal with an invalid status', async () => {
+                const invalidProposalId = proposalId + 1;
+                try {
+                    await dposInstance.voteSidechain(
+                        invalidProposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[0] }
+                    );
+                } catch (error) {
+                    assert.isAbove(error.message.search('Invalid proposal status'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should vote successfully as a validator', async () => {
+                const tx = await dposInstance.voteSidechain(
+                    proposalId,
+                    ENUM_VOTE_TYPE_YES,
+                    { from: VALIDATORS[0] }
+                );
+                const { event, args } = tx.logs[0];
+
+                assert.equal(event, 'VoteSidechain');
+                assert.equal(args.proposalId, proposalId);
+                assert.equal(args.voter, VALIDATORS[0]);
+                assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+            });
+
+            describe('after a validtor votes successfully', async () => {
+                beforeEach(async () => {
+                    await dposInstance.voteSidechain(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[0] }
+                    );
+                });
+
+                it('should fail to vote for the same proposal twice', async () => {
+                    try {
+                        await dposInstance.voteSidechain(
+                            proposalId,
+                            ENUM_VOTE_TYPE_YES,
+                            { from: VALIDATORS[0] }
+                        );
+                    } catch (error) {
+                        assert.isAbove(error.message.search('Voter has voted'), -1);
+                        return;
+                    }
+
+                    assert.fail('should have thrown before');
+                });
+
+                it('should vote successfully as another validator', async () => {
+                    const tx = await dposInstance.voteSidechain(
+                        proposalId,
+                        ENUM_VOTE_TYPE_YES,
+                        { from: VALIDATORS[1] }
+                    );
+                    const { event, args } = tx.logs[0];
+
+                    assert.equal(event, 'VoteSidechain');
+                    assert.equal(args.proposalId, proposalId);
+                    assert.equal(args.voter, VALIDATORS[1]);
+                    assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+                });
+
+                it('should fail to confirmSidechainProposal before the vote deadline', async () => {
+                    try {
+                        await dposInstance.confirmSidechainProposal(proposalId);
+                    } catch (error) {
+                        assert.isAbove(error.message.search('Vote deadline not reached'), -1);
+                        return;
+                    }
+
+                    assert.fail('should have thrown before');
+                });
+
+                describe('after passing the vote deadline', async () => {
+                    beforeEach(async () => {
+                        await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+                    });
+
+                    it('should fail to vote after the vote deadline', async () => {
+                        try {
+                            await dposInstance.voteSidechain(
+                                proposalId,
+                                ENUM_VOTE_TYPE_YES,
+                                { from: VALIDATORS[2] }
+                            );
+                        } catch (error) {
+                            assert.isAbove(error.message.search('Vote deadline reached'), -1);
+                            return;
+                        }
+
+                        assert.fail('should have thrown before');
+                    });
+
+                    it('should confirmSidechainProposal (reject proposal case) successfully', async () => {
+                        const tx = await dposInstance.confirmSidechainProposal(proposalId);
+                        const { event, args } = tx.logs[0];
+
+                        assert.equal(event, 'ConfirmSidechainProposal');
+                        assert.equal(args.proposalId, proposalId);
+                        assert.equal(args.passed, false);
+                        assert.equal(args.sidechainAddr, ONE_ADDR);
+                        assert.equal(args.registered, newRegistrationStatus);
+                    });
+                });
+            });
+
+            describe('after over 2/3 voting power votes for Yes', async () => {
+                beforeEach(async () => {
+                    const majorNum = Math.ceil(VALIDATORS.length * 2 / 3);
+                    for (let i = 0; i < majorNum; i++) {
+                        await dposInstance.voteSidechain(
+                            proposalId,
+                            ENUM_VOTE_TYPE_YES,
+                            { from: VALIDATORS[i] }
+                        );
+                    }
+                });
+
+                describe('after passing the vote deadline', async () => {
+                    beforeEach(async () => {
+                        await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+                    });
+
+                    it('should confirmSidechainProposal (accept proposal case) successfully', async () => {
+                        const tx = await dposInstance.confirmSidechainProposal(proposalId);
+                        const { event, args } = tx.logs[0];
+                        const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(ONE_ADDR);
+
+                        assert.equal(event, 'ConfirmSidechainProposal');
+                        assert.equal(args.proposalId, proposalId);
+                        assert.equal(args.passed, true);
+                        assert.equal(args.sidechainAddr, ONE_ADDR);
+                        assert.equal(args.registered, newRegistrationStatus);
+                        assert.equal(queriedRegistrationStatus, newRegistrationStatus);
+                    });
+
+                    describe('after registering a new sidechain', async () => {
+                        beforeEach(async () => {
+                            await dposInstance.confirmSidechainProposal(proposalId);
+                        });
+
+                        it('should be able to unregister this sidechain successfully', async () => {
+                            const registrationStatus = false;
+                            const unregisterProposalId = proposalId + 1;
+
+                            // createSidechainProposal
+                            await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+                            await dposInstance.createSidechainProposal(ONE_ADDR, registrationStatus);
+
+                            // after over 2/3 voting power votes for Yes
+                            const majorNum = Math.ceil(VALIDATORS.length * 2 / 3);
+                            for (let i = 0; i < majorNum; i++) {
+                                await dposInstance.voteSidechain(
+                                    unregisterProposalId,
+                                    ENUM_VOTE_TYPE_YES,
+                                    { from: VALIDATORS[i] }
+                                );
+                            }
+
+                            // pass vote deadline
+                            await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+
+                            // confirmSidechainProposal
+                            const tx = await dposInstance.confirmSidechainProposal(unregisterProposalId);
+                            const { event, args } = tx.logs[0];
+                            const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(ONE_ADDR);
+
+                            assert.equal(event, 'ConfirmSidechainProposal');
+                            assert.equal(args.proposalId, unregisterProposalId);
+                            assert.equal(args.passed, true);
+                            assert.equal(args.sidechainAddr, ONE_ADDR);
+                            assert.equal(args.registered, registrationStatus);
+                            assert.equal(queriedRegistrationStatus, registrationStatus);
+                        });
+                    });
+                });
+            });
         });
     });
 
@@ -951,10 +1371,10 @@ contract('DPoS and SGN contracts', async accounts => {
 
             assert.equal(tx.logs[0].event, 'ValidatorChange');
             assert.equal(tx.logs[0].args.ethAddr, accounts[1]);
-            assert.equal(tx.logs[0].args.changeType, ValidatorRemoval);
+            assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
             assert.equal(tx.logs[1].event, 'ValidatorChange');
             assert.equal(tx.logs[1].args.ethAddr, addr);
-            assert.equal(tx.logs[1].args.changeType, ValidatorAdd);
+            assert.equal(tx.logs[1].args.changeType, VALIDATOR_ADD);
         });
     });
 });
