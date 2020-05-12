@@ -1,5 +1,8 @@
 pragma solidity ^0.5.0;
 
+/**
+ * @title SGN interface
+ */
 interface ISGN {
     // functions
     function updateSidechainAddr(bytes calldata _sidechainAddr) external;

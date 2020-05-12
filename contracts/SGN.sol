@@ -9,6 +9,11 @@ import "./lib/interface/IDPoS.sol";
 import "./lib/data/PbSgn.sol";
 import "./lib/DPoSCommon.sol";
 
+/**
+ * @title Sidechain contract of State Guardian Network
+ * @notice This contract implements the mainchain logic of Celer State Guardian Network sidechain
+ * @dev specs: https://www.celer.network/docs/celercore/sgn/sidechain.html#mainchain-contracts
+ */
 contract SGN is ISGN {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
@@ -25,22 +30,41 @@ contract SGN is ISGN {
     mapping (address => uint) public redeemedServiceReward;
     mapping (address => bytes) public sidechainAddrMap;
 
+    /**
+     * @notice Throws if the given address is zero address
+     * @param _addr address to be checked
+     */
     modifier onlyNonZeroAddr(address _addr) {
         require(_addr != address(0), "0 address");
         _;
     }
 
-    // check this before sidechain's operation
+    /**
+     * @notice Throws if SGN sidechain is not valid
+     * @dev Check this before sidechain's operations
+     */
     modifier onlyValidSidechain() {
         require(DPoSContract.isValidDPoS(), "DPoS is not valid");
         _;
     }
 
+    /**
+     * @notice SGN constructor
+     * @dev Need to deploy DPoS contract first before deploying SGN contract
+     * @param _celerTokenAddress address of Celer Token Contract
+     * @param _DPoSAddress address of DPoS Contract
+     */
     constructor(address _celerTokenAddress, address _DPoSAddress) public {
         celerToken = IERC20(_celerTokenAddress);
         DPoSContract = IDPoS(_DPoSAddress);
     }
 
+    /**
+     * @notice Update sidechain address
+     * @dev Note that the "sidechain address" here means the address in the offchain sidechain system,
+         which is different from the sidechain contract address
+     * @param _sidechainAddr the new address in the offchain sidechain system
+     */
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
 
@@ -57,6 +81,10 @@ contract SGN is ISGN {
         emit UpdateSidechainAddr(msgSender, oldSidechainAddr, _sidechainAddr);
     }
 
+    /**
+     * @notice Subscribe the guardian service
+     * @param _amount subscription fee paid along this function call in CELR tokens
+     */
     function subscribe(uint _amount) external onlyValidSidechain {
         address msgSender = msg.sender;
 
@@ -72,6 +100,12 @@ contract SGN is ISGN {
         emit AddSubscriptionBalance(msgSender, _amount);
     }
 
+    /**
+     * @notice Redeem rewards
+     * @dev The rewards include both the service reward and mining reward
+     * @dev SGN contract acts as an interface for users to redeem mining rewards 
+     * @param _rewardRequest reward request bytes coded in protobuf
+     */
     function redeemReward(bytes calldata _rewardRequest) external onlyValidSidechain {
         require(
             DPoSContract.validateMultiSigMessage(_rewardRequest),

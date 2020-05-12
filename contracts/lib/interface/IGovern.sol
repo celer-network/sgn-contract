@@ -1,5 +1,8 @@
 pragma solidity ^0.5.0;
 
+/**
+ * @title Govern interface
+ */
 interface IGovern {
     enum ParamNames { ProposalDeposit, GovernVoteTimeout, BlameTimeout, MinValidatorNum, MaxValidatorNum, MinStakeInPool, IncreaseRateWaitTime }
     

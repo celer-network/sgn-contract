@@ -1,10 +1,12 @@
 pragma solidity ^0.5.0;
 
+/**
+ * @title DPoS interface
+ */
 interface IDPoS {
     enum ValidatorChangeType { Add, Removal }
 
     // functions
-
     // TODO: interface can't be inherited, so VoteType is not declared here
     // function voteParam(uint _proposalId, VoteType _vote) external;
 
