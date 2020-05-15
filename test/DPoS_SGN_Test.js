@@ -25,11 +25,10 @@ const ZERO_BYTES = '0x0000000000000000000000000000000000000000000000000000000000
 const HASHED_NULL = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';
 
 const COMMISSION_RATE = 100;
-const RATE_LOCK_END_TIME = 100000;
-const HIGHER_RATE = 200;
-const LARGER_LOCK_END_TIME = 200000;
 const LOWER_RATE = 50;
-const SMALLER_LOCK_END_TIME = 50000;
+const HIGHER_RATE = 200;
+const RATE_LOCK_END_TIME = 2;
+const LARGER_LOCK_END_TIME = 100000;
 const INCREASE_RATE_WAIT_TIME = 100;  // in practice, this should be 80640 (2 weeks)
 
 const ENUM_BLAME_TIMEOUT = 2;
@@ -179,7 +178,7 @@ contract('DPoS and SGN contracts', async accounts => {
             );
         });
 
-        it('should increase the rate_lock_end_time successfully', async () => {
+        it('should increase the rate lock end time successfully', async () => {
             const tx = await dposInstance.nonIncreaseCommissionRate(
                 COMMISSION_RATE,
                 LARGER_LOCK_END_TIME,
@@ -192,22 +191,47 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
         });
 
-        it('should fail to decrease the rate_lock_end_time', async () => {
+        it('should fail to update the rate lock end time to an outdated block number', async () => {
             try {
                 await dposInstance.nonIncreaseCommissionRate(
                     COMMISSION_RATE,
-                    SMALLER_LOCK_END_TIME,
+                    1,
                     { from: CANDIDATE }
                 );
             } catch (error) {
-                assert.isAbove(error.message.search('invalid new lock_end_time'), -1);
+                assert.isAbove(error.message.search('Outdated new lock end time'), -1);
                 return;
             }
 
             assert.fail('should have thrown before');
         });
 
-        it('should decrease the commission rate immediately and successfully', async () => {
+        it('should fail to decrease the rate lock end time', async () => {
+            // increase the lock end time first
+            await dposInstance.nonIncreaseCommissionRate(
+                COMMISSION_RATE,
+                LARGER_LOCK_END_TIME,
+                { from: CANDIDATE }
+            );
+
+            // get next block
+            const block = await web3.eth.getBlock('latest');
+
+            try {
+                await dposInstance.nonIncreaseCommissionRate(
+                    COMMISSION_RATE,
+                    block.number + 10,
+                    { from: CANDIDATE }
+                );
+            } catch (error) {
+                assert.isAbove(error.message.search('New lock end time is not increasing'), -1);
+                return;
+            }
+
+            assert.fail('should have thrown before');
+        });
+
+        it('should decrease the commission rate immediately after lock end time', async () => {
             const tx = await dposInstance.nonIncreaseCommissionRate(
                 LOWER_RATE,
                 LARGER_LOCK_END_TIME,
@@ -218,6 +242,27 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(event, 'UpdateCommissionRate');
             assert.equal(args.newRate, LOWER_RATE);
             assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+        });
+
+        it('should fail to update the commission rate before lock end time', async () => {
+            await dposInstance.nonIncreaseCommissionRate(
+                COMMISSION_RATE,
+                LARGER_LOCK_END_TIME,
+                { from: CANDIDATE }
+            );
+
+            try {
+                await dposInstance.nonIncreaseCommissionRate(
+                    LOWER_RATE,
+                    LARGER_LOCK_END_TIME,
+                    { from: CANDIDATE }
+                );
+            } catch (error) {
+                assert.isAbove(error.message.search('Commission rate is locked'), -1);
+                return;
+            }
+
+            assert.fail('should have thrown before');
         });
 
         it('should announce increase commission rate successfully', async () => {
@@ -234,7 +279,7 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(args.announcedLockEndTime, LARGER_LOCK_END_TIME);
         });
 
-        describe('after one delegator delegates enough stake to the candidate', async () => {
+        describe('after announceIncreaseCommissionRate', async () => {
             beforeEach(async () => {
                 await dposInstance.announceIncreaseCommissionRate(
                     HIGHER_RATE,
@@ -248,6 +293,34 @@ contract('DPoS and SGN contracts', async accounts => {
                     await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
                 } catch (error) {
                     assert.isAbove(error.message.search('new rate hasn\'t taken effect'), -1);
+                    return;
+                }
+
+                assert.fail('should have thrown before');
+            });
+
+            it('should fail to confirmIncreaseCommissionRate after new rate can take effect but before lock end time', async () => {
+                await dposInstance.nonIncreaseCommissionRate(
+                    COMMISSION_RATE,
+                    LARGER_LOCK_END_TIME,
+                    { from: CANDIDATE }
+                );
+
+                // need to announceIncreaseCommissionRate again because _updateCommissionRate
+                // will remove the previous announcement of increasing commission rate 
+                await dposInstance.announceIncreaseCommissionRate(
+                    HIGHER_RATE,
+                    LARGER_LOCK_END_TIME,
+                    { from: CANDIDATE }
+                );
+
+                await Timetravel.advanceBlocks(INCREASE_RATE_WAIT_TIME);
+
+                try {
+                    await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
+                } catch (error) {
+                    console.log(error.message);
+                    assert.isAbove(error.message.search('Commission rate is locked'), -1);
                     return;
                 }
 

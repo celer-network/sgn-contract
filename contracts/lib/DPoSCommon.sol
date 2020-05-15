@@ -1,5 +1,9 @@
 pragma solidity ^0.5.0;
 
+/**
+ * @title DPoS contract common Library
+ * @notice Common items used in DPoS contract
+ */
 library DPoSCommon {
     // Unbonded: not a validator and not responsible for previous validator behaviors if any.
     //   Delegators now are free to withdraw stakes (directly).
