@@ -65,9 +65,9 @@ interface IDPoS {
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, uint commissionRate, uint rateLockEndTime);
 
-    event CommissionRateAnnouncement(address candidate, uint announcedRate, uint announcedLockEndTime);
+    event CommissionRateAnnouncement(address indexed candidate, uint announcedRate, uint announcedLockEndTime);
 
-    event UpdateCommissionRate(uint newRate, uint newLockEndTime);
+    event UpdateCommissionRate(address indexed candidate, uint newRate, uint newLockEndTime);
 
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);
 
