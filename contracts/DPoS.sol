@@ -46,7 +46,7 @@ contract DPoS is IDPoS, Govern {
 
         uint commissionRate;  // equal to real commission rate * COMMISSION_RATE_BASE
         uint rateLockEndTime;  // must be monotonic increasing. Use block number
-        // for the announcement of increasing commission rate 
+        // for the announcement of increasing commission rate
         uint announcedRate;
         uint announcedLockEndTime;
         uint announcementTime;
@@ -553,7 +553,7 @@ contract DPoS is IDPoS, Govern {
      */
     function getValidatorNum() public view returns (uint) {
         uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
-        
+
         uint num = 0;
         for (uint i = 0; i < maxValidatorNum; i++) {
             if (validatorSet[i] != address(0)) {
@@ -690,12 +690,12 @@ contract DPoS is IDPoS, Govern {
 
         _candidate.commissionRate = _newRate;
         _candidate.rateLockEndTime = _newLockEndTime;
-        
+
         delete _candidate.announcedRate;
         delete _candidate.announcedLockEndTime;
         delete _candidate.announcementTime;
 
-        emit UpdateCommissionRate(_newRate, _newLockEndTime);
+        emit UpdateCommissionRate(msg.sender, _newRate, _newLockEndTime);
     }
 
     /**
