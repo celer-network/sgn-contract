@@ -471,9 +471,8 @@ contract DPoS is IDPoS, Govern {
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
 
-        bytes32 h = keccak256(penaltyRequest.penalty);
         require(
-            _checkValidatorSigs(h, penaltyRequest.sigs),
+            _checkValidatorSigs(penaltyRequest.penalty, penaltyRequest.sigs),
             "Fail to check validator sigs"
         );
         require(!usedPenaltyNonce[penalty.nonce], "Used penalty nonce");
@@ -518,15 +517,14 @@ contract DPoS is IDPoS, Govern {
 
     /**
      * @notice Validate multi-signed message
-     * @dev Can't use view here because _checkValidatorSigs is not a view function
+     * @dev Can't use view here because checkValidatorSigs is not a view function
      * @param _request a multi-signed message bytes coded in protobuf
      * @return passed the validation or not
      */
-    function validateMultiSigMessage(bytes calldata _request) external onlyRegisteredSidechains returns(bool) {
+    function validateMultiSigMessage(bytes calldata _request) external returns (bool) {
         PbSgn.MultiSigMessage memory request = PbSgn.decMultiSigMessage(_request);
-        bytes32 h = keccak256(request.msg);
 
-        return _checkValidatorSigs(h, request.sigs);
+        return _checkValidatorSigs(request.msg, request.sigs);
     }
 
     /**
@@ -657,7 +655,7 @@ contract DPoS is IDPoS, Govern {
      * @notice Get minimum amount of stakes for a quorum
      * @return the minimum amount
      */
-    function getMinQuorumStakingPool() public view returns(uint) {
+    function getMinQuorumStakingPool() public view returns (uint) {
         return getTotalValidatorStakingPool().mul(2).div(3).add(1);
     }
 
@@ -665,7 +663,7 @@ contract DPoS is IDPoS, Govern {
      * @notice Get the total amount of stakes in validators' staking pools
      * @return the total amount
      */
-    function getTotalValidatorStakingPool() public view returns(uint) {
+    function getTotalValidatorStakingPool() public view returns (uint) {
         uint maxValidatorNum = getUIntValue(uint(ParamNames.MaxValidatorNum));
 
         uint totalValidatorStakingPool = 0;
@@ -779,15 +777,14 @@ contract DPoS is IDPoS, Govern {
     }
 
     /**
-     * @notice Check whether validators with more than 2/3 total stakes have signed this hash
-     * @param _h signed hash
+     * @notice Check whether validators with more than 2/3 total stakes have signed the data
+     * @param _data signed data
      * @param _sigs signatures
      * @return whether the signatures are valid or not
      */
-    function _checkValidatorSigs(bytes32 _h, bytes[] memory _sigs) private returns(bool) {
+    function _checkValidatorSigs(bytes memory _data, bytes[] memory _sigs) private returns (bool) {
         uint minQuorumStakingPool = getMinQuorumStakingPool();
-
-        bytes32 hash = _h.toEthSignedMessageHash();
+        bytes32 hash = keccak256(_data).toEthSignedMessageHash();
         address[] memory addrs = new address[](_sigs.length);
         uint quorumStakingPool = 0;
         bool hasDuplicatedSig = false;
