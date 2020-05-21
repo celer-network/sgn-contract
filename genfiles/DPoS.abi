@@ -737,7 +737,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "name": "candidate",
         "type": "address"
       },
@@ -758,6 +758,11 @@
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
       {
         "indexed": false,
         "name": "newRate",
