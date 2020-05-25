@@ -10,7 +10,9 @@ import { message } from 'antd';
 
 import contractOptions from './utils/contracts';
 import { checkNetworkCompatbility } from './utils/network';
+import CELRModel from './models/celr-token';
 import DPoSModel from './models/dpos';
+import SGNModel from './models/sgn';
 import NetworkModel from './models/network';
 
 function* rootSaga() {
@@ -48,7 +50,9 @@ app.use(
 
 // 3. Model
 // Moved to router.js
+app.model(CELRModel);
 app.model(DPoSModel);
+app.model(SGNModel);
 app.model(NetworkModel);
 
 // 4. Router
