@@ -1,6 +1,6 @@
 const POLL_INTERVAL = 1000;
 
-export const subscribeEvent = (account, contracts) => {
+export const subscribeEvent = (account, contracts, dispatch) => {
   const { DPoS, CELRToken } = contracts;
 
   DPoS.events.InitializeCandidate(
@@ -15,6 +15,25 @@ export const subscribeEvent = (account, contracts) => {
 
       const { candidate } = event.returnValues;
       DPoS.methods.getCandidateInfo.cacheCall(candidate);
+    }
+  );
+
+  DPoS.events.CreateParamProposal(
+    {
+      fromBlock: 0,
+    },
+    (err, event) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+
+      dispatch({
+        type: 'DPoS/addProposal',
+        payload: {
+          proposal: event.returnValues,
+        },
+      });
     }
   );
 
