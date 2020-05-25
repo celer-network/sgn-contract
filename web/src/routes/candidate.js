@@ -14,12 +14,15 @@ import {
   Tabs,
 } from 'antd';
 
+import SidechainForm from '../components/candidate/sidechain-form';
 import DelegateForm from '../components/candidate/delegate-form';
 import WithdrawForm from '../components/candidate/withdraw-form';
+import CommissionForm from '../components/candidate/commission-form';
 import DelegatorTable from '../components/candidate/delegator-table';
 import PunishTable from '../components/candidate/punish-table';
 import { formatCelrValue } from '../utils/unit';
 import { CANDIDATE_STATUS } from '../utils/dpos';
+import { RATE_BASE } from '../utils/constant';
 
 class Candidate extends React.Component {
   constructor(props, context) {
@@ -29,14 +32,19 @@ class Candidate extends React.Component {
     this.state = {
       candidate: null,
       punishes: [],
+      isSidechainModalVisible: false,
       isDelegateModalVisible: false,
       isWithdrawModalVisible: false,
+      isCommissionModalVisible: false,
     };
+
+    const candidateId = props.match.params.id;
+    this.contracts.SGN.methods.sidechainAddrMap.cacheCall(candidateId);
 
     this.contracts.DPoS.events.Delegate(
       {
         fromBlock: 0,
-        filter: { candidate: props.match.params.id },
+        filter: { candidate: candidateId },
       },
       (err, event) => {
         if (err) {
@@ -55,7 +63,7 @@ class Candidate extends React.Component {
     this.contracts.DPoS.events.Punish(
       {
         fromBlock: 0,
-        filter: { validator: props.match.params.id },
+        filter: { validator: candidateId },
       },
       (err, event) => {
         if (err) {
@@ -84,6 +92,12 @@ class Candidate extends React.Component {
     return { candidate, candidateId, delegators };
   }
 
+  toggleSidechainModal = () => {
+    this.setState((prevState) => ({
+      isSidechainModalVisible: !prevState.isSidechainModalVisible,
+    }));
+  };
+
   toggleDelegateModal = () => {
     this.setState((prevState) => ({
       isDelegateModalVisible: !prevState.isDelegateModalVisible,
@@ -96,20 +110,47 @@ class Candidate extends React.Component {
     }));
   };
 
+  toggleCommissionModal = () => {
+    this.setState((prevState) => ({
+      isCommissionModalVisible: !prevState.isCommissionModalVisible,
+    }));
+  };
+
   confirmWithdraw = () => {
     const { candidateId } = this.state;
 
     this.contracts.DPoS.methods.confirmWithdraw.cacheSend(candidateId);
   };
 
+  confirmIncreaseCommissionRate = () => {
+    this.contracts.DPoS.methods.confirmIncreaseCommissionRate.cacheSend();
+  };
+
   renderAction = () => {
+    const { accounts } = this.props;
+    const { candidate } = this.state;
+    const isOwner = accounts[0] === candidate.args[0];
+
     const menu = (
       <Menu>
+        <Menu.Item onClick={this.toggleSidechainModal}>
+          Update Sidechain
+        </Menu.Item>
         <Menu.Item onClick={this.toggleDelegateModal}>Delegate</Menu.Item>
         <Menu.Item onClick={this.toggleWithdrawModal}>
           Initialize Withdraw
         </Menu.Item>
         <Menu.Item onClick={this.confirmWithdraw}>Confirm Withdraw</Menu.Item>
+        {isOwner && (
+          <Menu.Item onClick={this.toggleCommissionModal}>
+            Announce Increase Commission Rate
+          </Menu.Item>
+        )}
+        {isOwner && (
+          <Menu.Item onClick={this.confirmIncreaseCommissionRate}>
+            Confirm Increase Commission Rate
+          </Menu.Item>
+        )}
       </Menu>
     );
 
@@ -123,13 +164,25 @@ class Candidate extends React.Component {
   };
 
   renderCandidateDetail = () => {
+    const { SGN } = this.props;
     const { candidate, delegators, punishes } = this.state;
-    const { minSelfStake, stakingPool, status } = candidate.value;
+    const candidateId = candidate.args[0];
+    const {
+      minSelfStake,
+      stakingPool,
+      status,
+      commissionRate,
+      rateLockEndTime,
+    } = candidate.value;
+    const sidechainAddr = _.find(
+      SGN.sidechainAddrMap,
+      (data) => data.args[0] === candidateId
+    );
 
     return (
       <Row style={{ marginTop: '10px' }}>
         <Col span={12}>
-          <Statistic title="Address" value={candidate.args[0]} />
+          <Statistic title="Address" value={candidateId} />
         </Col>
         <Col span={12}>
           <Statistic title="Status" value={CANDIDATE_STATUS[status]} />
@@ -144,6 +197,24 @@ class Candidate extends React.Component {
           <Statistic
             title="Staking Pool"
             value={formatCelrValue(stakingPool)}
+          />
+        </Col>
+        <Col span={12}>
+          <Statistic
+            title="Commission Rate"
+            value={commissionRate / RATE_BASE}
+          />
+        </Col>
+        <Col span={12}>
+          <Statistic
+            title="Rate Lock End Time"
+            value={`${rateLockEndTime} block height`}
+          />
+        </Col>
+        <Col span={12}>
+          <Statistic
+            title="Sidechain Address"
+            value={_.get(sidechainAddr, 'value')}
           />
         </Col>
         <Col span={24}>
@@ -164,8 +235,10 @@ class Candidate extends React.Component {
     const {
       candidate,
       candidateId,
+      isSidechainModalVisible,
       isDelegateModalVisible,
       isWithdrawModalVisible,
+      isCommissionModalVisible,
     } = this.state;
 
     if (!candidate) {
@@ -175,6 +248,11 @@ class Candidate extends React.Component {
     return (
       <Card title="Candidate" extra={this.renderAction()}>
         {this.renderCandidateDetail()}
+        <SidechainForm
+          candidate={candidateId}
+          visible={isSidechainModalVisible}
+          onClose={this.toggleSidechainModal}
+        />
         <DelegateForm
           candidate={candidateId}
           visible={isDelegateModalVisible}
@@ -184,6 +262,11 @@ class Candidate extends React.Component {
           candidate={candidateId}
           visible={isWithdrawModalVisible}
           onClose={this.toggleWithdrawModal}
+        />
+        <CommissionForm
+          candidate={candidateId}
+          visible={isCommissionModalVisible}
+          onClose={this.toggleCommissionModal}
         />
       </Card>
     );
@@ -199,10 +282,11 @@ Candidate.contextTypes = {
 };
 
 function mapStateToProps(state) {
-  const { contracts, DPoS } = state;
-
+  const { accounts, contracts, DPoS, SGN } = state;
   return {
+    accounts,
     DPoS: { ...DPoS, ...contracts.DPoS },
+    SGN: { ...SGN, ...contracts.SGN },
   };
 }
 

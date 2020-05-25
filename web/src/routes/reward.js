@@ -97,9 +97,10 @@ class Reward extends React.Component {
   };
 
   render() {
-    const { DPoS } = this.props;
+    const { DPoS, SGN } = this.props;
     const { miningReward, serviceReward } = this.state;
-    const { redeemedServiceReward, redeemedMiningReward } = DPoS;
+    const { redeemedMiningReward } = DPoS;
+    const { redeemedServiceReward } = SGN;
 
     if (_.isEmpty(redeemedServiceReward) || _.isEmpty(redeemedMiningReward)) {
       return <Skeleton />;
@@ -151,12 +152,13 @@ Reward.contextTypes = {
 };
 
 function mapStateToProps(state) {
-  const { network, accounts, contracts, DPoS } = state;
+  const { network, accounts, contracts, DPoS, SGN } = state;
 
   return {
     network,
     accounts,
     DPoS: { ...DPoS, ...contracts.DPoS },
+    SGN: { ...SGN, ...contracts.SGN },
   };
 }
 
