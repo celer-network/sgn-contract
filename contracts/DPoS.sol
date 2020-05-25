@@ -58,7 +58,6 @@ contract DPoS is IDPoS, Govern {
     mapping (address => bool) public checkedValidators;
     // struct ValidatorCandidate includes a mapping and therefore candidateProfiles can't be public
     mapping (address => ValidatorCandidate) private candidateProfiles;
-    uint public miningPool;
     mapping (address => uint) public redeemedMiningReward;
 
     /********** Constants **********/
@@ -68,6 +67,7 @@ contract DPoS is IDPoS, Govern {
     IERC20 public celerToken;
     // used for bootstrap: there should be enough time for delegating and claim the initial validators
     uint public dposGoLiveTime;
+    uint public miningPool;
 
     /**
      * @notice Throws if given address is zero address
