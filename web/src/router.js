@@ -22,6 +22,10 @@ function RouterConfig({ history, app }) {
     app,
     component: () => import('./routes/candidate'),
   });
+  const Govern = Dynamic({
+    app,
+    component: () => import('./routes/govern'),
+  });
   const Reward = Dynamic({
     app,
     component: () => import('./routes/reward'),
@@ -34,6 +38,7 @@ function RouterConfig({ history, app }) {
           <App>
             <Switch>
               <Route exact path="/dpos" component={DPoS} />
+              <Route exact path="/govern" component={Govern} />
               <Route exact path="/reward" component={Reward} />
               <Route exact path="/candidate/:id" component={Candidate} />
               <Route exact path="/" render={redirectToHome} />

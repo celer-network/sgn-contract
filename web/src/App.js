@@ -25,7 +25,7 @@ class App extends React.Component {
 
   componentWillMount() {
     const { accounts, dispatch } = this.props;
-    subscribeEvent(accounts[0], this.contracts);
+    subscribeEvent(accounts[0], this.contracts, dispatch);
     subscribeChainInfo(this.web3, dispatch);
 
     dispatch({
@@ -53,6 +53,9 @@ class App extends React.Component {
           <Menu theme="dark" mode="inline" selectedKeys={[pathname.slice(1)]}>
             <Menu.Item key="dpos">
               <Link to="/dpos">DPoS</Link>
+            </Menu.Item>
+            <Menu.Item key="govern">
+              <Link to="/govern">Govern</Link>
             </Menu.Item>
             <Menu.Item key="reward">
               <Link to="/reward">Reward</Link>
