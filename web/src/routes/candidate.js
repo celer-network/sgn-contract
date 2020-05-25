@@ -11,7 +11,7 @@ import {
   Menu,
   Dropdown,
   Icon,
-  Tabs
+  Tabs,
 } from 'antd';
 
 import DelegateForm from '../components/candidate/delegate-form';
@@ -19,7 +19,7 @@ import WithdrawForm from '../components/candidate/withdraw-form';
 import DelegatorTable from '../components/candidate/delegator-table';
 import PunishTable from '../components/candidate/punish-table';
 import { formatCelrValue } from '../utils/unit';
-import { CANDIDATE_STATUS } from '../utils/guard';
+import { CANDIDATE_STATUS } from '../utils/dpos';
 
 class Candidate extends React.Component {
   constructor(props, context) {
@@ -30,13 +30,13 @@ class Candidate extends React.Component {
       candidate: null,
       punishes: [],
       isDelegateModalVisible: false,
-      isWithdrawModalVisible: false
+      isWithdrawModalVisible: false,
     };
 
-    this.contracts.Guard.events.Delegate(
+    this.contracts.DPoS.events.Delegate(
       {
         fromBlock: 0,
-        filter: { candidate: props.match.params.id }
+        filter: { candidate: props.match.params.id },
       },
       (err, event) => {
         if (err) {
@@ -45,17 +45,17 @@ class Candidate extends React.Component {
 
         const { delegator, candidate } = event.returnValues;
 
-        this.contracts.Guard.methods.getDelegatorInfo.cacheCall(
+        this.contracts.DPoS.methods.getDelegatorInfo.cacheCall(
           candidate,
           delegator
         );
       }
     );
 
-    this.contracts.Guard.events.Punish(
+    this.contracts.DPoS.events.Punish(
       {
         fromBlock: 0,
-        filter: { validator: props.match.params.id }
+        filter: { validator: props.match.params.id },
       },
       (err, event) => {
         if (err) {
@@ -63,43 +63,43 @@ class Candidate extends React.Component {
         }
 
         this.setState({
-          punishes: [...this.state.punishes, event.returnValues]
+          punishes: [...this.state.punishes, event.returnValues],
         });
       }
     );
   }
 
   static getDerivedStateFromProps(props) {
-    const { match, Guard = {} } = props;
+    const { match, DPoS = {} } = props;
     const candidateId = match.params.id;
-    const candidates = _.values(Guard.getCandidateInfo);
+    const candidates = _.values(DPoS.getCandidateInfo);
     const candidate = _.find(
       candidates,
-      candidate => candidate.args[0] === candidateId
+      (candidate) => candidate.args[0] === candidateId
     );
-    const delegators = _.values(Guard.getDelegatorInfo).filter(
-      delegator => delegator.args[0] === candidateId
+    const delegators = _.values(DPoS.getDelegatorInfo).filter(
+      (delegator) => delegator.args[0] === candidateId
     );
 
     return { candidate, candidateId, delegators };
   }
 
   toggleDelegateModal = () => {
-    this.setState(prevState => ({
-      isDelegateModalVisible: !prevState.isDelegateModalVisible
+    this.setState((prevState) => ({
+      isDelegateModalVisible: !prevState.isDelegateModalVisible,
     }));
   };
 
   toggleWithdrawModal = () => {
-    this.setState(prevState => ({
-      isWithdrawModalVisible: !prevState.isWithdrawModalVisible
+    this.setState((prevState) => ({
+      isWithdrawModalVisible: !prevState.isWithdrawModalVisible,
     }));
   };
 
   confirmWithdraw = () => {
     const { candidateId } = this.state;
 
-    this.contracts.Guard.methods.confirmWithdraw.cacheSend(candidateId);
+    this.contracts.DPoS.methods.confirmWithdraw.cacheSend(candidateId);
   };
 
   renderAction = () => {
@@ -165,7 +165,7 @@ class Candidate extends React.Component {
       candidate,
       candidateId,
       isDelegateModalVisible,
-      isWithdrawModalVisible
+      isWithdrawModalVisible,
     } = this.state;
 
     if (!candidate) {
@@ -191,18 +191,18 @@ class Candidate extends React.Component {
 }
 
 Candidate.propTypes = {
-  dispatch: PropTypes.func.isRequired
+  dispatch: PropTypes.func.isRequired,
 };
 
 Candidate.contextTypes = {
-  drizzle: PropTypes.object
+  drizzle: PropTypes.object,
 };
 
 function mapStateToProps(state) {
-  const { contracts, Guard } = state;
+  const { contracts, DPoS } = state;
 
   return {
-    Guard: { ...Guard, ...contracts.Guard }
+    DPoS: { ...DPoS, ...contracts.DPoS },
   };
 }
 

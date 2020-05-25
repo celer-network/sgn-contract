@@ -10,7 +10,7 @@ import {
   Col,
   Button,
   Input,
-  message
+  message,
 } from 'antd';
 import axios from 'axios';
 
@@ -27,26 +27,26 @@ class Reward extends React.Component {
     this.contracts = context.drizzle.contracts;
     this.state = {};
 
-    this.contracts.Guard.methods.redeemedServiceReward.cacheCall(
+    this.contracts.SGN.methods.redeemedServiceReward.cacheCall(
       this.currentUser
     );
-    this.contracts.Guard.methods.redeemedMiningReward.cacheCall(
+    this.contracts.DPoS.methods.redeemedMiningReward.cacheCall(
       this.currentUser
     );
 
     this.setGateway(localStorage.getItem(GATEWAY_KEY));
   }
 
-  setGateway = value => {
+  setGateway = (value) => {
     localStorage.setItem(GATEWAY_KEY, value);
     this.gateway = axios.create({
       baseURL: value,
-      timeout: 1000
+      timeout: 1000,
     });
 
-    this.gateway.get(`/validator/reward/${this.currentUser}`).then(res => {
+    this.gateway.get(`/validator/reward/${this.currentUser}`).then((res) => {
       this.setState({
-        ...res.data.result
+        ...res.data.result,
       });
     });
   };
@@ -54,7 +54,7 @@ class Reward extends React.Component {
   indendWithdraw = () => {
     this.gateway
       .post('/validator/withdrawReward', {
-        ethAddr: this.currentUser
+        ethAddr: this.currentUser,
       })
       .then(() => {
         message.success(
@@ -66,8 +66,8 @@ class Reward extends React.Component {
   redeemReward = () => {
     this.gateway
       .get(`/validator/rewardRequest/${this.currentUser}`)
-      .then(res => {
-        this.contracts.Guard.methods.redeemReward.cacheSend(
+      .then((res) => {
+        this.contracts.SGN.methods.redeemReward.cacheSend(
           '0x' + res.data.result
         );
       });
@@ -92,14 +92,14 @@ class Reward extends React.Component {
       </Button>,
       <Button type="primary" onClick={this.redeemReward}>
         Redeem Reward
-      </Button>
+      </Button>,
     ];
   };
 
   render() {
-    const { Guard } = this.props;
+    const { DPoS } = this.props;
     const { miningReward, serviceReward } = this.state;
-    const { redeemedServiceReward, redeemedMiningReward } = Guard;
+    const { redeemedServiceReward, redeemedMiningReward } = DPoS;
 
     if (_.isEmpty(redeemedServiceReward) || _.isEmpty(redeemedMiningReward)) {
       return <Skeleton />;
@@ -143,20 +143,20 @@ class Reward extends React.Component {
 }
 
 Reward.propTypes = {
-  dispatch: PropTypes.func.isRequired
+  dispatch: PropTypes.func.isRequired,
 };
 
 Reward.contextTypes = {
-  drizzle: PropTypes.object
+  drizzle: PropTypes.object,
 };
 
 function mapStateToProps(state) {
-  const { network, accounts, contracts, Guard } = state;
+  const { network, accounts, contracts, DPoS } = state;
 
   return {
     network,
     accounts,
-    Guard: { ...Guard, ...contracts.Guard }
+    DPoS: { ...DPoS, ...contracts.DPoS },
   };
 }
 

@@ -24,7 +24,7 @@ class DelegateForm extends React.Component {
 
       const { value } = values;
 
-      this.contracts.Guard.methods.delegate.cacheSend(
+      this.contracts.DPoS.methods.delegate.cacheSend(
         candidate,
         web3.utils.toWei(value.toString(), 'ether')
       );
@@ -41,15 +41,15 @@ class DelegateForm extends React.Component {
         field: 'number',
         fieldOptions: {
           ...celrFieldOptions,
-          placeholder: 'The amount of CELR to delegate'
+          placeholder: 'The amount of CELR to delegate',
         },
         rules: [
           {
             message: 'Please enter a value!',
-            required: true
-          }
-        ]
-      }
+            required: true,
+          },
+        ],
+      },
     ];
 
     return (
@@ -67,11 +67,11 @@ class DelegateForm extends React.Component {
 
 DelegateForm.propTypes = {
   visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
 };
 
 DelegateForm.contextTypes = {
-  drizzle: PropTypes.object
+  drizzle: PropTypes.object,
 };
 
 export default DelegateForm;

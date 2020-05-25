@@ -9,7 +9,7 @@ function AccountInfo(props) {
   return (
     <Card className="account-info" title="Account info">
       <Statistic
-        title="CELR allowance for Guard"
+        title="CELR allowance for DPoS"
         value={formatCelrValue(celrValue)}
       />
     </Card>
