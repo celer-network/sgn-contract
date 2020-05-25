@@ -12,20 +12,20 @@ import contractOptions from './utils/contracts';
 const { ConnectedRouter } = routerRedux;
 const LoadingWrapper = withRouter(LoadingContainer);
 
-const redirectToHome = () => <Redirect to="/guard" />;
+const redirectToHome = () => <Redirect to="/dpos" />;
 
 function RouterConfig({ history, app }) {
-  const Guard = Dynamic({
+  const DPoS = Dynamic({
     app,
-    component: () => import('./routes/guard')
+    component: () => import('./routes/dpos'),
   });
   const Candidate = Dynamic({
     app,
-    component: () => import('./routes/candidate')
+    component: () => import('./routes/candidate'),
   });
   const Reward = Dynamic({
     app,
-    component: () => import('./routes/reward')
+    component: () => import('./routes/reward'),
   });
 
   return (
@@ -34,7 +34,7 @@ function RouterConfig({ history, app }) {
         <LoadingWrapper loadingComp={Spin}>
           <App>
             <Switch>
-              <Route exact path="/guard" component={Guard} />
+              <Route exact path="/dpos" component={DPoS} />
               <Route exact path="/reward" component={Reward} />
               <Route exact path="/candidate/:id" component={Candidate} />
               <Route exact path="/" render={redirectToHome} />
@@ -47,7 +47,7 @@ function RouterConfig({ history, app }) {
 }
 
 RouterConfig.propTypes = {
-  history: PropTypes.object.isRequired
+  history: PropTypes.object.isRequired,
 };
 
 export default RouterConfig;

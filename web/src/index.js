@@ -4,17 +4,17 @@ import { all, fork } from 'redux-saga/effects';
 import {
   generateContractsInitialState,
   drizzleReducers,
-  drizzleSagas
+  drizzleSagas,
 } from 'drizzle';
 import { message } from 'antd';
 
 import contractOptions from './utils/contracts';
 import { checkNetworkCompatbility } from './utils/network';
-import GuardModel from './models/guard';
+import DPoSModel from './models/dpos';
 import NetworkModel from './models/network';
 
 function* rootSaga() {
-  yield all(drizzleSagas.map(saga => fork(saga)));
+  yield all(drizzleSagas.map((saga) => fork(saga)));
 }
 
 checkNetworkCompatbility();
@@ -22,10 +22,10 @@ checkNetworkCompatbility();
 // 1. Initialize
 const app = dva({
   initialState: {
-    ...generateContractsInitialState(contractOptions)
+    ...generateContractsInitialState(contractOptions),
   },
   extraReducers: {
-    ...drizzleReducers
+    ...drizzleReducers,
   },
   onError(err) {
     if (err.resp) {
@@ -35,20 +35,20 @@ const app = dva({
     } else {
       message.error(err);
     }
-  }
+  },
 });
 
 // 2. Plugins
 app.use(
   createLoading({
-    namespace: 'loading'
+    namespace: 'loading',
     // effects: enable effects level loading state
   })
 );
 
 // 3. Model
 // Moved to router.js
-app.model(GuardModel);
+app.model(DPoSModel);
 app.model(NetworkModel);
 
 // 4. Router

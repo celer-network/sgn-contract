@@ -1,11 +1,11 @@
 const POLL_INTERVAL = 1000;
 
 export const subscribeEvent = (account, contracts) => {
-  const { Guard, CELRToken } = contracts;
+  const { DPoS, CELRToken } = contracts;
 
-  Guard.events.InitializeCandidate(
+  DPoS.events.InitializeCandidate(
     {
-      fromBlock: 0
+      fromBlock: 0,
     },
     (err, event) => {
       if (err) {
@@ -14,7 +14,7 @@ export const subscribeEvent = (account, contracts) => {
       }
 
       const { candidate } = event.returnValues;
-      Guard.methods.getCandidateInfo.cacheCall(candidate);
+      DPoS.methods.getCandidateInfo.cacheCall(candidate);
     }
   );
 
@@ -22,8 +22,8 @@ export const subscribeEvent = (account, contracts) => {
     {
       filter: {
         owner: account,
-        spender: Guard.address
-      }
+        spender: DPoS.address,
+      },
     },
     (err, event) => {
       if (err) {
@@ -46,11 +46,11 @@ export const subscribeChainInfo = (web3, dispatch) => {
       window.location.reload();
     }
 
-    return web3.eth.getBlock('latest').then(block => {
+    return web3.eth.getBlock('latest').then((block) => {
       if (block && blockNumber !== block.number) {
         dispatch({
           type: 'network/save',
-          payload: { block }
+          payload: { block },
         });
         blockNumber = block.number;
       }
@@ -59,6 +59,6 @@ export const subscribeChainInfo = (web3, dispatch) => {
 };
 
 const getCelrAllowance = (account, contracts) => {
-  const { CELRToken, Guard } = contracts;
-  CELRToken.methods.allowance.cacheCall(account, Guard.address);
+  const { CELRToken, DPoS } = contracts;
+  CELRToken.methods.allowance.cacheCall(account, DPoS.address);
 };

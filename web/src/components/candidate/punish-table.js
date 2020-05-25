@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
 import { Table } from 'antd';
 
@@ -9,12 +8,12 @@ import { formatCelrValue } from '../../utils/unit';
 const columns = [
   {
     title: 'Delegator',
-    dataIndex: 'delegator'
+    dataIndex: 'delegator',
   },
   {
     title: 'Amount',
-    dataIndex: 'amount'
-  }
+    dataIndex: 'amount',
+  },
 ];
 
 class PunishTable extends React.Component {
@@ -25,9 +24,9 @@ class PunishTable extends React.Component {
       .sort((punish0, punish1) => {
         return punish0.validator > punish1.validator;
       })
-      .map(punish => ({
+      .map((punish) => ({
         ...punish,
-        amount: formatCelrValue(punish.amount)
+        amount: formatCelrValue(punish.amount),
       }));
 
     console.log(punishes);
@@ -38,7 +37,7 @@ class PunishTable extends React.Component {
 }
 
 PunishTable.propTypes = {
-  punishes: PropTypes.array.isRequired
+  punishes: PropTypes.array.isRequired,
 };
 
 function mapStateToProps(state) {}

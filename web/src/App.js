@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
 import { withRouter, Link } from 'dva/router';
-import { Card, Layout, Menu, Button } from 'antd';
-import { AccountData } from 'drizzle-react-components';
+import { Layout, Menu, Button } from 'antd';
 
 import ApproveCELRForm from './components/approve-celr';
 import AccountInfo from './components/account-info';
@@ -31,13 +30,13 @@ class App extends React.Component {
 
     dispatch({
       type: 'network/save',
-      payload: getNetworkConfig(this.web3.currentProvider.networkVersion)
+      payload: getNetworkConfig(this.web3.currentProvider.networkVersion),
     });
   }
 
   toggleModal = () => {
-    this.setState(prevState => ({
-      isModalVisible: !prevState.isModalVisible
+    this.setState((prevState) => ({
+      isModalVisible: !prevState.isModalVisible,
     }));
   };
 
@@ -52,8 +51,8 @@ class App extends React.Component {
         <Sider>
           <AccountInfo celrValue={celerAllowance.value} />
           <Menu theme="dark" mode="inline" selectedKeys={[pathname.slice(1)]}>
-            <Menu.Item key="guard">
-              <Link to="/guard">Guard</Link>
+            <Menu.Item key="dpos">
+              <Link to="/dpos">DPoS</Link>
             </Menu.Item>
             <Menu.Item key="reward">
               <Link to="/reward">Reward</Link>
@@ -84,11 +83,11 @@ class App extends React.Component {
 
 App.propTypes = {
   children: PropTypes.element.isRequired,
-  location: PropTypes.object.isRequired
+  location: PropTypes.object.isRequired,
 };
 
 App.contextTypes = {
-  drizzle: PropTypes.object
+  drizzle: PropTypes.object,
 };
 
 function mapStateToProps(state) {
@@ -96,7 +95,7 @@ function mapStateToProps(state) {
 
   return {
     accounts,
-    CELRToken: contracts.CELRToken
+    CELRToken: contracts.CELRToken,
   };
 }
 

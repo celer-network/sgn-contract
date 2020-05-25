@@ -24,7 +24,7 @@ class WithdrawForm extends React.Component {
 
       const { value } = values;
 
-      this.contracts.Guard.methods.intendWithdraw.cacheSend(
+      this.contracts.DPoS.methods.intendWithdraw.cacheSend(
         candidate,
         web3.utils.toWei(value.toString(), 'ether')
       );
@@ -41,15 +41,15 @@ class WithdrawForm extends React.Component {
         field: 'number',
         fieldOptions: {
           ...celrFieldOptions,
-          placeholder: 'The amount of CELR to withdraw'
+          placeholder: 'The amount of CELR to withdraw',
         },
         rules: [
           {
             message: 'Please enter a value!',
-            required: true
-          }
-        ]
-      }
+            required: true,
+          },
+        ],
+      },
     ];
 
     return (
@@ -67,11 +67,11 @@ class WithdrawForm extends React.Component {
 
 WithdrawForm.propTypes = {
   visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
 };
 
 WithdrawForm.contextTypes = {
-  drizzle: PropTypes.object
+  drizzle: PropTypes.object,
 };
 
 export default WithdrawForm;

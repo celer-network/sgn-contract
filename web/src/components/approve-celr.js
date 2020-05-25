@@ -26,7 +26,7 @@ class ApproveCelrForm extends React.Component {
 
       this.contracts.CELRToken.methods
         .approve(
-          this.contracts.Guard.address,
+          this.contracts.DPoS.address,
           web3.utils.toWei(value.toString(), 'ether')
         )
         .send();
@@ -43,20 +43,20 @@ class ApproveCelrForm extends React.Component {
         field: 'number',
         fieldOptions: {
           ...celrFieldOptions,
-          placeholder: 'The amount of CELR allowance Guard has'
+          placeholder: 'The amount of CELR allowance DPoS has',
         },
         rules: [
           {
             message: 'Please enter a value!',
-            required: true
-          }
-        ]
-      }
+            required: true,
+          },
+        ],
+      },
     ];
 
     return (
       <Modal
-        title="Approve CELR to Guard"
+        title="Approve CELR to DPoS"
         visible={visible}
         onOk={this.onSubmit}
         onCancel={onClose}
@@ -69,11 +69,11 @@ class ApproveCelrForm extends React.Component {
 
 ApproveCelrForm.propTypes = {
   visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
 };
 
 ApproveCelrForm.contextTypes = {
-  drizzle: PropTypes.object
+  drizzle: PropTypes.object,
 };
 
 export default ApproveCelrForm;
