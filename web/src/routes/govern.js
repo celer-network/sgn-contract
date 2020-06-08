@@ -2,22 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
-import { Link } from 'dva/router';
-import {
-  Button,
-  Card,
-  List,
-  Statistic,
-  Row,
-  Col,
-  Icon,
-  Dropdown,
-  Menu,
-} from 'antd';
+import { Button, Card, List, Statistic, Row, Col, Dropdown, Menu } from 'antd';
 
 import ProposalForm from '../components/govern/proposal-form';
 import { PARAM_NAMES, VOTE_TYPE } from '../utils/dpos';
-import { formatCelrValue } from '../utils/unit';
 
 class Govern extends React.Component {
   constructor(props, context) {
