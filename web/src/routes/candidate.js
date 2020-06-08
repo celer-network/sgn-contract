@@ -126,6 +126,10 @@ class Candidate extends React.Component {
     this.contracts.DPoS.methods.confirmIncreaseCommissionRate.cacheSend();
   };
 
+  claimValidator = () => {
+    this.contracts.DPoS.methods.claimValidator.cacheSend();
+  };
+
   renderAction = () => {
     const { accounts } = this.props;
     const { candidate } = this.state;
@@ -150,6 +154,9 @@ class Candidate extends React.Component {
           <Menu.Item onClick={this.confirmIncreaseCommissionRate}>
             Confirm Increase Commission Rate
           </Menu.Item>
+        )}
+        {isOwner && (
+          <Menu.Item onClick={this.claimValidator}>Claim Validator</Menu.Item>
         )}
       </Menu>
     );
@@ -249,22 +256,21 @@ class Candidate extends React.Component {
       <Card title="Candidate" extra={this.renderAction()}>
         {this.renderCandidateDetail()}
         <SidechainForm
-          candidate={candidateId}
           visible={isSidechainModalVisible}
           onClose={this.toggleSidechainModal}
         />
         <DelegateForm
-          candidate={candidateId}
+          candidateId={candidateId}
           visible={isDelegateModalVisible}
           onClose={this.toggleDelegateModal}
         />
         <WithdrawForm
-          candidate={candidateId}
+          candidateId={candidateId}
           visible={isWithdrawModalVisible}
           onClose={this.toggleWithdrawModal}
         />
         <CommissionForm
-          candidate={candidateId}
+          candidate={candidate}
           visible={isCommissionModalVisible}
           onClose={this.toggleCommissionModal}
         />

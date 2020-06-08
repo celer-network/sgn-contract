@@ -18,7 +18,7 @@ class CommissionForm extends React.Component {
   }
 
   handleIncreaseCommission = () => {
-    const { onClose, network } = this.props;
+    const { onClose, network, candidate } = this.props;
 
     this.form.current.validateFields((err, values) => {
       if (err) {
@@ -27,12 +27,20 @@ class CommissionForm extends React.Component {
       }
 
       let { commissionRate, rateLockEndTime } = values;
+      commissionRate = commissionRate * RATE_BASE;
       rateLockEndTime = _.toNumber(rateLockEndTime) + network.block.number;
 
-      this.contracts.DPoS.methods.announceIncreaseCommissionRate.cacheSend(
-        commissionRate * RATE_BASE,
-        rateLockEndTime
-      );
+      if (commissionRate > candidate.value.commissionRate) {
+        this.contracts.DPoS.methods.announceIncreaseCommissionRate.cacheSend(
+          commissionRate,
+          rateLockEndTime
+        );
+      } else {
+        this.contracts.DPoS.methods.nonIncreaseCommissionRate.cacheSend(
+          commissionRate,
+          rateLockEndTime
+        );
+      }
       onClose();
     });
   };

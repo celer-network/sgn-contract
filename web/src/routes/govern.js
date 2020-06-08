@@ -30,7 +30,8 @@ class Govern extends React.Component {
   };
 
   renderProposal = (propsal) => {
-    const { proposalId, voteDeadline, record, newValue } = propsal;
+    const proposalId = propsal.args[0];
+    const { voteDeadline, record, newValue } = propsal.value;
     const menu = (
       <Menu>
         {_.map(VOTE_TYPE, (value, type) => (
@@ -85,8 +86,8 @@ class Govern extends React.Component {
 
     return (
       <List
-        grid={{ gutter: 16, column: 3 }}
-        dataSource={DPoS.proposals}
+        grid={{ gutter: 16, column: 2 }}
+        dataSource={_.values(DPoS.paramProposals)}
         renderItem={this.renderProposal}
       />
     );

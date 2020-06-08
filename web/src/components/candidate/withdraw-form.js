@@ -15,7 +15,7 @@ class WithdrawForm extends React.Component {
   }
 
   onSubmit = () => {
-    const { onClose, candidate } = this.props;
+    const { onClose, candidateId } = this.props;
 
     this.form.current.validateFields((err, values) => {
       if (err) {
@@ -25,7 +25,7 @@ class WithdrawForm extends React.Component {
       const { value } = values;
 
       this.contracts.DPoS.methods.intendWithdraw.cacheSend(
-        candidate,
+        candidateId,
         web3.utils.toWei(value.toString(), 'ether')
       );
 
