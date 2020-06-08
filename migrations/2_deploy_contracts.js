@@ -1,21 +1,21 @@
-const ERC20ExampleToken = artifacts.require('ERC20ExampleToken');
+const CELRToken = artifacts.require('CELRToken');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
 
-const governProposalDeposit = 1000000000000000000;
+const governProposalDeposit = '1000000000000000000';
 const governVoteTimeout = 2;
 const blameTimeout = 0;
 const minValidatorNum = 0;
 const maxValidatorNum = 10;
-const minStakeInPool = 1000000000000000000;
+const minStakeInPool = '1000000000000000000';
 const increaseRateWaitTime = 2;
 const dposGoLiveTimeout = 0;
 
 module.exports = function (deployer, network, accounts) {
   return deployer
-    .deploy(ERC20ExampleToken)
+    .deploy(CELRToken)
     .then(() => {
-      return ERC20ExampleToken.deployed();
+      return CELRToken.deployed();
     })
     .then((token) => {
       if (network === 'development') {
@@ -24,7 +24,7 @@ module.exports = function (deployer, network, accounts) {
 
       return deployer.deploy(
         DPoS,
-        ERC20ExampleToken.address,
+        CELRToken.address,
         governProposalDeposit,
         governVoteTimeout,
         blameTimeout,
@@ -36,10 +36,8 @@ module.exports = function (deployer, network, accounts) {
       );
     })
     .then((dpos) => {
-      return deployer
-        .deploy(SGN, ERC20ExampleToken.address, DPoS.address)
-        .then(() => {
-          dpos.registerSidechain(SGN.address);
-        });
+      return deployer.deploy(SGN, CELRToken.address, DPoS.address).then(() => {
+        dpos.registerSidechain(SGN.address);
+      });
     });
 };
