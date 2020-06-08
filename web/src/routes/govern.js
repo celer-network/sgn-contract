@@ -4,14 +4,15 @@ import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
 import { Button, Card, List, Statistic, Row, Col, Dropdown, Menu } from 'antd';
 
+import Filter from '../components/filter';
 import ProposalForm from '../components/govern/proposal-form';
-import { PARAM_NAMES, VOTE_TYPE } from '../utils/dpos';
+import { PARAM_NAMES, PROPOSAL_STATUS, VOTE_TYPE } from '../utils/dpos';
 
 class Govern extends React.Component {
   constructor(props, context) {
     super(props);
 
-    this.state = { isProposalModalVisible: false };
+    this.state = { isProposalModalVisible: false, filter: { status: '1' } };
     this.contracts = context.drizzle.contracts;
   }
 
@@ -27,6 +28,31 @@ class Govern extends React.Component {
 
   confirmParamProposal = (proposalId) => {
     this.contracts.DPoS.methods.confirmParamProposal.cacheSend(proposalId);
+  };
+
+  updateFilter = (change) => {
+    this.setState((prevState) => ({
+      filter: { ...prevState.filter, ...change },
+    }));
+  };
+
+  renderFilters = () => {
+    const { status } = this.state.filter;
+    const proposalStatus = _.map(PROPOSAL_STATUS, (value, status) => [
+      value,
+      status,
+    ]);
+
+    return (
+      <Filter
+        name="status"
+        options={proposalStatus}
+        style={{ width: 100 }}
+        onChange={this.updateFilter}
+        value={status}
+        allowClear
+      />
+    );
   };
 
   renderProposal = (propsal) => {
@@ -83,11 +109,19 @@ class Govern extends React.Component {
 
   renderProposals = () => {
     const { DPoS } = this.props;
+    const { filter } = this.state;
+    let proposals = _.values(DPoS.paramProposals);
+
+    proposals = _.filter(proposals, (proposal) => {
+      const { status } = proposal.value;
+      console.log(proposal.value);
+      return filter.status === status;
+    });
 
     return (
       <List
         grid={{ gutter: 16, column: 2 }}
-        dataSource={_.values(DPoS.paramProposals)}
+        dataSource={proposals}
         renderItem={this.renderProposal}
       />
     );
@@ -105,6 +139,7 @@ class Govern extends React.Component {
           </Button>
         }
       >
+        {this.renderFilters()}
         {this.renderProposals()}
         <ProposalForm
           visible={isProposalModalVisible}
