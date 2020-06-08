@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import web3 from 'web3';
 import _ from 'lodash';
 import { Modal } from 'antd';
 import { drizzleConnect } from 'drizzle-react';
