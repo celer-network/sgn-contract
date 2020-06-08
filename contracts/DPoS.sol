@@ -685,8 +685,12 @@ contract DPoS is IDPoS, Govern {
     function _updateCommissionRate(ValidatorCandidate storage _candidate, uint _newRate, uint _newLockEndTime) private {
         require(_newRate <= COMMISSION_RATE_BASE, "Invalid new rate");
         require(_newLockEndTime > block.number, "Outdated new lock end time");
-        require(_newRate == _candidate.commissionRate || block.number > _candidate.rateLockEndTime, "Commission rate is locked");
-        require(_newRate != _candidate.commissionRate || _newLockEndTime > _candidate.rateLockEndTime, "New lock end time is not increasing");
+
+        if (_newRate == _candidate.commissionRate) {
+            require(_newLockEndTime > _candidate.rateLockEndTime, "New lock end time is not increasing");
+        } else {
+            require(block.number > _candidate.rateLockEndTime, "Commission rate is locked");
+        }
 
         _candidate.commissionRate = _newRate;
         _candidate.rateLockEndTime = _newLockEndTime;
