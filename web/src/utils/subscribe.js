@@ -28,12 +28,7 @@ export const subscribeEvent = (account, contracts, dispatch) => {
         return;
       }
 
-      dispatch({
-        type: 'DPoS/addProposal',
-        payload: {
-          proposal: event.returnValues,
-        },
-      });
+      DPoS.methods.paramProposals.cacheCall(event.returnValues.proposalId);
     }
   );
 

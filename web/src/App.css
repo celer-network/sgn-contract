@@ -1,31 +1,40 @@
 @import '~antd/dist/antd.css';
 
 #root {
-    display: flex;
-    flex: 1;
-    height: 100%;
+  display: flex;
+  flex: 1;
+  height: 100%;
 }
 
 .account-data .ant-card-head {
-    height: 65px;
+  height: 65px;
 }
 
 .account-data h4,
 .account-data p {
-    overflow: hidden;
-    text-overflow: ellipsis;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ant-menu-item.approve-celr {
-    position: absolute;
-    bottom: 0;
+  position: absolute;
+  bottom: 0;
 }
 
 .ant-statistic-content {
-    overflow: hidden;
-    text-overflow: ellipsis;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ant-input-number {
-    width: 315px;
+  width: 315px;
+}
+
+.dropdown-filter {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.dropdown-filter .ant-form-item-control-wrapper {
+  display: inline-block;
 }
