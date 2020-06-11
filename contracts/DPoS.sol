@@ -644,9 +644,9 @@ contract DPoS is IDPoS, Govern {
         uint len = d.intentEndIndex.sub(d.intentStartIndex);
         intentAmounts = new uint[](len);
         intentProposedTimes = new uint[](len);
-        for (uint i = d.intentStartIndex; i < d.intentEndIndex; i++) {
-            intentAmounts[i] = d.withdrawIntents[i].amount;
-            intentProposedTimes[i] = d.withdrawIntents[i].proposedTime;
+        for (uint i = 0; i < len; i++) {
+            intentAmounts[i] = d.withdrawIntents[i+d.intentStartIndex].amount;
+            intentProposedTimes[i] = d.withdrawIntents[i+d.intentStartIndex].proposedTime;
         }
 
         delegatedStake = d.delegatedStake;
