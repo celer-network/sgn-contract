@@ -74,7 +74,7 @@ contract('DPoS edge case', async (accounts) => {
     }
   });
 
-  it('should delegate to candidate by a delegator successfully', async () => {
+  it('should getDelegatorInfo successfully', async () => {
     await dposInstance.initializeCandidate(
       MIN_SELF_STAKE,
       COMMISSION_RATE,
@@ -89,7 +89,6 @@ contract('DPoS edge case', async (accounts) => {
     await dposInstance.delegate(CANDIDATE, 2 * DELEGATOR_STAKE);
     await dposInstance.intendWithdraw(CANDIDATE, DELEGATOR_STAKE);
 
-    let res = await dposInstance.getDelegatorInfo.call(CANDIDATE, DELEGATOR);
-    console.log(res);
+    await dposInstance.getDelegatorInfo.call(CANDIDATE, DELEGATOR);
   });
 });
