@@ -67,6 +67,7 @@ sync_go_binding() {
   popd
 }
 
+echo "sync go binding ..."
 setup_git
 get_pr
 node_modules/.bin/truffle compile
