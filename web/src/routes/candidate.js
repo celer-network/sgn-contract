@@ -19,6 +19,7 @@ import DelegateForm from '../components/candidate/delegate-form';
 import WithdrawForm from '../components/candidate/withdraw-form';
 import CommissionForm from '../components/candidate/commission-form';
 import DelegatorTable from '../components/candidate/delegator-table';
+import SidechainInfo from '../components/candidate/sidechain-info';
 import PunishTable from '../components/candidate/punish-table';
 import { formatCelrValue } from '../utils/unit';
 import { CANDIDATE_STATUS } from '../utils/dpos';
@@ -209,7 +210,7 @@ class Candidate extends React.Component {
         <Col span={12}>
           <Statistic
             title="Commission Rate"
-            value={commissionRate / RATE_BASE}
+            value={`${commissionRate / RATE_BASE} %`}
           />
         </Col>
         <Col span={12}>
@@ -228,6 +229,9 @@ class Candidate extends React.Component {
           <Tabs>
             <Tabs.TabPane tab="Delegators" key="delegators">
               <DelegatorTable delegators={delegators} />
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Sidechain" key="sidechain">
+              <SidechainInfo candidateId={candidateId} />
             </Tabs.TabPane>
             <Tabs.TabPane tab="Punishes" key="punishes">
               <PunishTable punishes={punishes} />

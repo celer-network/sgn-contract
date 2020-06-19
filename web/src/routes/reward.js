@@ -2,27 +2,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
-import {
-  Skeleton,
-  Card,
-  Statistic,
-  Row,
-  Col,
-  Button,
-  Input,
-  message,
-} from 'antd';
+import { Skeleton, Card, Statistic, Row, Col, Button, message } from 'antd';
 import axios from 'axios';
 
 import { formatCelrValue } from '../utils/unit';
-
-const GATEWAY_KEY = 'gateway';
 
 class Reward extends React.Component {
   constructor(props, context) {
     super(props);
 
-    const { accounts } = props;
+    const {
+      accounts,
+      network: { setting },
+    } = props;
     this.currentUser = accounts[0];
     this.contracts = context.drizzle.contracts;
     this.state = {};
@@ -34,22 +26,23 @@ class Reward extends React.Component {
       this.currentUser
     );
 
-    this.setGateway(localStorage.getItem(GATEWAY_KEY));
-  }
-
-  setGateway = (value) => {
-    localStorage.setItem(GATEWAY_KEY, value);
-    this.gateway = axios.create({
-      baseURL: value,
-      timeout: 1000,
-    });
-
-    this.gateway.get(`/validator/reward/${this.currentUser}`).then((res) => {
-      this.setState({
-        ...res.data.result,
+    if (setting.gateway) {
+      this.gateway = axios.create({
+        baseURL: setting.gateway,
+        timeout: 1000,
       });
-    });
-  };
+
+      this.gateway.get(`/validator/reward/${this.currentUser}`).then((res) => {
+        this.setState({
+          ...res.data.result,
+        });
+      });
+    } else {
+      message.warning(
+        'Please config gateway url in setting to load sgn reward correctly'
+      );
+    }
+  }
 
   indendWithdraw = () => {
     this.gateway
@@ -71,18 +64,6 @@ class Reward extends React.Component {
           '0x' + res.data.result
         );
       });
-  };
-
-  renderGateway = () => {
-    return (
-      <Input.Search
-        defaultValue={this.gateway.defaults.baseURL}
-        placeholder="Gateway url"
-        enterButton="Save"
-        onSearch={this.setGateway}
-        style={{ width: 500 }}
-      />
-    );
   };
 
   renderActions = () => {
@@ -107,11 +88,7 @@ class Reward extends React.Component {
     }
 
     return (
-      <Card
-        title="Reward"
-        actions={this.renderActions()}
-        extra={this.renderGateway()}
-      >
+      <Card title="Reward" actions={this.renderActions()}>
         <Row style={{ marginTop: '10px' }}>
           <Col span={12}>
             <Statistic
