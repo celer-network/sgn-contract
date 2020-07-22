@@ -26,22 +26,24 @@ class Reward extends React.Component {
       this.currentUser
     );
 
-    if (setting.gateway) {
-      this.gateway = axios.create({
-        baseURL: setting.gateway,
-        timeout: 1000,
-      });
+    this.gateway = axios.create({
+      baseURL: setting.gateway,
+      timeout: 1000,
+    });
 
-      this.gateway.get(`/validator/reward/${this.currentUser}`).then((res) => {
+    this.gateway
+      .get(`/validator/reward/${this.currentUser}`)
+      .then((res) => {
         this.setState({
           ...res.data.result,
         });
+      })
+      .catch((err) => {
+        console.error(err);
+        message.warning(
+          'Please config gateway url in setting to load sgn reward correctly'
+        );
       });
-    } else {
-      message.warning(
-        'Please config gateway url in setting to load sgn reward correctly'
-      );
-    }
   }
 
   indendWithdraw = () => {

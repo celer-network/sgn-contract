@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Statistic, Button, Drawer, Input } from 'antd';
+import { Card, Statistic, Button } from 'antd';
 
 import Setting from './setting';
 import { formatCelrValue } from '../utils/unit';
