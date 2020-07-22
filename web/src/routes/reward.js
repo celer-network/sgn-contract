@@ -46,7 +46,7 @@ class Reward extends React.Component {
       });
   }
 
-  indendWithdraw = () => {
+  intendWithdraw = () => {
     this.gateway
       .post('/validator/withdrawReward', {
         ethAddr: this.currentUser,
@@ -70,7 +70,7 @@ class Reward extends React.Component {
 
   renderActions = () => {
     return [
-      <Button type="primary" onClick={this.indendWithdraw}>
+      <Button type="primary" onClick={this.intendWithdraw}>
         Initialize Redeem
       </Button>,
       <Button type="primary" onClick={this.redeemReward}>
