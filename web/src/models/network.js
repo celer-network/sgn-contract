@@ -4,7 +4,9 @@ export default {
   namespace: 'network',
 
   state: {
-    setting: JSON.parse(localStorage.getItem(SETTING_KEY)) || {},
+    setting: JSON.parse(localStorage.getItem(SETTING_KEY)) || {
+      gateway: `${window.location.protocol}//${window.location.hostname}:1317`,
+    },
   },
 
   effects: {
