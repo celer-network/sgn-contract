@@ -1,33 +1,33 @@
 {
-  "scripts": {
-    "test": "npx truffle test",
-    "ganache": "npx ganache-cli --accounts 20",
-    "compile": "npx truffle compile",
-    "coverage": "npx solidity-coverage",
-    "lint": "npx solhint 'contracts/**/*.sol'",
-    "lint:js": "npx eslint .",
-    "migrate": "npx truffle migrate --reset"
-  },
-  "dependencies": {
-    "openzeppelin-solidity": "2.5",
-    "protobufjs": "6.8.8",
-    "web3": "1.0.0-beta.54"
-  },
-  "devDependencies": {
-    "acorn": ">=5.7.4",
-    "babel-eslint": "^10.0.3",
-    "eslint": "^6.7.2",
-    "eslint-config-prettier": "^6.7.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.19.1",
-    "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-prettier": "^3.1.2",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "ganache-cli": "^6.9.0",
-    "kind-of": ">=6.0.3",
-    "minimist": ">=0.2.1",
-    "solhint": "^3.1.0",
-    "truffle": "^5.1.36"
-  }
+    "scripts": {
+        "test": "npx truffle test",
+        "ganache": "npx ganache-cli --accounts 20",
+        "compile": "npx truffle compile",
+        "coverage": "npx solidity-coverage",
+        "lint": "npx solhint 'contracts/**/*.sol'",
+        "lint:js": "npx eslint test/*",
+        "migrate": "npx truffle migrate --reset"
+    },
+    "dependencies": {
+        "openzeppelin-solidity": "2.5",
+        "protobufjs": "6.8.8",
+        "web3": "1.0.0-beta.54"
+    },
+    "devDependencies": {
+        "acorn": ">=5.7.4",
+        "babel-eslint": "^10.0.3",
+        "eslint": "^6.7.2",
+        "eslint-config-prettier": "^6.7.0",
+        "eslint-config-standard": "^14.1.0",
+        "eslint-plugin-import": "^2.19.1",
+        "eslint-plugin-node": "^10.0.0",
+        "eslint-plugin-prettier": "^3.1.2",
+        "eslint-plugin-promise": "^4.2.1",
+        "eslint-plugin-standard": "^4.0.1",
+        "ganache-cli": "^6.9.0",
+        "kind-of": ">=6.0.3",
+        "minimist": ">=0.2.1",
+        "solhint": "^3.1.0",
+        "truffle": "^5.1.36"
+    }
 }
