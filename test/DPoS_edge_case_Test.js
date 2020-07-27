@@ -5,7 +5,7 @@ const sha3 = web3.utils.keccak256;
 const protoChainFactory = require('./helper/protoChainFactory');
 const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
-const ERC20ExampleToken = artifacts.require('ERC20ExampleToken');
+const CELRToken = artifacts.require('CELRToken');
 
 const GANACHE_ACCOUNT_NUM = 5; // defined in .circleci/config.yml
 const GOVERN_PROPOSAL_DEPOSIT = 100;
@@ -44,7 +44,7 @@ const CANDIDATE_WITHDRAW_UNDER_MIN = 30;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
-contract('DPoS edge case', async (accounts) => {
+contract('DPoS edge case', async accounts => {
   const DELEGATOR = accounts[0];
   const CANDIDATE = accounts[1];
   // CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN < MIN_SELF_STAKE
@@ -54,7 +54,7 @@ contract('DPoS edge case', async (accounts) => {
   let dposInstance;
 
   beforeEach(async () => {
-    celerToken = await ERC20ExampleToken.new();
+    celerToken = await CELRToken.new();
 
     dposInstance = await DPoS.new(
       celerToken.address,
