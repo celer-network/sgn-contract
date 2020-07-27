@@ -23,7 +23,6 @@ jobs:
           command: |
             if [ ! -d "node_modules" ]; then
               npm install --no-save
-              npm install ganache-cli@$GANACHE_VER truffle@$TRUFFLE_VER --no-save
             fi
       - run:
           name: fetch abigen binary if not exists
@@ -39,9 +38,9 @@ jobs:
       - run:
           name: run truffle test
           command: |
-            node_modules/.bin/ganache-cli --gasLimit 8000000 --accounts 20 2> /dev/null 1> /dev/null &
+            npm run ganache 2> /dev/null 1> /dev/null &
             GANACHE_PID=$!
-            node_modules/.bin/truffle test
+            npm run test
             kill -9 $GANACHE_PID
             # git checkout -- gas_used_logs/  # discard changes generated during ci tests in gas_used_logs/
       - run:
@@ -53,4 +52,4 @@ jobs:
       - save_cache:
           key: npm-cache-{{ checksum "package-lock.json" }}
           paths:
-            - "node_modules"
+            - 'node_modules'
