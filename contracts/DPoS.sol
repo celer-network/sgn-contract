@@ -16,7 +16,7 @@ import './lib/Govern.sol';
  * @title A DPoS contract shared by every sidechain
  * @notice This contract holds the basic logic of DPoS in Celer's coherent sidechain system
  */
-contract DPoS is IDPoS, Govern, Ownable, Pausable, WhitelistedRole {
+contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
@@ -161,15 +161,10 @@ contract DPoS is IDPoS, Govern, Ownable, Pausable, WhitelistedRole {
     /**
      * @notice Onwer drains one type of tokens when the contract is paused
      * @dev This is for emergency situations.
-     * @param _tokenAddress address of token to drain
      * @param _amount drained token amount
      */
-    function drainToken(address _tokenAddress, uint256 _amount)
-        external
-        whenPaused
-        onlyOwner
-    {
-        _transfer(_tokenAddress, msg.sender, _amount);
+    function drainToken(uint256 _amount) external whenPaused onlyOwner {
+        celerToken.safeTransfer(msg.sender, _amount);
     }
 
     /**

@@ -16,7 +16,7 @@ import './lib/DPoSCommon.sol';
  * @notice This contract implements the mainchain logic of Celer State Guardian Network sidechain
  * @dev specs: https://www.celer.network/docs/celercore/sgn/sidechain.html#mainchain-contracts
  */
-contract SGN is ISGN {
+contract SGN is ISGN, Ownable, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
@@ -64,15 +64,10 @@ contract SGN is ISGN {
     /**
      * @notice Onwer drains one type of tokens when the contract is paused
      * @dev This is for emergency situations.
-     * @param _tokenAddress address of token to drain
      * @param _amount drained token amount
      */
-    function drainToken(address _tokenAddress, uint256 _amount)
-        external
-        whenPaused
-        onlyOwner
-    {
-        _transfer(_tokenAddress, msg.sender, _amount);
+    function drainToken(uint256 _amount) external whenPaused onlyOwner {
+        celerToken.safeTransfer(msg.sender, _amount);
     }
 
     /**
