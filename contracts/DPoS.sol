@@ -582,7 +582,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @notice Punish malicious validators
      * @param _penaltyRequest penalty request bytes coded in protobuf
      */
-    function punish(bytes calldata _penaltyRequest) external onlyValidDPoS {
+    function punish(bytes calldata _penaltyRequest)
+        external
+        whenNotPaused
+        onlyValidDPoS
+    {
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(
             _penaltyRequest
         );

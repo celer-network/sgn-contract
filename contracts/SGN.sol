@@ -122,6 +122,7 @@ contract SGN is ISGN, Ownable, Pausable {
      */
     function redeemReward(bytes calldata _rewardRequest)
         external
+        whenNotPaused
         onlyValidSidechain
     {
         require(

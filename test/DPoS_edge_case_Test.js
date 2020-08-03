@@ -1,12 +1,11 @@
 const DPoS = artifacts.require('DPoS');
 const CELRToken = artifacts.require('CELRToken');
 
-const GANACHE_ACCOUNT_NUM = 5; // defined in .circleci/config.yml
+const GANACHE_ACCOUNT_NUM = 5;
 const GOVERN_PROPOSAL_DEPOSIT = 100;
 const GOVERN_VOTE_TIMEOUT = 20;
 const BLAME_TIMEOUT = 50;
 const MIN_VALIDATOR_NUM = 1;
-// need to be larger than CANDIDATE_STAKE for test purpose
 const MIN_STAKING_POOL = 80;
 const DPOS_GO_LIVE_TIMEOUT = 50;
 
@@ -17,15 +16,12 @@ const MIN_SELF_STAKE = 20;
 const MAX_VALIDATOR_NUM = 11;
 
 const DELEGATOR_STAKE = 100;
-// use beforeEach method to set up an isolated test environment for each unite test,
-// and therefore make all tests independent from each other.
+
 contract('DPoS edge case', async accounts => {
     const DELEGATOR = accounts[0];
     const CANDIDATE = accounts[1];
-    // CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN < MIN_SELF_STAKE
 
     let celerToken;
-    // let instance;
     let dposInstance;
 
     beforeEach(async () => {
@@ -47,6 +43,28 @@ contract('DPoS edge case', async accounts => {
         for (let i = 1; i < GANACHE_ACCOUNT_NUM; i++) {
             await celerToken.transfer(accounts[i], 10000000);
         }
+    });
+
+    it('should fail to drain token for unpaused state', async () => {
+        await celerToken.transfer(dposInstance.address, 10);
+
+        try {
+            await dposInstance.drainToken(10);
+        } catch (e) {
+            assert.isAbove(
+                e.message.search('VM Exception while processing transaction'),
+                -1
+            );
+            return;
+        }
+
+        assert.fail('should have thrown before');
+    });
+
+    it('should drainToken successfully after pauce contract', async () => {
+        await celerToken.transfer(dposInstance.address, 10);
+        await dposInstance.pause();
+        await dposInstance.drainToken(1);
     });
 
     it('should getDelegatorInfo successfully', async () => {
