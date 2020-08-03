@@ -138,6 +138,48 @@ contract('DPoS and SGN contracts', async accounts => {
         assert.fail('should have thrown before');
     });
 
+    it('should fail to initialize a candidate for unpaused state', async () => {
+        await dposInstance.pause();
+        try {
+            await dposInstance.initializeCandidate(
+                MIN_SELF_STAKE,
+                COMMISSION_RATE,
+                RATE_LOCK_END_TIME,
+                { from: CANDIDATE }
+            );
+        } catch (e) {
+            assert.isAbove(
+                e.message.search('VM Exception while processing transaction'),
+                -1
+            );
+            return;
+        }
+
+        assert.fail('should have thrown before');
+    });
+
+    it('should fail to initialize a candidate when whitelist is on and missing from whitelist', async () => {
+        await dposInstance.updateEnableWhitelist(true);
+        try {
+            await dposInstance.initializeCandidate(
+                MIN_SELF_STAKE,
+                COMMISSION_RATE,
+                RATE_LOCK_END_TIME,
+                { from: CANDIDATE }
+            );
+        } catch (e) {
+            assert.isAbove(
+                e.message.search(
+                    'WhitelistedRole: caller does not have the Whitelisted role'
+                ),
+                -1
+            );
+            return;
+        }
+
+        assert.fail('should have thrown before');
+    });
+
     it('should initialize a candidate successfully', async () => {
         let tx = await dposInstance.initializeCandidate(
             MIN_SELF_STAKE,
@@ -159,6 +201,17 @@ contract('DPoS and SGN contracts', async accounts => {
         assert.equal(tx.logs[0].args.candidate, CANDIDATE);
         assert.equal(tx.logs[0].args.oldSidechainAddr, HASHED_NULL);
         assert.equal(tx.logs[0].args.newSidechainAddr, sha3(sidechainAddr));
+    });
+
+    it('should initialize a candidate successfully when whitelist is on and in whitelist', async () => {
+        await dposInstance.updateEnableWhitelist(true);
+        await dposInstance.addWhitelisted(CANDIDATE);
+        await dposInstance.initializeCandidate(
+            MIN_SELF_STAKE,
+            COMMISSION_RATE,
+            RATE_LOCK_END_TIME,
+            { from: CANDIDATE }
+        );
     });
 
     describe('after one candidate finishes initialization', async () => {
@@ -394,6 +447,25 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(args.newSidechainAddr, sha3(newSidechainAddr));
         });
 
+        it('should fail to delegate for paused contract', async () => {
+            await dposInstance.pause();
+
+            await celerToken.approve(dposInstance.address, DELEGATOR_STAKE);
+            try {
+                await dposInstance.delegate(CANDIDATE, DELEGATOR_STAKE);
+            } catch (e) {
+                assert.isAbove(
+                    e.message.search(
+                        'VM Exception while processing transaction'
+                    ),
+                    -1
+                );
+                return;
+            }
+
+            assert.fail('should have thrown before');
+        });
+
         it('should delegate to candidate by a delegator successfully', async () => {
             await celerToken.approve(dposInstance.address, DELEGATOR_STAKE);
 
@@ -419,6 +491,25 @@ contract('DPoS and SGN contracts', async accounts => {
             } catch (error) {
                 assert.isAbove(
                     error.message.search('Insufficient staking pool'),
+                    -1
+                );
+                return;
+            }
+
+            assert.fail('should have thrown before');
+        });
+
+        it('should fail to contributeToMiningPool for unpaused state', async () => {
+            await dposInstance.pause();
+            await celerToken.approve(dposInstance.address, 100);
+
+            try {
+                await dposInstance.contributeToMiningPool(100);
+            } catch (e) {
+                assert.isAbove(
+                    e.message.search(
+                        'VM Exception while processing transaction'
+                    ),
                     -1
                 );
                 return;
@@ -595,6 +686,32 @@ contract('DPoS and SGN contracts', async accounts => {
                             );
                         });
 
+                        it('should fail to subscribe for unpaused state', async () => {
+                            await sgnInstance.pause();
+                            await celerToken.approve(
+                                sgnInstance.address,
+                                SUB_FEE,
+                                {
+                                    from: SUBSCRIBER
+                                }
+                            );
+                            try {
+                                await sgnInstance.subscribe(SUB_FEE, {
+                                    from: SUBSCRIBER
+                                });
+                            } catch (e) {
+                                assert.isAbove(
+                                    e.message.search(
+                                        'VM Exception while processing transaction'
+                                    ),
+                                    -1
+                                );
+                                return;
+                            }
+
+                            assert.fail('should have thrown before');
+                        });
+
                         // TODO: use a describe for the following when condition
                         it('should subscribe successfully when there are enough validators', async () => {
                             await celerToken.approve(
@@ -612,6 +729,34 @@ contract('DPoS and SGN contracts', async accounts => {
                             assert.equal(event, 'AddSubscriptionBalance');
                             assert.equal(args.consumer, SUBSCRIBER);
                             assert.equal(args.amount, SUB_FEE);
+                        });
+
+                        it('should fail to punish for unpaused state', async () => {
+                            await dposInstance.pause();
+
+                            try {
+                                const request = await getPenaltyRequestBytes({
+                                    nonce: 1,
+                                    expireTime: 1000000,
+                                    validatorAddr: [CANDIDATE],
+                                    delegatorAddrs: [CANDIDATE, DELEGATOR],
+                                    delegatorAmts: [5, 10],
+                                    beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                                    beneficiaryAmts: [7, 8],
+                                    signers: [CANDIDATE]
+                                });
+                                await dposInstance.punish(request);
+                            } catch (e) {
+                                assert.isAbove(
+                                    e.message.search(
+                                        'VM Exception while processing transaction'
+                                    ),
+                                    -1
+                                );
+                                return;
+                            }
+
+                            assert.fail('should have thrown before');
                         });
 
                         it('should punish successfully', async () => {
@@ -725,6 +870,32 @@ contract('DPoS and SGN contracts', async accounts => {
                                 assert.isAbove(
                                     error.message.search(
                                         "Amount doesn't match"
+                                    ),
+                                    -1
+                                );
+                                return;
+                            }
+
+                            assert.fail('should have thrown before');
+                        });
+
+                        it('should fail to redeem reward for unpaused state', async () => {
+                            await sgnInstance.pause();
+
+                            try {
+                                const rewardRequest = await getRewardRequestBytes(
+                                    {
+                                        receiver: accounts[9],
+                                        cumulativeMiningReward: 100,
+                                        cumulativeServiceReward: 0,
+                                        signers: [CANDIDATE]
+                                    }
+                                );
+                                await sgnInstance.redeemReward(rewardRequest);
+                            } catch (e) {
+                                assert.isAbove(
+                                    e.message.search(
+                                        'VM Exception while processing transaction'
                                     ),
                                     -1
                                 );
