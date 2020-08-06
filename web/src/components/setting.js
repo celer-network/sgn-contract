@@ -6,84 +6,88 @@ import { drizzleConnect } from 'drizzle-react';
 import Form from './form';
 
 class SettingForm extends React.Component {
-  constructor(props, context) {
-    super(props);
+    constructor(props, context) {
+        super(props);
 
-    this.state = {};
-    this.form = React.createRef();
-    this.contracts = context.drizzle.contracts;
-  }
+        this.state = {};
+        this.form = React.createRef();
+        this.contracts = context.drizzle.contracts;
+    }
 
-  handleSubmit = () => {
-    const { onClose, dispatch } = this.props;
+    handleSubmit = () => {
+        const { onClose, dispatch } = this.props;
 
-    this.form.current.validateFields((err, values) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
+        this.form.current.validateFields((err, values) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
 
-      dispatch({
-        type: 'network/saveSetting',
-        payload: { setting: values },
-      });
+            dispatch({
+                type: 'network/saveSetting',
+                payload: { setting: values }
+            });
 
-      onClose();
-    });
-  };
+            onClose();
+        });
+    };
 
-  render() {
-    const {
-      visible,
-      onClose,
-      network: { setting = {} },
-    } = this.props;
+    render() {
+        const {
+            visible,
+            onClose,
+            network: { setting = {} }
+        } = this.props;
 
-    const formItems = [
-      {
-        name: 'gateway',
-        initialValue: setting.gateway,
-        fieldOptions: {
-          placeholder: 'The gateway URL',
-        },
-        rules: [
-          {
-            message: 'Please enter gateway URL!',
-            required: true,
-          },
-        ],
-      },
-    ];
+        const formItems = [
+            {
+                name: 'gateway',
+                initialValue: setting.gateway,
+                fieldOptions: {
+                    placeholder: 'The gateway URL'
+                },
+                rules: [
+                    {
+                        message: 'Please enter gateway URL!',
+                        required: true
+                    }
+                ]
+            }
+        ];
 
-    return (
-      <Drawer
-        title="Setting"
-        placement="right"
-        width="500"
-        onClose={onClose}
-        visible={visible}
-      >
-        <Form ref={this.form} items={formItems} onSubmit={this.handleSubmit} />
-      </Drawer>
-    );
-  }
+        return (
+            <Drawer
+                title="Setting"
+                placement="right"
+                width="500"
+                onClose={onClose}
+                visible={visible}
+            >
+                <Form
+                    ref={this.form}
+                    items={formItems}
+                    onSubmit={this.handleSubmit}
+                />
+            </Drawer>
+        );
+    }
 }
 
 SettingForm.propTypes = {
-  visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+    visible: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired
 };
 
 SettingForm.contextTypes = {
-  drizzle: PropTypes.object,
+    drizzle: PropTypes.object
 };
 
 function mapStateToProps(state) {
-  const { network } = state;
+    const { network } = state;
 
-  return {
-    network,
-  };
+    return {
+        network
+    };
 }
 
 export default drizzleConnect(SettingForm, mapStateToProps);

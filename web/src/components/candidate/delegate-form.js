@@ -7,71 +7,71 @@ import Form from '../form';
 import { celrFieldOptions } from '../../utils/form';
 
 class DelegateForm extends React.Component {
-  constructor(props, context) {
-    super(props);
+    constructor(props, context) {
+        super(props);
 
-    this.form = React.createRef();
-    this.contracts = context.drizzle.contracts;
-  }
+        this.form = React.createRef();
+        this.contracts = context.drizzle.contracts;
+    }
 
-  onSubmit = () => {
-    const { onClose, candidateId } = this.props;
+    onSubmit = () => {
+        const { onClose, candidateId } = this.props;
 
-    this.form.current.validateFields((err, values) => {
-      if (err) {
-        return;
-      }
+        this.form.current.validateFields((err, values) => {
+            if (err) {
+                return;
+            }
 
-      const { value } = values;
+            const { value } = values;
 
-      this.contracts.DPoS.methods.delegate.cacheSend(
-        candidateId,
-        web3.utils.toWei(value.toString(), 'ether')
-      );
+            this.contracts.DPoS.methods.delegate.cacheSend(
+                candidateId,
+                web3.utils.toWei(value.toString(), 'ether')
+            );
 
-      onClose();
-    });
-  };
+            onClose();
+        });
+    };
 
-  render() {
-    const { visible, onClose } = this.props;
-    const formItems = [
-      {
-        name: 'value',
-        field: 'number',
-        fieldOptions: {
-          ...celrFieldOptions,
-          placeholder: 'The amount of CELR to delegate',
-        },
-        rules: [
-          {
-            message: 'Please enter a value!',
-            required: true,
-          },
-        ],
-      },
-    ];
+    render() {
+        const { visible, onClose } = this.props;
+        const formItems = [
+            {
+                name: 'value',
+                field: 'number',
+                fieldOptions: {
+                    ...celrFieldOptions,
+                    placeholder: 'The amount of CELR to delegate'
+                },
+                rules: [
+                    {
+                        message: 'Please enter a value!',
+                        required: true
+                    }
+                ]
+            }
+        ];
 
-    return (
-      <Modal
-        title="Delegate Stake"
-        visible={visible}
-        onOk={this.onSubmit}
-        onCancel={onClose}
-      >
-        <Form ref={this.form} items={formItems} />
-      </Modal>
-    );
-  }
+        return (
+            <Modal
+                title="Delegate Stake"
+                visible={visible}
+                onOk={this.onSubmit}
+                onCancel={onClose}
+            >
+                <Form ref={this.form} items={formItems} />
+            </Modal>
+        );
+    }
 }
 
 DelegateForm.propTypes = {
-  visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+    visible: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired
 };
 
 DelegateForm.contextTypes = {
-  drizzle: PropTypes.object,
+    drizzle: PropTypes.object
 };
 
 export default DelegateForm;

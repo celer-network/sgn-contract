@@ -7,73 +7,73 @@ import Form from './form';
 import { celrFieldOptions } from '../utils/form';
 
 class ApproveCelrForm extends React.Component {
-  constructor(props, context) {
-    super(props);
+    constructor(props, context) {
+        super(props);
 
-    this.form = React.createRef();
-    this.contracts = context.drizzle.contracts;
-  }
+        this.form = React.createRef();
+        this.contracts = context.drizzle.contracts;
+    }
 
-  onSubmit = () => {
-    const { onClose } = this.props;
+    onSubmit = () => {
+        const { onClose } = this.props;
 
-    this.form.current.validateFields((err, values) => {
-      if (err) {
-        return;
-      }
+        this.form.current.validateFields((err, values) => {
+            if (err) {
+                return;
+            }
 
-      const { value } = values;
+            const { value } = values;
 
-      this.contracts.CELRToken.methods
-        .approve(
-          this.contracts.DPoS.address,
-          web3.utils.toWei(value.toString(), 'ether')
-        )
-        .send();
+            this.contracts.CELRToken.methods
+                .approve(
+                    this.contracts.DPoS.address,
+                    web3.utils.toWei(value.toString(), 'ether')
+                )
+                .send();
 
-      onClose();
-    });
-  };
+            onClose();
+        });
+    };
 
-  render() {
-    const { visible, onClose } = this.props;
-    const formItems = [
-      {
-        name: 'value',
-        field: 'number',
-        fieldOptions: {
-          ...celrFieldOptions,
-          placeholder: 'The amount of CELR allowance DPoS has',
-        },
-        rules: [
-          {
-            message: 'Please enter a value!',
-            required: true,
-          },
-        ],
-      },
-    ];
+    render() {
+        const { visible, onClose } = this.props;
+        const formItems = [
+            {
+                name: 'value',
+                field: 'number',
+                fieldOptions: {
+                    ...celrFieldOptions,
+                    placeholder: 'The amount of CELR allowance DPoS has'
+                },
+                rules: [
+                    {
+                        message: 'Please enter a value!',
+                        required: true
+                    }
+                ]
+            }
+        ];
 
-    return (
-      <Modal
-        title="Approve CELR to DPoS"
-        visible={visible}
-        onOk={this.onSubmit}
-        onCancel={onClose}
-      >
-        <Form ref={this.form} items={formItems} />
-      </Modal>
-    );
-  }
+        return (
+            <Modal
+                title="Approve CELR to DPoS"
+                visible={visible}
+                onOk={this.onSubmit}
+                onCancel={onClose}
+            >
+                <Form ref={this.form} items={formItems} />
+            </Modal>
+        );
+    }
 }
 
 ApproveCelrForm.propTypes = {
-  visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+    visible: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired
 };
 
 ApproveCelrForm.contextTypes = {
-  drizzle: PropTypes.object,
+    drizzle: PropTypes.object
 };
 
 export default ApproveCelrForm;
