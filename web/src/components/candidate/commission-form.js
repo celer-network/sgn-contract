@@ -9,75 +9,76 @@ import { commissionRateField, rateLockEndTimeField } from '../../utils/form';
 import { RATE_BASE } from '../../utils/constant';
 
 class CommissionForm extends React.Component {
-  constructor(props, context) {
-    super(props);
+    constructor(props, context) {
+        super(props);
 
-    this.state = {};
-    this.form = React.createRef();
-    this.contracts = context.drizzle.contracts;
-  }
+        this.state = {};
+        this.form = React.createRef();
+        this.contracts = context.drizzle.contracts;
+    }
 
-  handleIncreaseCommission = () => {
-    const { onClose, network, candidate } = this.props;
+    handleIncreaseCommission = () => {
+        const { onClose, network, candidate } = this.props;
 
-    this.form.current.validateFields((err, values) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
+        this.form.current.validateFields((err, values) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
 
-      let { commissionRate, rateLockEndTime } = values;
-      commissionRate = commissionRate * RATE_BASE;
-      rateLockEndTime = _.toNumber(rateLockEndTime) + network.block.number;
+            let { commissionRate, rateLockEndTime } = values;
+            commissionRate = commissionRate * RATE_BASE;
+            rateLockEndTime =
+                _.toNumber(rateLockEndTime) + network.block.number;
 
-      if (commissionRate > candidate.value.commissionRate) {
-        this.contracts.DPoS.methods.announceIncreaseCommissionRate.cacheSend(
-          commissionRate,
-          rateLockEndTime
+            if (commissionRate > candidate.value.commissionRate) {
+                this.contracts.DPoS.methods.announceIncreaseCommissionRate.cacheSend(
+                    commissionRate,
+                    rateLockEndTime
+                );
+            } else {
+                this.contracts.DPoS.methods.nonIncreaseCommissionRate.cacheSend(
+                    commissionRate,
+                    rateLockEndTime
+                );
+            }
+            onClose();
+        });
+    };
+
+    render() {
+        const { visible, onClose } = this.props;
+
+        const formItems = [commissionRateField, rateLockEndTimeField];
+
+        return (
+            <Modal
+                title="Increase Commission Rate"
+                visible={visible}
+                onOk={this.handleIncreaseCommission}
+                onCancel={onClose}
+            >
+                <Form ref={this.form} items={formItems} />
+            </Modal>
         );
-      } else {
-        this.contracts.DPoS.methods.nonIncreaseCommissionRate.cacheSend(
-          commissionRate,
-          rateLockEndTime
-        );
-      }
-      onClose();
-    });
-  };
-
-  render() {
-    const { visible, onClose } = this.props;
-
-    const formItems = [commissionRateField, rateLockEndTimeField];
-
-    return (
-      <Modal
-        title="Increase Commission Rate"
-        visible={visible}
-        onOk={this.handleIncreaseCommission}
-        onCancel={onClose}
-      >
-        <Form ref={this.form} items={formItems} />
-      </Modal>
-    );
-  }
+    }
 }
 
 CommissionForm.propTypes = {
-  visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+    visible: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired
 };
 
 CommissionForm.contextTypes = {
-  drizzle: PropTypes.object,
+    drizzle: PropTypes.object
 };
 
 function mapStateToProps(state) {
-  const { network } = state;
+    const { network } = state;
 
-  return {
-    network,
-  };
+    return {
+        network
+    };
 }
 
 export default drizzleConnect(CommissionForm, mapStateToProps);

@@ -7,41 +7,44 @@ import Select from './select';
 const FormItem = Form.Item;
 
 export default class Filter extends React.PureComponent {
-  onChange = (value) => {
-    const { name, onChange } = this.props;
+    onChange = value => {
+        const { name, onChange } = this.props;
 
-    if (name) {
-      onChange({ [name]: value });
-      return;
-    }
+        if (name) {
+            onChange({ [name]: value });
+            return;
+        }
 
-    onChange(value);
-  };
-
-  render() {
-    const { allowClear, label, name, mode, value } = this.props;
-    const selectProps = {
-      ..._.omit(this.props, ['label', 'name', 'onChange']),
+        onChange(value);
     };
 
-    if (mode === 'multiple' && !value) {
-      selectProps.value = [];
-    }
+    render() {
+        const { allowClear, label, name, mode, value } = this.props;
+        const selectProps = {
+            ..._.omit(this.props, ['label', 'name', 'onChange'])
+        };
 
-    if (!mode && !allowClear) {
-      selectProps.allowClear = false;
-    }
+        if (mode === 'multiple' && !value) {
+            selectProps.value = [];
+        }
 
-    return (
-      <FormItem className="dropdown-filter" label={label || _.capitalize(name)}>
-        <Select {...selectProps} onChange={this.onChange} />
-      </FormItem>
-    );
-  }
+        if (!mode && !allowClear) {
+            selectProps.allowClear = false;
+        }
+
+        return (
+            <FormItem
+                className="dropdown-filter"
+                label={label || _.capitalize(name)}
+            >
+                <Select {...selectProps} onChange={this.onChange} />
+            </FormItem>
+        );
+    }
 }
 
 Filter.defaultProps = {
-  disabled: false,
-  label: '',
-  placeholder: 'all',
+    disabled: false,
+    label: '',
+    placeholder: 'all'
 };

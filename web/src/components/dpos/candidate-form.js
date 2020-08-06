@@ -7,90 +7,91 @@ import { drizzleConnect } from 'drizzle-react';
 
 import Form from '../form';
 import {
-  minValueRule,
-  celrFieldOptions,
-  commissionRateField,
-  rateLockEndTimeField,
+    minValueRule,
+    celrFieldOptions,
+    commissionRateField,
+    rateLockEndTimeField
 } from '../../utils/form';
 import { RATE_BASE } from '../../utils/constant';
 
 class CandidateForm extends React.Component {
-  constructor(props, context) {
-    super(props);
+    constructor(props, context) {
+        super(props);
 
-    this.state = {};
-    this.form = React.createRef();
-    this.contracts = context.drizzle.contracts;
-  }
+        this.state = {};
+        this.form = React.createRef();
+        this.contracts = context.drizzle.contracts;
+    }
 
-  handleInitializeCandidate = () => {
-    const { onClose, network } = this.props;
+    handleInitializeCandidate = () => {
+        const { onClose, network } = this.props;
 
-    this.form.current.validateFields((err, values) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
+        this.form.current.validateFields((err, values) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
 
-      let { minSelfStake = 0, commissionRate, rateLockEndTime } = values;
-      rateLockEndTime = _.toNumber(rateLockEndTime) + network.block.number;
+            let { minSelfStake = 0, commissionRate, rateLockEndTime } = values;
+            rateLockEndTime =
+                _.toNumber(rateLockEndTime) + network.block.number;
 
-      this.contracts.DPoS.methods.initializeCandidate.cacheSend(
-        web3.utils.toWei(minSelfStake.toString(), 'ether'),
-        commissionRate * RATE_BASE,
-        rateLockEndTime
-      );
-      onClose();
-    });
-  };
+            this.contracts.DPoS.methods.initializeCandidate.cacheSend(
+                web3.utils.toWei(minSelfStake.toString(), 'ether'),
+                commissionRate * RATE_BASE,
+                rateLockEndTime
+            );
+            onClose();
+        });
+    };
 
-  render() {
-    const { visible, onClose } = this.props;
+    render() {
+        const { visible, onClose } = this.props;
 
-    const formItems = [
-      {
-        name: 'minSelfStake',
-        label: 'Min Self Stake',
-        field: 'number',
-        fieldOptions: {
-          ...celrFieldOptions,
-          placeholder: 'The minimum self stake',
-          initialValue: 0,
-        },
-        rules: [minValueRule(0)],
-      },
-      commissionRateField,
-      rateLockEndTimeField,
-    ];
+        const formItems = [
+            {
+                name: 'minSelfStake',
+                label: 'Min Self Stake',
+                field: 'number',
+                fieldOptions: {
+                    ...celrFieldOptions,
+                    placeholder: 'The minimum self stake',
+                    initialValue: 0
+                },
+                rules: [minValueRule(0)]
+            },
+            commissionRateField,
+            rateLockEndTimeField
+        ];
 
-    return (
-      <Modal
-        title="Initialize Candidate"
-        visible={visible}
-        onOk={this.handleInitializeCandidate}
-        onCancel={onClose}
-      >
-        <Form ref={this.form} items={formItems} />
-      </Modal>
-    );
-  }
+        return (
+            <Modal
+                title="Initialize Candidate"
+                visible={visible}
+                onOk={this.handleInitializeCandidate}
+                onCancel={onClose}
+            >
+                <Form ref={this.form} items={formItems} />
+            </Modal>
+        );
+    }
 }
 
 CandidateForm.propTypes = {
-  visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+    visible: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired
 };
 
 CandidateForm.contextTypes = {
-  drizzle: PropTypes.object,
+    drizzle: PropTypes.object
 };
 
 function mapStateToProps(state) {
-  const { network } = state;
+    const { network } = state;
 
-  return {
-    network,
-  };
+    return {
+        network
+    };
 }
 
 export default drizzleConnect(CandidateForm, mapStateToProps);

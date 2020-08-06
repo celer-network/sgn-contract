@@ -1,13 +1,13 @@
 export default {
-  namespace: 'DPoS',
+    namespace: 'DPoS',
 
-  state: {},
+    state: {},
 
-  effects: {},
+    effects: {},
 
-  reducers: {
-    save(state, action) {
-      return { ...state, ...action.payload };
-    },
-  },
+    reducers: {
+        save(state, action) {
+            return { ...state, ...action.payload };
+        }
+    }
 };
