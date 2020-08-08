@@ -177,16 +177,16 @@ class Candidate extends React.Component {
             commissionRate,
             rateLockEndTime
         } = candidate.value;
-        const sidechainHexAddr = _.find(
-            SGN.sidechainAddrMap,
-            data => data.args[0] === candidateId
-        );
-        const sidechainAddr = bech32.encode(
-            'cosmos',
-            bech32.toWords(
-                web3.utils.hexToBytes(_.get(sidechainHexAddr, 'value', ''))
-            )
-        );
+        const sidechainHexAddr = _.chain(SGN.sidechainAddrMap)
+            .find(data => data.args[0] === candidateId)
+            .get('value', '')
+            .value();
+        const sidechainAddr =
+            sidechainHexAddr &&
+            bech32.encode(
+                'cosmos',
+                bech32.toWords(web3.utils.hexToBytes(sidechainHexAddr))
+            );
 
         return (
             <Row style={{ marginTop: '10px' }}>
