@@ -4,11 +4,13 @@
 const REAL_SIGNATURE_SIZE = 2 * 65; // 65 bytes in hexadecimal string legnth
 const PADDED_SIGNATURE_SIZE = 2 * 96; // 96 bytes in hexadecimal string length
 
-const DUMMY_SIGNATURE = `0x${web3.utils.padLeft("", REAL_SIGNATURE_SIZE)}`;
+const DUMMY_SIGNATURE = `0x${web3.utils.padLeft('', REAL_SIGNATURE_SIZE)}`;
 
 function toEthSignedMessageHash(messageHex) {
-    const messageBuffer = Buffer.from(messageHex.substring(2), "hex");
-    const prefix = Buffer.from(`\u0019Ethereum Signed Message:\n${messageBuffer.length}`);
+    const messageBuffer = Buffer.from(messageHex.substring(2), 'hex');
+    const prefix = Buffer.from(
+        `\u0019Ethereum Signed Message:\n${messageBuffer.length}`
+    );
     return web3.utils.sha3(Buffer.concat([prefix, messageBuffer]));
 }
 
@@ -25,9 +27,9 @@ function fixSignature(signature) {
 }
 
 // signs message in node (ganache auto-applies "Ethereum Signed Message" prefix)
-async function signMessage(signer, messageHex = "0x") {
+async function signMessage(signer, messageHex = '0x') {
     return fixSignature(await web3.eth.sign(messageHex, signer));
-};
+}
 
 /**
  * Create a signer between a contract and a signer for a voucher of method, args, and redeemer
@@ -38,17 +40,21 @@ async function signMessage(signer, messageHex = "0x") {
  * @param methodName string
  * @param methodArgs any[]
  */
-const getSignFor = (contract, signer) => (redeemer, methodName, methodArgs = []) => {
-    const parts = [
-        contract.address,
-        redeemer,
-    ];
+const getSignFor = (contract, signer) => (
+    redeemer,
+    methodName,
+    methodArgs = []
+) => {
+    const parts = [contract.address, redeemer];
 
     // if we have a method, add it to the parts that we're signing
     if (methodName) {
         if (methodArgs.length > 0) {
             parts.push(
-                contract.contract.methods[methodName](...methodArgs.concat([DUMMY_SIGNATURE])).encodeABI()
+                contract.contract.methods[methodName](
+                    ...methodArgs.concat([DUMMY_SIGNATURE])
+                )
+                    .encodeABI()
                     .slice(0, -1 * PADDED_SIGNATURE_SIZE)
             );
         } else {
@@ -66,5 +72,5 @@ module.exports = {
     signMessage,
     toEthSignedMessageHash,
     fixSignature,
-    getSignFor,
+    getSignFor
 };

@@ -1,11 +1,11 @@
-const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const Web3 = require('web3');
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 const sha3 = web3.utils.keccak256;
 
-const protoChainLoader = require("./protoChainLoader");
-const { signMessage } = require("./sign");
+const protoChainLoader = require('./protoChainLoader');
+const { signMessage } = require('./sign');
 
-const utilities = require("./utilities");
+const utilities = require('./utilities');
 const { uint2bytes } = utilities;
 
 // calculate the signature of given address on given hash
@@ -18,13 +18,13 @@ const calculateSignature = async (address, hash) => {
 };
 
 const calculateSignatures = async (addresses, hash) => {
-    let sigs = [];
+    const sigs = [];
     for (let i = 0; i < addresses.length; i++) {
         const sig = await calculateSignature(addresses[i], hash);
         sigs.push(sig);
     }
     return sigs;
-}
+};
 
 module.exports = async () => {
     const protoChain = await protoChainLoader();
@@ -37,26 +37,23 @@ module.exports = async () => {
         AccountAmtPair
     } = protoChain;
 
-    /********** internal API **********/
+    /** ******** internal API **********/
     // get array of AccountAmtPair proto
-    const getAccountAmtPairs = (
-        accounts,
-        amounts,
-    ) => {
-        assert(accounts.length == amounts.length);
-        let pairs = [];
+    const getAccountAmtPairs = (accounts, amounts) => {
+        assert(accounts.length === amounts.length);
+        const pairs = [];
         for (let i = 0; i < accounts.length; i++) {
-            let pair = {
+            const pair = {
                 account: web3.utils.hexToBytes(accounts[i]),
                 amt: uint2bytes(amounts[i])
             };
-            pairProto = AccountAmtPair.create(pair);
+            const pairProto = AccountAmtPair.create(pair);
             pairs.push(pairProto);
         }
         return pairs;
-    }
+    };
 
-    /********** external API **********/
+    /** ******** external API **********/
     const getPenaltyRequestBytes = async ({
         nonce,
         expireTime,
@@ -65,10 +62,16 @@ module.exports = async () => {
         delegatorAmts,
         beneficiaryAddrs,
         beneficiaryAmts,
-        signers,
+        signers
     }) => {
-        const penalizedDelegators = getAccountAmtPairs(delegatorAddrs, delegatorAmts);
-        const beneficiaries = getAccountAmtPairs(beneficiaryAddrs, beneficiaryAmts);
+        const penalizedDelegators = getAccountAmtPairs(
+            delegatorAddrs,
+            delegatorAmts
+        );
+        const beneficiaries = getAccountAmtPairs(
+            beneficiaryAddrs,
+            beneficiaryAmts
+        );
 
         const penalty = {
             nonce: nonce,
@@ -87,14 +90,14 @@ module.exports = async () => {
         const penaltyRequest = {
             penalty: penaltyBytes,
             sigs: sigs
-        }
+        };
         const penaltyRequestProto = PenaltyRequest.create(penaltyRequest);
         const penaltyRequestBytes = PenaltyRequest.encode(penaltyRequestProto)
             .finish()
             .toJSON().data;
 
         return penaltyRequestBytes;
-    }
+    };
 
     const getRewardRequestBytes = async ({
         receiver,
@@ -106,7 +109,7 @@ module.exports = async () => {
             receiver: web3.utils.hexToBytes(receiver),
             cumulativeMiningReward: uint2bytes(cumulativeMiningReward),
             cumulativeServiceReward: uint2bytes(cumulativeServiceReward)
-        }
+        };
         const rewardProto = Reward.create(reward);
         const rewardBytes = Reward.encode(rewardProto)
             .finish()
@@ -117,18 +120,18 @@ module.exports = async () => {
         const rewardRequest = {
             reward: rewardBytes,
             sigs: sigs
-        }
+        };
         const rewardRequestProto = RewardRequest.create(rewardRequest);
         const rewardRequestBytes = RewardRequest.encode(rewardRequestProto)
             .finish()
             .toJSON().data;
 
         return rewardRequestBytes;
-    }
+    };
 
-    /********** exposed APIs **********/
+    /** ******** exposed APIs **********/
     return {
         getPenaltyRequestBytes, // async
         getRewardRequestBytes // async
     };
-}
+};

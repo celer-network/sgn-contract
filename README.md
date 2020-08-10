@@ -1,4 +1,4 @@
-Mainchain smart sontracts of Celer state guardian network (SGN)
+Mainchain smart contracts of [Celer state guardian network (SGN)](https://www.celer.network/docs/celercore/sgn/architecture.html)
 
 [![CircleCI](https://circleci.com/gh/celer-network/sgn-contract/tree/master.svg?style=svg)](https://circleci.com/gh/celer-network/sgn-contract/tree/master)
 
