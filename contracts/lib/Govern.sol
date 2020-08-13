@@ -56,7 +56,7 @@ contract Govern is IGovern, Ownable {
      * @param _minValidatorNum the minimum number of validators
      * @param _maxValidatorNum the maximum number of validators
      * @param _minStakeInPool the global minimum requirement of staking pool for each validator
-     * @param _increaseRateWaitTime the wait time for increasing commission rate after an announcement
+     * @param _advanceNoticePeriod the time after the announcement and prior to the effective time of an update
      */
     constructor(
         address _governTokenAddress,
@@ -66,10 +66,10 @@ contract Govern is IGovern, Ownable {
         uint _minValidatorNum,
         uint _maxValidatorNum,
         uint _minStakeInPool,
-        uint _increaseRateWaitTime
+        uint _advanceNoticePeriod
     )
         public
-    {        
+    {
         governToken = IERC20(_governTokenAddress);
 
         UIntStorage[uint(ParamNames.ProposalDeposit)] = _governProposalDeposit;
@@ -78,7 +78,7 @@ contract Govern is IGovern, Ownable {
         UIntStorage[uint(ParamNames.MinValidatorNum)] = _minValidatorNum;
         UIntStorage[uint(ParamNames.MaxValidatorNum)] = _maxValidatorNum;
         UIntStorage[uint(ParamNames.MinStakeInPool)] = _minStakeInPool;
-        UIntStorage[uint(ParamNames.IncreaseRateWaitTime)] = _increaseRateWaitTime;
+        UIntStorage[uint(ParamNames.AdvanceNoticePeriod)] = _advanceNoticePeriod;
     }
 
     /********** Get functions **********/
@@ -131,7 +131,7 @@ contract Govern is IGovern, Ownable {
         nextParamProposalId = nextParamProposalId.add(1);
         address msgSender = msg.sender;
         uint deposit = UIntStorage[uint(ParamNames.ProposalDeposit)];
-        
+
         p.proposer = msgSender;
         p.deposit = deposit;
         p.voteDeadline = block.number.add(UIntStorage[uint(ParamNames.GovernVoteTimeout)]);
@@ -182,7 +182,7 @@ contract Govern is IGovern, Ownable {
         emit ConfirmParamProposal(_proposalId, _passed, p.record, p.newValue);
     }
 
-    // 
+    //
     /**
      * @notice Register a sidechain by contract owner
      * @dev Owner can renounce Ownership if needed for this function
@@ -202,7 +202,7 @@ contract Govern is IGovern, Ownable {
         nextSidechainProposalId = nextSidechainProposalId.add(1);
         address msgSender = msg.sender;
         uint deposit = UIntStorage[uint(ParamNames.ProposalDeposit)];
-        
+
         p.proposer = msgSender;
         p.deposit = deposit;
         p.voteDeadline = block.number.add(UIntStorage[uint(ParamNames.GovernVoteTimeout)]);

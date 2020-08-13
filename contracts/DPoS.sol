@@ -120,7 +120,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _minValidatorNum the minimum number of validators
      * @param _maxValidatorNum the maximum number of validators
      * @param _minStakeInPool the global minimum requirement of staking pool for each validator
-     * @param _increaseRateWaitTime the wait time for increasing commission rate after an announcement
+     * @param _advanceNoticePeriod the wait time for increasing commission rate after an announcement
      * @param _dposGoLiveTimeout the timeout for DPoS to go live after contract creatation
      */
     constructor(
@@ -131,7 +131,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 _minValidatorNum,
         uint256 _maxValidatorNum,
         uint256 _minStakeInPool,
-        uint256 _increaseRateWaitTime,
+        uint256 _advanceNoticePeriod,
         uint256 _dposGoLiveTimeout
     )
         public
@@ -143,7 +143,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             _minValidatorNum,
             _maxValidatorNum,
             _minStakeInPool,
-            _increaseRateWaitTime
+            _advanceNoticePeriod
         )
     {
         celerToken = IERC20(_celerTokenAddress);
@@ -352,11 +352,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function confirmIncreaseCommissionRate() external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(candidate.initialized, 'Candidate is not initialized');
-        uint256 increaseRateWaitTime = getUIntValue(
-            uint256(ParamNames.IncreaseRateWaitTime)
+        uint256 advanceNoticePeriod = getUIntValue(
+            uint256(ParamNames.AdvanceNoticePeriod)
         );
         require(
-            block.number > candidate.announcementTime + increaseRateWaitTime,
+            block.number > candidate.announcementTime + advanceNoticePeriod,
             "new rate hasn't taken effect"
         );
 
