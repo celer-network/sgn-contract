@@ -112,6 +112,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
+     * @notice Throws if contract in migrating state
+     */
+    modifier onlyNotMigrating() {
+        require(!isMigrating(), 'contract migrating');
+        _;
+    }
+
+    /**
      * @notice DPoS constructor
      * @dev will initialize parent contract Govern first
      * @param _celerTokenAddress address of Celer Token Contract
@@ -399,8 +407,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyNonZeroAddr(_candidateAddr)
     {
 
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, 'Candidate is not initialized');
 
         address msgSender = msg.sender;
@@ -607,6 +614,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         external
         whenNotPaused
         onlyValidDPoS
+        onlyNotMigrating
     {
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(
             _penaltyRequest
@@ -721,6 +729,18 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             candidateProfiles[_addr].status ==
             DPoSCommon.CandidateStatus.Bonded;
     }
+
+    /**
+     * @notice Check if the contract is in migrating state
+     * @return contract in migrating state or not
+     */
+    function isMigrating() public view returns (bool) {
+        uint256 migrationTime = getUIntValue(
+            uint256(ParamNames.MigrationTime)
+        );
+        return migrationTime != 0 && block.number >= migrationTime;
+    }
+
 
     /**
      * @notice Get the number of validators
