@@ -40,8 +40,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     struct ValidatorCandidate {
         bool initialized;
         uint256 minSelfStake;
-        // stakingPool sum of all delegations to this candidate
-        uint256 stakingPool;
+        uint256 stakingPool; // sum of all delegations to this candidate
         mapping(address => Delegator) delegatorProfiles;
         DPoSCommon.CandidateStatus status;
         uint256 unbondTime;
@@ -51,6 +50,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 announcedRate;
         uint256 announcedLockEndTime;
         uint256 announcementTime;
+        // for decreasing minSelfStake
+        uint256 earliestBondTime;
     }
 
     mapping(uint256 => address) public validatorSet;
@@ -281,7 +282,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     /**
      * @notice Initialize a candidate profile for validator
      * @dev every validator must become a candidate first
-     * @param _minSelfStake the self-declaimed minimum amount of self stake
+     * @param _minSelfStake minimal amount of tokens staked by the validator itself
      * @param _commissionRate the self-declaimed commission rate
      * @param _rateLockEndTime the lock end time of initial commission rate
      */
@@ -368,6 +369,26 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
+     * @notice update minimal self stake value
+     * @param _minSelfStake minimal amount of tokens staked by the validator itself
+     */
+    function updateMinSelfStake(uint256 _minSelfStake) external {
+        ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+        require(candidate.initialized, 'Candidate is not initialized');
+        if (_minSelfStake < candidate.minSelfStake) {
+            require(
+                candidate.status == DPoSCommon.CandidateStatus.Unbonded,
+                "Candidate is not unbonded"
+            );
+            uint256 advanceNoticePeriod = getUIntValue(
+                uint256(ParamNames.AdvanceNoticePeriod)
+            );
+            candidate.earliestBondTime = block.number + advanceNoticePeriod;
+        }
+        candidate.minSelfStake = _minSelfStake;
+    }
+
+    /**
      * @notice Delegate CELR tokens to a candidate
      * @param _candidateAddr candidate to delegate
      * @param _amount the amount of delegated CELR tokens
@@ -406,6 +427,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(
             candidate.status == DPoSCommon.CandidateStatus.Unbonded ||
                 candidate.status == DPoSCommon.CandidateStatus.Unbonding
+        );
+        require(
+            block.number > candidate.earliestBondTime,
+            "Not earliest bond time yet"
         );
         uint256 minStakeInPool = getUIntValue(
             uint256(ParamNames.MinStakeInPool)
@@ -453,8 +478,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      */
     function confirmUnbondedCandidate(address _candidateAddr) external {
 
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.status == DPoSCommon.CandidateStatus.Unbonding);
         require(block.number >= candidate.unbondTime);
 
@@ -474,8 +498,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 _amount
     ) external onlyNonZeroAddr(_candidateAddr) {
 
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.status == DPoSCommon.CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
@@ -497,9 +520,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     {
         address msgSender = msg.sender;
 
-
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);

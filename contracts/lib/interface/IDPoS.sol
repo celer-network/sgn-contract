@@ -21,6 +21,8 @@ interface IDPoS {
 
     function nonIncreaseCommissionRate(uint _newRate, uint _newLockEndTime) external;
 
+    function updateMinSelfStake(uint256 _minSelfStake) external;
+
     function delegate(address _candidate, uint _amount) external;
 
     function claimValidator() external;
