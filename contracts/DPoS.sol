@@ -385,8 +385,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(candidate.initialized, 'Candidate is not initialized');
         if (_minSelfStake < candidate.minSelfStake) {
             require(
-                candidate.status == DPoSCommon.CandidateStatus.Unbonded,
-                "Candidate is not unbonded"
+                candidate.status != DPoSCommon.CandidateStatus.Bonded,
+                "Candidate is bonded"
             );
             uint256 advanceNoticePeriod = getUIntValue(
                 uint256(ParamNames.AdvanceNoticePeriod)
@@ -394,6 +394,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             candidate.earliestBondTime = block.number + advanceNoticePeriod;
         }
         candidate.minSelfStake = _minSelfStake;
+        emit UpdateMinSelfStake(msg.sender, _minSelfStake);
     }
 
     /**

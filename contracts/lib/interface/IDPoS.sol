@@ -71,6 +71,8 @@ interface IDPoS {
 
     event UpdateCommissionRate(address indexed candidate, uint newRate, uint newLockEndTime);
 
+    event UpdateMinSelfStake(address indexed candidate, uint minSelfStake);
+
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);
 
     event ValidatorChange(address indexed ethAddr, ValidatorChangeType indexed changeType);

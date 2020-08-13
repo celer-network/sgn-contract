@@ -11,7 +11,7 @@ const DPOS_GO_LIVE_TIMEOUT = 50;
 
 const COMMISSION_RATE = 100;
 const RATE_LOCK_END_TIME = 2;
-const INCREASE_RATE_WAIT_TIME = 100; // in practice, this should be 80640 (2 weeks)
+const ADVANCE_NOTICE_PERIOD = 100; // in practice, this should be 80640 (2 weeks)
 const MIN_SELF_STAKE = 20;
 const MAX_VALIDATOR_NUM = 11;
 
@@ -35,7 +35,7 @@ contract('DPoS edge case', async accounts => {
             MIN_VALIDATOR_NUM,
             MAX_VALIDATOR_NUM,
             MIN_STAKING_POOL,
-            INCREASE_RATE_WAIT_TIME,
+            ADVANCE_NOTICE_PERIOD,
             DPOS_GO_LIVE_TIMEOUT
         );
 
