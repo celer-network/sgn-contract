@@ -40,8 +40,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     struct ValidatorCandidate {
         bool initialized;
         uint256 minSelfStake;
-        // stakingPool sum of all delegations to this candidate
-        uint256 stakingPool;
+        uint256 stakingPool; // sum of all delegations to this candidate
         mapping(address => Delegator) delegatorProfiles;
         DPoSCommon.CandidateStatus status;
         uint256 unbondTime;
@@ -51,6 +50,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 announcedRate;
         uint256 announcedLockEndTime;
         uint256 announcementTime;
+        // for decreasing minSelfStake
+        uint256 earliestBondTime;
     }
 
     mapping(uint256 => address) public validatorSet;
@@ -111,6 +112,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
+     * @notice Throws if contract in migrating state
+     */
+    modifier onlyNotMigrating() {
+        require(!isMigrating(), 'contract migrating');
+        _;
+    }
+
+    /**
      * @notice DPoS constructor
      * @dev will initialize parent contract Govern first
      * @param _celerTokenAddress address of Celer Token Contract
@@ -120,7 +129,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _minValidatorNum the minimum number of validators
      * @param _maxValidatorNum the maximum number of validators
      * @param _minStakeInPool the global minimum requirement of staking pool for each validator
-     * @param _increaseRateWaitTime the wait time for increasing commission rate after an announcement
+     * @param _advanceNoticePeriod the wait time for increasing commission rate after an announcement
      * @param _dposGoLiveTimeout the timeout for DPoS to go live after contract creatation
      */
     constructor(
@@ -131,7 +140,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 _minValidatorNum,
         uint256 _maxValidatorNum,
         uint256 _minStakeInPool,
-        uint256 _increaseRateWaitTime,
+        uint256 _advanceNoticePeriod,
         uint256 _dposGoLiveTimeout
     )
         public
@@ -143,7 +152,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             _minValidatorNum,
             _maxValidatorNum,
             _minStakeInPool,
-            _increaseRateWaitTime
+            _advanceNoticePeriod
         )
     {
         celerToken = IERC20(_celerTokenAddress);
@@ -281,7 +290,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     /**
      * @notice Initialize a candidate profile for validator
      * @dev every validator must become a candidate first
-     * @param _minSelfStake the self-declaimed minimum amount of self stake
+     * @param _minSelfStake minimal amount of tokens staked by the validator itself
      * @param _commissionRate the self-declaimed commission rate
      * @param _rateLockEndTime the lock end time of initial commission rate
      */
@@ -352,11 +361,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function confirmIncreaseCommissionRate() external {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(candidate.initialized, 'Candidate is not initialized');
-        uint256 increaseRateWaitTime = getUIntValue(
-            uint256(ParamNames.IncreaseRateWaitTime)
+        uint256 advanceNoticePeriod = getUIntValue(
+            uint256(ParamNames.AdvanceNoticePeriod)
         );
         require(
-            block.number > candidate.announcementTime + increaseRateWaitTime,
+            block.number > candidate.announcementTime + advanceNoticePeriod,
             "new rate hasn't taken effect"
         );
 
@@ -365,6 +374,27 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             candidate.announcedRate,
             candidate.announcedLockEndTime
         );
+    }
+
+    /**
+     * @notice update minimal self stake value
+     * @param _minSelfStake minimal amount of tokens staked by the validator itself
+     */
+    function updateMinSelfStake(uint256 _minSelfStake) external {
+        ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
+        require(candidate.initialized, 'Candidate is not initialized');
+        if (_minSelfStake < candidate.minSelfStake) {
+            require(
+                candidate.status != DPoSCommon.CandidateStatus.Bonded,
+                "Candidate is bonded"
+            );
+            uint256 advanceNoticePeriod = getUIntValue(
+                uint256(ParamNames.AdvanceNoticePeriod)
+            );
+            candidate.earliestBondTime = block.number + advanceNoticePeriod;
+        }
+        candidate.minSelfStake = _minSelfStake;
+        emit UpdateMinSelfStake(msg.sender, _minSelfStake);
     }
 
     /**
@@ -378,8 +408,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyNonZeroAddr(_candidateAddr)
     {
 
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, 'Candidate is not initialized');
 
         address msgSender = msg.sender;
@@ -406,6 +435,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(
             candidate.status == DPoSCommon.CandidateStatus.Unbonded ||
                 candidate.status == DPoSCommon.CandidateStatus.Unbonding
+        );
+        require(
+            block.number > candidate.earliestBondTime,
+            "Not earliest bond time yet"
         );
         uint256 minStakeInPool = getUIntValue(
             uint256(ParamNames.MinStakeInPool)
@@ -453,8 +486,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      */
     function confirmUnbondedCandidate(address _candidateAddr) external {
 
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.status == DPoSCommon.CandidateStatus.Unbonding);
         require(block.number >= candidate.unbondTime);
 
@@ -474,8 +506,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 _amount
     ) external onlyNonZeroAddr(_candidateAddr) {
 
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.status == DPoSCommon.CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
@@ -497,9 +528,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     {
         address msgSender = msg.sender;
 
-
-            ValidatorCandidate storage candidate
-         = candidateProfiles[_candidateAddr];
+        ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
         _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
@@ -586,6 +615,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         external
         whenNotPaused
         onlyValidDPoS
+        onlyNotMigrating
     {
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(
             _penaltyRequest
@@ -645,7 +675,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         for (uint256 i = 0; i < penalty.beneficiaries.length; i++) {
             PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
             totalAddAmt = totalAddAmt.add(beneficiary.amt);
-            emit Indemnify(beneficiary.account, beneficiary.amt);
+            emit Compensate(beneficiary.account, beneficiary.amt);
 
             if (beneficiary.account == address(0)) {
                 // address(0) stands for miningPool
@@ -700,6 +730,18 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             candidateProfiles[_addr].status ==
             DPoSCommon.CandidateStatus.Bonded;
     }
+
+    /**
+     * @notice Check if the contract is in migrating state
+     * @return contract in migrating state or not
+     */
+    function isMigrating() public view returns (bool) {
+        uint256 migrationTime = getUIntValue(
+            uint256(ParamNames.MigrationTime)
+        );
+        return migrationTime != 0 && block.number >= migrationTime;
+    }
+
 
     /**
      * @notice Get the number of validators

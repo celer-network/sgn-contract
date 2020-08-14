@@ -29,9 +29,16 @@ const LOWER_RATE = 50;
 const HIGHER_RATE = 200;
 const RATE_LOCK_END_TIME = 2;
 const LARGER_LOCK_END_TIME = 100000;
-const INCREASE_RATE_WAIT_TIME = 100; // in practice, this should be 80640 (2 weeks)
+const ADVANCE_NOTICE_PERIOD = 100; // in practice, this should be 80640 (2 weeks)
+
+const MIN_SELF_STAKE = 20;
+const HIGHER_MIN_SELF_STAKE = 25;
+const LOWER_MIN_SELF_STAKE = 15;
 
 const ENUM_BLAME_TIMEOUT = 2;
+const ENUM_MIGRATION_TIME = 7;
+const MIGRATOIN_START_TIME = 10;
+
 const ENUM_VOTE_TYPE_YES = 1;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
@@ -41,7 +48,6 @@ contract('DPoS and SGN contracts', async accounts => {
     const DELEGATOR_STAKE = 100;
     const DELEGATOR_WITHDRAW = 80;
     const CANDIDATE = accounts[1];
-    const MIN_SELF_STAKE = 20;
     const CANDIDATE_STAKE = 40;
     // CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN < MIN_SELF_STAKE
     const CANDIDATE_WITHDRAW_UNDER_MIN = 30;
@@ -73,7 +79,7 @@ contract('DPoS and SGN contracts', async accounts => {
             MIN_VALIDATOR_NUM,
             MAX_VALIDATOR_NUM,
             MIN_STAKING_POOL,
-            INCREASE_RATE_WAIT_TIME,
+            ADVANCE_NOTICE_PERIOD,
             DPOS_GO_LIVE_TIMEOUT
         );
 
@@ -383,14 +389,13 @@ contract('DPoS and SGN contracts', async accounts => {
                     { from: CANDIDATE }
                 );
 
-                await Timetravel.advanceBlocks(INCREASE_RATE_WAIT_TIME);
+                await Timetravel.advanceBlocks(ADVANCE_NOTICE_PERIOD);
 
                 try {
                     await dposInstance.confirmIncreaseCommissionRate({
                         from: CANDIDATE
                     });
                 } catch (error) {
-                    console.log(error.message);
                     assert.isAbove(
                         error.message.search('Commission rate is locked'),
                         -1
@@ -402,7 +407,7 @@ contract('DPoS and SGN contracts', async accounts => {
             });
 
             it('should confirmIncreaseCommissionRate successfully after new rate takes effect ', async () => {
-                await Timetravel.advanceBlocks(INCREASE_RATE_WAIT_TIME);
+                await Timetravel.advanceBlocks(ADVANCE_NOTICE_PERIOD);
                 const tx = await dposInstance.confirmIncreaseCommissionRate({
                     from: CANDIDATE
                 });
@@ -571,9 +576,7 @@ contract('DPoS and SGN contracts', async accounts => {
                     await celerToken.approve(
                         dposInstance.address,
                         CANDIDATE_STAKE,
-                        {
-                            from: CANDIDATE
-                        }
+                        { from: CANDIDATE }
                     );
                     await dposInstance.delegate(CANDIDATE, CANDIDATE_STAKE, {
                         from: CANDIDATE
@@ -589,6 +592,58 @@ contract('DPoS and SGN contracts', async accounts => {
                     assert.equal(event, 'ValidatorChange');
                     assert.equal(args.ethAddr, CANDIDATE);
                     assert.equal(args.changeType, VALIDATOR_ADD);
+                });
+
+                it('should increase min self stake and claimValidator successfully', async () => {
+                    let tx = await dposInstance.updateMinSelfStake(
+                        HIGHER_MIN_SELF_STAKE,
+                        { from: CANDIDATE }
+                    );
+                    assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
+                    assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+                    assert.equal(tx.logs[0].args.minSelfStake, HIGHER_MIN_SELF_STAKE);
+
+                    tx = await dposInstance.claimValidator({from: CANDIDATE});
+                    assert.equal(tx.logs[0].event, 'ValidatorChange');
+                    assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
+                    assert.equal(tx.logs[0].args.changeType, VALIDATOR_ADD);
+                });
+
+                it('should decrease min self stake successfully but fail to claimValidator before notice period', async () => {
+                    const tx = await dposInstance.updateMinSelfStake(
+                        LOWER_MIN_SELF_STAKE,
+                        { from: CANDIDATE }
+                    );
+                    const { event, args } = tx.logs[0];
+                    assert.equal(event, 'UpdateMinSelfStake');
+                    assert.equal(args.candidate, CANDIDATE);
+                    assert.equal(args.minSelfStake, LOWER_MIN_SELF_STAKE);
+
+                    try {
+                        await dposInstance.claimValidator({from: CANDIDATE});
+                    } catch (error) {
+                        assert.isAbove(
+                            error.message.search("Not earliest bond time yet"),
+                            -1
+                        );
+                        return;
+                    }
+
+                    assert.fail('should have thrown before');;
+                });
+
+                it('should decrease min self stake and claimValidator after notice period successfully', async () => {
+                    await dposInstance.updateMinSelfStake(
+                        LOWER_MIN_SELF_STAKE,
+                        { from: CANDIDATE }
+                    );
+
+                    await Timetravel.advanceBlocks(ADVANCE_NOTICE_PERIOD);
+
+                    const tx = await dposInstance.claimValidator({from: CANDIDATE});
+                    assert.equal(tx.logs[0].event, 'ValidatorChange');
+                    assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
+                    assert.equal(tx.logs[0].args.changeType, VALIDATOR_ADD);
                 });
 
                 describe('after one candidate claimValidator', async () => {
@@ -624,9 +679,7 @@ contract('DPoS and SGN contracts', async accounts => {
                         const tx = await dposInstance.intendWithdraw(
                             CANDIDATE,
                             CANDIDATE_WITHDRAW_UNDER_MIN,
-                            {
-                                from: CANDIDATE
-                            }
+                            { from: CANDIDATE }
                         );
                         const block = await web3.eth.getBlock('latest');
 
@@ -675,6 +728,32 @@ contract('DPoS and SGN contracts', async accounts => {
                             tx.logs[1].args.proposedTime.toNumber(),
                             block.number
                         );
+                    });
+
+                    it('should increase min self stake successfully', async () => {
+                        const tx = await dposInstance.updateMinSelfStake(
+                            HIGHER_MIN_SELF_STAKE,
+                            { from: CANDIDATE }
+                        );
+                        assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
+                        assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+                        assert.equal(tx.logs[0].args.minSelfStake, HIGHER_MIN_SELF_STAKE);
+                    });
+
+                    it('should fail to decrease min self stake', async () => {
+                        try {
+                            await dposInstance.updateMinSelfStake(
+                                LOWER_MIN_SELF_STAKE,
+                                { from: CANDIDATE }
+                            );
+                        } catch (error) {
+                            assert.isAbove(
+                                error.message.search("Candidate is bonded"),
+                                -1
+                            );
+                            return;
+                        }
+                        assert.fail('should have thrown before');;
                     });
 
                     // TODO: add a test of "fail to confirmWithdraw because penalty slashes all undelegating stake"
@@ -1228,7 +1307,6 @@ contract('DPoS and SGN contracts', async accounts => {
         });
 
         describe('after someone createParamProposal successfully', async () => {
-            const newBlameTimeout = BLAME_TIMEOUT + 1;
             const proposalId = 0;
 
             beforeEach(async () => {
@@ -1237,8 +1315,8 @@ contract('DPoS and SGN contracts', async accounts => {
                     GOVERN_PROPOSAL_DEPOSIT
                 );
                 await dposInstance.createParamProposal(
-                    ENUM_BLAME_TIMEOUT,
-                    newBlameTimeout
+                    ENUM_MIGRATION_TIME,
+                    MIGRATOIN_START_TIME
                 );
             });
 
@@ -1390,8 +1468,8 @@ contract('DPoS and SGN contracts', async accounts => {
                         assert.equal(event, 'ConfirmParamProposal');
                         assert.equal(args.proposalId, proposalId);
                         assert.equal(args.passed, false);
-                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
-                        assert.equal(args.newValue, newBlameTimeout);
+                        assert.equal(args.record, ENUM_MIGRATION_TIME);
+                        assert.equal(args.newValue, MIGRATOIN_START_TIME);
                     });
                 });
             });
@@ -1420,16 +1498,42 @@ contract('DPoS and SGN contracts', async accounts => {
                             proposalId
                         );
                         const { event, args } = tx.logs[0];
-                        const queriedNewBlameTimeout = await dposInstance.getUIntValue(
-                            ENUM_BLAME_TIMEOUT
+                        const queriedMigrationTime = await dposInstance.getUIntValue(
+                            ENUM_MIGRATION_TIME
                         );
 
                         assert.equal(event, 'ConfirmParamProposal');
                         assert.equal(args.proposalId, proposalId);
                         assert.equal(args.passed, true);
-                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
-                        assert.equal(args.newValue, newBlameTimeout);
-                        assert.equal(queriedNewBlameTimeout, newBlameTimeout);
+                        assert.equal(args.record, ENUM_MIGRATION_TIME);
+                        assert.equal(args.newValue, MIGRATOIN_START_TIME);
+                        assert.equal(queriedMigrationTime, MIGRATOIN_START_TIME);
+                    });
+
+                    it('should fail to punish in migrating state', async () => {
+                        await dposInstance.confirmParamProposal(proposalId);
+                        const request = await getPenaltyRequestBytes({
+                            nonce: 1,
+                            expireTime: 1000000,
+                            validatorAddr: [VALIDATORS[0]],
+                            delegatorAddrs: [VALIDATORS[0]],
+                            delegatorAmts: [10],
+                            beneficiaryAddrs: [ZERO_ADDR],
+                            beneficiaryAmts: [10],
+                            signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
+                        });
+
+                        try {
+                            await dposInstance.punish(request);
+                        } catch (error) {
+                            assert.isAbove(
+                                error.message.search('contract migrating'),
+                                -1
+                            );
+                            return;
+                        }
+
+                        assert.fail('should have thrown before');
                     });
                 });
             });
@@ -1850,4 +1954,5 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(tx.logs[1].args.changeType, VALIDATOR_ADD);
         });
     });
+
 });

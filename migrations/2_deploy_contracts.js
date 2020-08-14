@@ -8,7 +8,7 @@ const blameTimeout = 0;
 const minValidatorNum = 0;
 const maxValidatorNum = 10;
 const minStakeInPool = '1000000000000000000';
-const increaseRateWaitTime = 2;
+const advanceNoticePeriod = 2;
 const dposGoLiveTimeout = 0;
 
 module.exports = function (deployer, network, accounts) {
@@ -31,7 +31,7 @@ module.exports = function (deployer, network, accounts) {
         minValidatorNum,
         maxValidatorNum,
         minStakeInPool,
-        increaseRateWaitTime,
+        advanceNoticePeriod,
         dposGoLiveTimeout
       );
     })

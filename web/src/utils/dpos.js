@@ -7,7 +7,7 @@ export const PARAM_NAMES = [
     'MinValidatorNum',
     'MaxValidatorNum',
     'MinStakeInPool',
-    'IncreaseRateWaitTime'
+    'AdvanceNoticePeriod'
 ];
 
 export const PROPOSAL_STATUS = { Voting: '1', Closed: '2' };

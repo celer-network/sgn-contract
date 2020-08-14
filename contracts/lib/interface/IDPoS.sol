@@ -7,15 +7,6 @@ interface IDPoS {
     enum ValidatorChangeType { Add, Removal }
 
     // functions
-    // TODO: interface can't be inherited, so VoteType is not declared here
-    // function voteParam(uint _proposalId, VoteType _vote) external;
-
-    // function confirmParamProposal(uint _proposalId) external;
-
-    // function voteSidechain(uint _proposalId, VoteType _vote) external;
-
-    // function confirmSidechainProposal(uint _proposalId) external;
-
     function contributeToMiningPool(uint _amount) external;
 
     function redeemMiningReward(address _receiver, uint _cumulativeReward) external;
@@ -29,6 +20,8 @@ interface IDPoS {
     function confirmIncreaseCommissionRate() external;
 
     function nonIncreaseCommissionRate(uint _newRate, uint _newLockEndTime) external;
+
+    function updateMinSelfStake(uint256 _minSelfStake) external;
 
     function delegate(address _candidate, uint _amount) external;
 
@@ -62,12 +55,23 @@ interface IDPoS {
 
     function getTotalValidatorStakingPool() external view returns(uint);
 
+    // TODO: interface can't be inherited, so VoteType is not declared here
+    // function voteParam(uint _proposalId, VoteType _vote) external;
+
+    // function confirmParamProposal(uint _proposalId) external;
+
+    // function voteSidechain(uint _proposalId, VoteType _vote) external;
+
+    // function confirmSidechainProposal(uint _proposalId) external;
+
     // events
     event InitializeCandidate(address indexed candidate, uint minSelfStake, uint commissionRate, uint rateLockEndTime);
 
     event CommissionRateAnnouncement(address indexed candidate, uint announcedRate, uint announcedLockEndTime);
 
     event UpdateCommissionRate(address indexed candidate, uint newRate, uint newLockEndTime);
+
+    event UpdateMinSelfStake(address indexed candidate, uint minSelfStake);
 
     event Delegate(address indexed delegator, address indexed candidate, uint newStake, uint stakingPool);
 
@@ -81,7 +85,7 @@ interface IDPoS {
 
     event Punish(address indexed validator, address indexed delegator, uint amount);
 
-    event Indemnify(address indexed indemnitee, uint amount);
+    event Compensate(address indexed indemnitee, uint amount);
 
     event CandidateUnbonded(address indexed candidate);
 

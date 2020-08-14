@@ -691,7 +691,7 @@
         "type": "uint256"
       },
       {
-        "name": "_increaseRateWaitTime",
+        "name": "_advanceNoticePeriod",
         "type": "uint256"
       },
       {
@@ -1064,6 +1064,23 @@
     "inputs": [
       {
         "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "minSelfStake",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdateMinSelfStake",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "name": "delegator",
         "type": "address"
       },
@@ -1210,7 +1227,7 @@
         "type": "uint256"
       }
     ],
-    "name": "Indemnify",
+    "name": "Compensate",
     "type": "event"
   },
   {
@@ -1464,6 +1481,20 @@
     "constant": false,
     "inputs": [
       {
+        "name": "_minSelfStake",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateMinSelfStake",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "_candidateAddr",
         "type": "address"
       },
@@ -1607,6 +1638,20 @@
       }
     ],
     "name": "isValidator",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "isMigrating",
     "outputs": [
       {
         "name": "",
