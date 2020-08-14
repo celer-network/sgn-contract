@@ -85,7 +85,7 @@ interface IDPoS {
 
     event Punish(address indexed validator, address indexed delegator, uint amount);
 
-    event Indemnify(address indexed indemnitee, uint amount);
+    event Compensate(address indexed indemnitee, uint amount);
 
     event CandidateUnbonded(address indexed candidate);
 

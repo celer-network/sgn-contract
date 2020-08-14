@@ -675,7 +675,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         for (uint256 i = 0; i < penalty.beneficiaries.length; i++) {
             PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
             totalAddAmt = totalAddAmt.add(beneficiary.amt);
-            emit Indemnify(beneficiary.account, beneficiary.amt);
+            emit Compensate(beneficiary.account, beneficiary.amt);
 
             if (beneficiary.account == address(0)) {
                 // address(0) stands for miningPool
