@@ -36,6 +36,9 @@ const HIGHER_MIN_SELF_STAKE = 25;
 const LOWER_MIN_SELF_STAKE = 15;
 
 const ENUM_BLAME_TIMEOUT = 2;
+const ENUM_MIGRATION_TIME = 7;
+const MIGRATOIN_START_TIME = 10;
+
 const ENUM_VOTE_TYPE_YES = 1;
 
 // use beforeEach method to set up an isolated test environment for each unite test,
@@ -1304,7 +1307,6 @@ contract('DPoS and SGN contracts', async accounts => {
         });
 
         describe('after someone createParamProposal successfully', async () => {
-            const newBlameTimeout = BLAME_TIMEOUT + 1;
             const proposalId = 0;
 
             beforeEach(async () => {
@@ -1313,8 +1315,8 @@ contract('DPoS and SGN contracts', async accounts => {
                     GOVERN_PROPOSAL_DEPOSIT
                 );
                 await dposInstance.createParamProposal(
-                    ENUM_BLAME_TIMEOUT,
-                    newBlameTimeout
+                    ENUM_MIGRATION_TIME,
+                    MIGRATOIN_START_TIME
                 );
             });
 
@@ -1466,8 +1468,8 @@ contract('DPoS and SGN contracts', async accounts => {
                         assert.equal(event, 'ConfirmParamProposal');
                         assert.equal(args.proposalId, proposalId);
                         assert.equal(args.passed, false);
-                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
-                        assert.equal(args.newValue, newBlameTimeout);
+                        assert.equal(args.record, ENUM_MIGRATION_TIME);
+                        assert.equal(args.newValue, MIGRATOIN_START_TIME);
                     });
                 });
             });
@@ -1496,16 +1498,42 @@ contract('DPoS and SGN contracts', async accounts => {
                             proposalId
                         );
                         const { event, args } = tx.logs[0];
-                        const queriedNewBlameTimeout = await dposInstance.getUIntValue(
-                            ENUM_BLAME_TIMEOUT
+                        const queriedMigrationTime = await dposInstance.getUIntValue(
+                            ENUM_MIGRATION_TIME
                         );
 
                         assert.equal(event, 'ConfirmParamProposal');
                         assert.equal(args.proposalId, proposalId);
                         assert.equal(args.passed, true);
-                        assert.equal(args.record, ENUM_BLAME_TIMEOUT);
-                        assert.equal(args.newValue, newBlameTimeout);
-                        assert.equal(queriedNewBlameTimeout, newBlameTimeout);
+                        assert.equal(args.record, ENUM_MIGRATION_TIME);
+                        assert.equal(args.newValue, MIGRATOIN_START_TIME);
+                        assert.equal(queriedMigrationTime, MIGRATOIN_START_TIME);
+                    });
+
+                    it('should fail to punish in migrating state', async () => {
+                        await dposInstance.confirmParamProposal(proposalId);
+                        const request = await getPenaltyRequestBytes({
+                            nonce: 1,
+                            expireTime: 1000000,
+                            validatorAddr: [VALIDATORS[0]],
+                            delegatorAddrs: [VALIDATORS[0]],
+                            delegatorAmts: [10],
+                            beneficiaryAddrs: [ZERO_ADDR],
+                            beneficiaryAmts: [10],
+                            signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
+                        });
+
+                        try {
+                            await dposInstance.punish(request);
+                        } catch (error) {
+                            assert.isAbove(
+                                error.message.search('contract migrating'),
+                                -1
+                            );
+                            return;
+                        }
+
+                        assert.fail('should have thrown before');
                     });
                 });
             });
