@@ -288,7 +288,7 @@ contract('DPoS and SGN contracts', async accounts => {
                 );
             } catch (error) {
                 assert.isAbove(
-                    error.message.search('New lock end time is not increasing'),
+                    error.message.search('Invalid new lock end time'),
                     -1
                 );
                 return;
@@ -297,42 +297,28 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.fail('should have thrown before');
         });
 
-        it('should decrease the commission rate immediately after lock end time', async () => {
-            const tx = await dposInstance.nonIncreaseCommissionRate(
+        it('should decrease the commission rate anytime', async () => {
+            let tx = await dposInstance.nonIncreaseCommissionRate(
                 LOWER_RATE,
                 LARGER_LOCK_END_TIME,
                 { from: CANDIDATE }
             );
-            const { event, args } = tx.logs[0];
 
-            assert.equal(event, 'UpdateCommissionRate');
-            assert.equal(args.candidate, CANDIDATE);
-            assert.equal(args.newRate, LOWER_RATE);
-            assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
-        });
+            assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
+            assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+            assert.equal(tx.logs[0].args.newRate, LOWER_RATE);
+            assert.equal(tx.logs[0].args.newLockEndTime, LARGER_LOCK_END_TIME);
 
-        it('should fail to update the commission rate before lock end time', async () => {
-            await dposInstance.nonIncreaseCommissionRate(
-                COMMISSION_RATE,
+            tx = await dposInstance.nonIncreaseCommissionRate(
+                LOWER_RATE - 10,
                 LARGER_LOCK_END_TIME,
                 { from: CANDIDATE }
             );
 
-            try {
-                await dposInstance.nonIncreaseCommissionRate(
-                    LOWER_RATE,
-                    LARGER_LOCK_END_TIME,
-                    { from: CANDIDATE }
-                );
-            } catch (error) {
-                assert.isAbove(
-                    error.message.search('Commission rate is locked'),
-                    -1
-                );
-                return;
-            }
-
-            assert.fail('should have thrown before');
+            assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
+            assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+            assert.equal(tx.logs[0].args.newRate, LOWER_RATE - 10);
+            assert.equal(tx.logs[0].args.newLockEndTime, LARGER_LOCK_END_TIME);
         });
 
         it('should announce increase commission rate successfully', async () => {
@@ -365,7 +351,7 @@ contract('DPoS and SGN contracts', async accounts => {
                     });
                 } catch (error) {
                     assert.isAbove(
-                        error.message.search("new rate hasn't taken effect"),
+                        error.message.search("Still in notice period"),
                         -1
                     );
                     return;
@@ -948,7 +934,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             } catch (error) {
                                 assert.isAbove(
                                     error.message.search(
-                                        "Amount doesn't match"
+                                        "Amount not match"
                                     ),
                                     -1
                                 );

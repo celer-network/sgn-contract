@@ -320,7 +320,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @notice Apply non-increase-commission-rate changes to commission rate or lock end time,
      *   including decreasing commission rate and/or changing lock end time
      * @dev It can increase lock end time immediately without waiting
-     * @dev It must wait until the previous lock end time to decrease the commission rate
      * @param _newRate new commission rate
      * @param _newLockEndTime new lock end time
      */
@@ -366,7 +365,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         );
         require(
             block.number > candidate.announcementTime + advanceNoticePeriod,
-            "new rate hasn't taken effect"
+            "Still in notice period"
         );
 
         _updateCommissionRate(
@@ -685,7 +684,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             }
         }
 
-        require(totalSubAmt == totalAddAmt, "Amount doesn't match");
+        require(totalSubAmt == totalAddAmt, "Amount not match");
     }
 
     /**
@@ -901,12 +900,12 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 _newLockEndTime
     ) private {
         require(_newRate <= COMMISSION_RATE_BASE, 'Invalid new rate');
-        require(_newLockEndTime > block.number, 'Outdated new lock end time');
+        require(_newLockEndTime >= block.number, 'Outdated new lock end time');
 
-        if (_newRate == _candidate.commissionRate) {
+        if (_newRate <= _candidate.commissionRate) {
             require(
-                _newLockEndTime > _candidate.rateLockEndTime,
-                'New lock end time is not increasing'
+                _newLockEndTime >= _candidate.rateLockEndTime,
+                'Invalid new lock end time'
             );
         } else {
             require(
