@@ -72,9 +72,9 @@ setup_git
 get_pr
 node_modules/.bin/truffle compile
 update_genfiles
+sync_go_binding
 if [[ `git status --porcelain` ]]; then
   commit_and_push
-  sync_go_binding
 else
   echo "Genfiles and go bindings are not changed. Nothing to update or sync."
 fi
