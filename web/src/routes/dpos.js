@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
 import { Link } from 'dva/router';
-import { Button, Card, List, Statistic, Row, Col, Icon } from 'antd';
+import { Card, List, Statistic, Row, Col, Icon } from 'antd';
 
 import { CANDIDATE_STATUS } from '../utils/dpos';
 import { formatCelrValue } from '../utils/unit';

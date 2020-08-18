@@ -28,7 +28,7 @@ export const formatCurrencyValue = (value, unit) => {
         return `${value} wei`;
     }
 
-    return `${web3.utils.fromWei(value)} ${unit}`;
+    return `${web3.utils.fromWei(value).split('.')[0]} ${unit}`;
 };
 
 export const formatCelrValue = value => {

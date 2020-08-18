@@ -46,7 +46,12 @@ class SidechainInfo extends React.Component {
     }
 
     render() {
-        const { commissionRate, stakingPool, delegators } = this.state;
+        const {
+            commissionRate,
+            stakingPool,
+            delegators,
+            description = {}
+        } = this.state;
         return (
             <Row>
                 <Col span={12}>
@@ -59,6 +64,18 @@ class SidechainInfo extends React.Component {
                     <Statistic
                         title="Staking Pool"
                         value={formatCelrValue(stakingPool)}
+                    />
+                </Col>
+                <Col span={12}>
+                    <Statistic
+                        title="Website"
+                        value={description.website || 'N/A'}
+                    />
+                </Col>
+                <Col span={12}>
+                    <Statistic
+                        title="Contact"
+                        value={description.security_contact || 'N/A'}
                     />
                 </Col>
 

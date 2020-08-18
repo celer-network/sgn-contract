@@ -44,6 +44,8 @@ PunishTable.propTypes = {
     punishes: PropTypes.array.isRequired
 };
 
-function mapStateToProps(state) {}
+function mapStateToProps(state) {
+    return {};
+}
 
 export default drizzleConnect(PunishTable, mapStateToProps);

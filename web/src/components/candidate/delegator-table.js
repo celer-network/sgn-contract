@@ -82,6 +82,8 @@ DelegatorTable.propTypes = {
     delegators: PropTypes.array.isRequired
 };
 
-function mapStateToProps(state) {}
+function mapStateToProps(state) {
+    return {};
+}
 
 export default drizzleConnect(DelegatorTable, mapStateToProps);
