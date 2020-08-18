@@ -126,19 +126,27 @@ class Candidate extends React.Component {
     renderAction = () => {
         const { accounts } = this.props;
         const { candidate } = this.state;
+        const { status } = candidate.value;
         const isOwner = accounts[0] === candidate.args[0];
-
         const menu = (
             <Menu>
                 <Menu.Item onClick={this.toggleDelegateModal}>
                     Delegate
                 </Menu.Item>
-                <Menu.Item onClick={this.toggleWithdrawModal}>
-                    Initialize Withdraw
-                </Menu.Item>
-                <Menu.Item onClick={this.confirmWithdraw}>
-                    Confirm Withdraw
-                </Menu.Item>
+                {status === '0' ? (
+                    <Menu.Item onClick={this.toggleWithdrawModal}>
+                        Withdraw
+                    </Menu.Item>
+                ) : (
+                    [
+                        <Menu.Item onClick={this.toggleWithdrawModal}>
+                            Initialize Withdraw
+                        </Menu.Item>,
+                        <Menu.Item onClick={this.confirmWithdraw}>
+                            Confirm Withdraw
+                        </Menu.Item>
+                    ]
+                )}
                 {isOwner && (
                     <Menu.Item onClick={this.toggleCommissionModal}>
                         Announce Increase Commission Rate

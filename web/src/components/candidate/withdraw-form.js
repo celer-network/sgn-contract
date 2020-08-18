@@ -25,7 +25,7 @@ class WithdrawForm extends React.Component {
 
             const { value } = values;
 
-            if (candidate.value.status === 0) {
+            if (candidate.value.status === '0') {
                 this.contracts.DPoS.methods.withdrawFromUnbondedCandidate.cacheSend(
                     candidateAddr,
                     web3.utils.toWei(value.toString(), 'ether')
