@@ -24,7 +24,7 @@ jobs:
             - run:
                   name: fetch abigen binary if not exists
                   environment:
-                      GETH_TOOL_VER: geth-alltools-linux-amd64-1.9.3-cfbb969d
+                      GETH_TOOL_VER: geth-alltools-linux-amd64-1.9.19-3e064192
                       GETH_VER_LOG: node_modules/geth_tool_ver.log
                   command: |
                       if [ ! -f "$GETH_VER_LOG" ] || [ $GETH_TOOL_VER != $(cat $GETH_VER_LOG) ]; then
