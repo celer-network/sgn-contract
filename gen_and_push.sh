@@ -8,7 +8,7 @@ set -e
 PRID="$1"
 BRANCH="$2"
 
-TRUFFLE_VER=`node_modules/.bin/truffle version`
+TRUFFLE_VER=$(node_modules/.bin/truffle version)
 PR_COMMIT_ID=""
 
 setup_git() {
@@ -22,8 +22,8 @@ get_pr() {
 }
 
 extract_abi_bin() {
-  jq .abi build/contracts/$1.json > genfiles/$1.abi
-  jq -r .bytecode build/contracts/$1.json > genfiles/$1.bin
+  jq .abi build/contracts/$1.json >genfiles/$1.abi
+  jq -r .bytecode build/contracts/$1.json >genfiles/$1.bin
 }
 
 update_genfiles() {
@@ -37,7 +37,7 @@ commit_and_push() {
   git add genfiles/
   git commit -m "Update genfiles by build bot" -m "$TRUFFLE_VER"
   # gh_token is an env in CI project setting
-  git push https://${GH_TOKEN}@github.com/celer-network/sgn-contract.git $BRANCH &> /dev/null
+  git push https://${GH_TOKEN}@github.com/celer-network/sgn-contract.git $BRANCH &>/dev/null
 }
 
 # $1 is contract abi/bin name, $2 is go pkg name
@@ -48,23 +48,24 @@ abigen_files() {
 
 # send a PR to gobinding repo
 sync_go_binding() {
-  PR_COMMIT_ID=`git rev-parse --short HEAD`
+  PR_COMMIT_ID=$(git rev-parse --short HEAD)
   echo sgn-contract PR Head Commit: $PR_COMMIT_ID
   REPO=https://${GH_TOKEN}@github.com/celer-network/sgn.git
-  git clone $REPO
+  git clone $REPO sgn
   pushd sgn
-  git checkout develop  # based on develop branch of sgn repo
+  git checkout develop # based on develop branch of sgn repo
   git fetch
   git checkout $BRANCH || git checkout -b $BRANCH
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
-  if [[ `git status --porcelain` ]]; then
+  if [[ $(git status --porcelain) ]]; then
     echo "Sync-ing go binding"
     git add .
     git commit -m "Sync go binding based on sgn-contract PR $PRID" -m "sgn-contract commit: $PR_COMMIT_ID"
     git push origin $BRANCH
   fi
   popd
+  rm -rf sgn
 }
 
 echo "sync go binding ..."
@@ -73,7 +74,7 @@ get_pr
 node_modules/.bin/truffle compile
 update_genfiles
 sync_go_binding
-if [[ `git status --porcelain` ]]; then
+if [[ $(git status --porcelain) ]]; then
   commit_and_push
 else
   echo "Genfiles and go bindings are not changed. Nothing to update or sync."
