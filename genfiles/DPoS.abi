@@ -1218,6 +1218,33 @@
     "inputs": [
       {
         "indexed": true,
+        "name": "delegator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "delegatorStake",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "candidatePool",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdateDelegatedStake",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "name": "indemnitee",
         "type": "address"
       },
