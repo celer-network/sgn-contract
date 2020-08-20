@@ -616,22 +616,21 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyValidDPoS
         onlyNotMigrating
     {
-        PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(
-            _penaltyRequest
-        );
+        PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
+
+        ValidatorCandidate storage validator = candidateProfiles[penalty.validatorAddress];
+        require(validator.status != DPoSCommon.CandidateStatus.Unbonded, "Validator unbounded");
 
         bytes32 h = keccak256(penaltyRequest.penalty);
         require(
             _checkValidatorSigs(h, penaltyRequest.sigs),
             'Fail to check validator sigs'
         );
-        require(!usedPenaltyNonce[penalty.nonce], 'Used penalty nonce');
         require(block.number < penalty.expireTime, 'Penalty expired');
-
+        require(!usedPenaltyNonce[penalty.nonce], 'Used penalty nonce');
         usedPenaltyNonce[penalty.nonce] = true;
 
-        ValidatorCandidate storage validator = candidateProfiles[penalty.validatorAddress];
         uint256 totalSubAmt = 0;
         for (uint256 i = 0; i < penalty.penalizedDelegators.length; i++) {
             PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
@@ -652,12 +651,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
                     MathOperation.Sub
                 );
             } else {
-                uint256 remainingAmt = penalizedDelegator.amt.sub(
-                    delegator.delegatedStake
-                );
-                delegator.undelegatingStake = delegator.undelegatingStake.sub(
-                    remainingAmt
-                );
+                uint256 remainingAmt = penalizedDelegator.amt.sub(delegator.delegatedStake);
+                delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
                 _updateDelegatedStake(
                     validator,
                     penalty.validatorAddress,
