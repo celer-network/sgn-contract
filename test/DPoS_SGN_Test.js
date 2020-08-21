@@ -461,7 +461,7 @@ contract('DPoS and SGN contracts', async accounts => {
             await celerToken.approve(dposInstance.address, DELEGATOR_STAKE);
 
             const tx = await dposInstance.delegate(CANDIDATE, DELEGATOR_STAKE);
-            const { event, args } = tx.logs[0];
+            const { event, args } = tx.logs[1];
 
             assert.equal(event, 'Delegate');
             assert.equal(args.delegator, DELEGATOR);
@@ -549,7 +549,7 @@ contract('DPoS and SGN contracts', async accounts => {
                     CANDIDATE,
                     DELEGATOR_WITHDRAW
                 );
-                const { event, args } = tx.logs[0];
+                const { event, args } = tx.logs[1];
 
                 assert.equal(event, 'WithdrawFromUnbondedCandidate');
                 assert.equal(args.delegator, DELEGATOR);
@@ -646,7 +646,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             smallAmount
                         );
                         const block = await web3.eth.getBlock('latest');
-                        const { event, args } = tx.logs[0];
+                        const { event, args } = tx.logs[1];
 
                         assert.equal(event, 'IntendWithdraw');
                         assert.equal(args.delegator, DELEGATOR);
@@ -669,22 +669,22 @@ contract('DPoS and SGN contracts', async accounts => {
                         );
                         const block = await web3.eth.getBlock('latest');
 
-                        assert.equal(tx.logs[0].event, 'ValidatorChange');
-                        assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
+                        assert.equal(tx.logs[1].event, 'ValidatorChange');
+                        assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
                         assert.equal(
-                            tx.logs[0].args.changeType,
+                            tx.logs[1].args.changeType,
                             VALIDATOR_REMOVAL
                         );
 
-                        assert.equal(tx.logs[1].event, 'IntendWithdraw');
-                        assert.equal(tx.logs[1].args.delegator, CANDIDATE);
-                        assert.equal(tx.logs[1].args.candidate, CANDIDATE);
+                        assert.equal(tx.logs[2].event, 'IntendWithdraw');
+                        assert.equal(tx.logs[2].args.delegator, CANDIDATE);
+                        assert.equal(tx.logs[2].args.candidate, CANDIDATE);
                         assert.equal(
-                            tx.logs[1].args.withdrawAmount,
+                            tx.logs[2].args.withdrawAmount,
                             CANDIDATE_WITHDRAW_UNDER_MIN
                         );
                         assert.equal(
-                            tx.logs[1].args.proposedTime.toNumber(),
+                            tx.logs[2].args.proposedTime.toNumber(),
                             block.number
                         );
                     });
@@ -696,22 +696,22 @@ contract('DPoS and SGN contracts', async accounts => {
                         );
                         const block = await web3.eth.getBlock('latest');
 
-                        assert.equal(tx.logs[0].event, 'ValidatorChange');
-                        assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
+                        assert.equal(tx.logs[1].event, 'ValidatorChange');
+                        assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
                         assert.equal(
-                            tx.logs[0].args.changeType,
+                            tx.logs[1].args.changeType,
                             VALIDATOR_REMOVAL
                         );
 
-                        assert.equal(tx.logs[1].event, 'IntendWithdraw');
-                        assert.equal(tx.logs[1].args.delegator, DELEGATOR);
-                        assert.equal(tx.logs[1].args.candidate, CANDIDATE);
+                        assert.equal(tx.logs[2].event, 'IntendWithdraw');
+                        assert.equal(tx.logs[2].args.delegator, DELEGATOR);
+                        assert.equal(tx.logs[2].args.candidate, CANDIDATE);
                         assert.equal(
-                            tx.logs[1].args.withdrawAmount,
+                            tx.logs[2].args.withdrawAmount,
                             DELEGATOR_WITHDRAW
                         );
                         assert.equal(
-                            tx.logs[1].args.proposedTime.toNumber(),
+                            tx.logs[2].args.proposedTime.toNumber(),
                             block.number
                         );
                     });
@@ -851,10 +851,10 @@ contract('DPoS and SGN contracts', async accounts => {
                             assert.equal(tx.logs[0].args.delegator, CANDIDATE);
                             assert.equal(tx.logs[0].args.amount, 5);
 
-                            assert.equal(tx.logs[1].event, 'Punish');
-                            assert.equal(tx.logs[1].args.validator, CANDIDATE);
-                            assert.equal(tx.logs[1].args.delegator, DELEGATOR);
-                            assert.equal(tx.logs[1].args.amount, 10);
+                            assert.equal(tx.logs[2].event, 'Punish');
+                            assert.equal(tx.logs[2].args.validator, CANDIDATE);
+                            assert.equal(tx.logs[2].args.delegator, DELEGATOR);
+                            assert.equal(tx.logs[2].args.amount, 10);
 
                             assert.equal(
                                 newMiningPool.toNumber(),

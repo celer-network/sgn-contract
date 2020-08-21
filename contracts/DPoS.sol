@@ -411,7 +411,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(candidate.initialized, 'Candidate is not initialized');
 
         address msgSender = msg.sender;
-        _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Add);
+        _updateDelegatedStake(candidate, _candidateAddr, msgSender, _amount, MathOperation.Add);
 
         celerToken.safeTransferFrom(msgSender, address(this), _amount);
 
@@ -509,7 +509,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(candidate.status == DPoSCommon.CandidateStatus.Unbonded);
 
         address msgSender = msg.sender;
-        _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
+        _updateDelegatedStake(candidate, _candidateAddr, msgSender, _amount, MathOperation.Sub);
         celerToken.safeTransfer(msgSender, _amount);
 
         emit WithdrawFromUnbondedCandidate(msgSender, _candidateAddr, _amount);
@@ -530,7 +530,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         Delegator storage delegator = candidate.delegatorProfiles[msgSender];
 
-        _updateDelegatedStake(candidate, msgSender, _amount, MathOperation.Sub);
+        _updateDelegatedStake(candidate, _candidateAddr, msgSender, _amount, MathOperation.Sub);
         delegator.undelegatingStake = delegator.undelegatingStake.add(_amount);
         _validateValidator(_candidateAddr);
 
@@ -616,27 +616,24 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyValidDPoS
         onlyNotMigrating
     {
-        PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(
-            _penaltyRequest
-        );
+        PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
+
+        ValidatorCandidate storage validator = candidateProfiles[penalty.validatorAddress];
+        require(validator.status != DPoSCommon.CandidateStatus.Unbonded, "Validator unbounded");
 
         bytes32 h = keccak256(penaltyRequest.penalty);
         require(
             _checkValidatorSigs(h, penaltyRequest.sigs),
             'Fail to check validator sigs'
         );
-        require(!usedPenaltyNonce[penalty.nonce], 'Used penalty nonce');
         require(block.number < penalty.expireTime, 'Penalty expired');
-
+        require(!usedPenaltyNonce[penalty.nonce], 'Used penalty nonce');
         usedPenaltyNonce[penalty.nonce] = true;
 
-        ValidatorCandidate storage validator = candidateProfiles[penalty
-            .validatorAddress];
         uint256 totalSubAmt = 0;
         for (uint256 i = 0; i < penalty.penalizedDelegators.length; i++) {
-            PbSgn.AccountAmtPair memory penalizedDelegator = penalty
-                .penalizedDelegators[i];
+            PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
             totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
             emit Punish(
                 penalty.validatorAddress,
@@ -644,24 +641,21 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
                 penalizedDelegator.amt
             );
 
-            Delegator storage delegator = validator
-                .delegatorProfiles[penalizedDelegator.account];
+            Delegator storage delegator = validator.delegatorProfiles[penalizedDelegator.account];
             if (delegator.delegatedStake >= penalizedDelegator.amt) {
                 _updateDelegatedStake(
                     validator,
+                    penalty.validatorAddress,
                     penalizedDelegator.account,
                     penalizedDelegator.amt,
                     MathOperation.Sub
                 );
             } else {
-                uint256 remainingAmt = penalizedDelegator.amt.sub(
-                    delegator.delegatedStake
-                );
-                delegator.undelegatingStake = delegator.undelegatingStake.sub(
-                    remainingAmt
-                );
+                uint256 remainingAmt = penalizedDelegator.amt.sub(delegator.delegatedStake);
+                delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
                 _updateDelegatedStake(
                     validator,
+                    penalty.validatorAddress,
                     penalizedDelegator.account,
                     delegator.delegatedStake,
                     MathOperation.Sub
@@ -933,12 +927,12 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      */
     function _updateDelegatedStake(
         ValidatorCandidate storage _candidate,
+        address _candidateAddr,
         address _delegatorAddr,
         uint256 _amount,
         MathOperation _op
     ) private {
-        Delegator storage delegator = _candidate
-            .delegatorProfiles[_delegatorAddr];
+        Delegator storage delegator = _candidate.delegatorProfiles[_delegatorAddr];
 
         if (_op == MathOperation.Add) {
             _candidate.stakingPool = _candidate.stakingPool.add(_amount);
@@ -949,6 +943,12 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         } else {
             assert(false);
         }
+        emit UpdateDelegatedStake(
+            _delegatorAddr,
+            _candidateAddr,
+            delegator.delegatedStake,
+            _candidate.stakingPool
+        );
     }
 
     /**

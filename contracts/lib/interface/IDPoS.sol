@@ -23,17 +23,17 @@ interface IDPoS {
 
     function updateMinSelfStake(uint256 _minSelfStake) external;
 
-    function delegate(address _candidate, uint _amount) external;
+    function delegate(address _candidateAddr, uint _amount) external;
+
+    function withdrawFromUnbondedCandidate(address _candidateAddr, uint _amount) external;
+
+    function intendWithdraw(address _candidateAddr, uint _amount) external;
+
+    function confirmWithdraw(address _candidateAddr) external;
 
     function claimValidator() external;
 
     function confirmUnbondedCandidate(address _candidateAddr) external;
-
-    function withdrawFromUnbondedCandidate(address _candidateAddr, uint _amount) external;
-
-    function intendWithdraw(address _candidate, uint _amount) external;
-
-    function confirmWithdraw(address _candidateAddr) external;
 
     function punish(bytes calldata _penaltyRequest) external;
 
@@ -84,6 +84,8 @@ interface IDPoS {
     event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
     event Punish(address indexed validator, address indexed delegator, uint amount);
+
+    event UpdateDelegatedStake(address indexed delegator, address indexed candidate, uint delegatorStake, uint candidatePool);
 
     event Compensate(address indexed indemnitee, uint amount);
 
