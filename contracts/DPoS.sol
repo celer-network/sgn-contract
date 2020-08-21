@@ -365,7 +365,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         );
         require(
             block.number > candidate.announcementTime + advanceNoticePeriod,
-            "Still in notice period"
+            'Still in notice period'
         );
 
         _updateCommissionRate(
@@ -385,7 +385,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         if (_minSelfStake < candidate.minSelfStake) {
             require(
                 candidate.status != DPoSCommon.CandidateStatus.Bonded,
-                "Candidate is bonded"
+                'Candidate is bonded'
             );
             uint256 advanceNoticePeriod = getUIntValue(
                 uint256(ParamNames.AdvanceNoticePeriod)
@@ -437,7 +437,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         );
         require(
             block.number > candidate.earliestBondTime,
-            "Not earliest bond time yet"
+            'Not earliest bond time yet'
         );
         uint256 minStakeInPool = getUIntValue(
             uint256(ParamNames.MinStakeInPool)
@@ -506,7 +506,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     ) external onlyNonZeroAddr(_candidateAddr) {
 
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
-        require(candidate.status == DPoSCommon.CandidateStatus.Unbonded);
+        require(
+            candidate.status == DPoSCommon.CandidateStatus.Unbonded || isMigrating(),
+            'invalid status'
+        );
 
         address msgSender = msg.sender;
         _updateDelegatedStake(candidate, _candidateAddr, msgSender, _amount, MathOperation.Sub);
@@ -620,7 +623,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
 
         ValidatorCandidate storage validator = candidateProfiles[penalty.validatorAddress];
-        require(validator.status != DPoSCommon.CandidateStatus.Unbonded, "Validator unbounded");
+        require(validator.status != DPoSCommon.CandidateStatus.Unbonded, 'Validator unbounded');
 
         bytes32 h = keccak256(penaltyRequest.penalty);
         require(
@@ -678,7 +681,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             }
         }
 
-        require(totalSubAmt == totalAddAmt, "Amount not match");
+        require(totalSubAmt == totalAddAmt, 'Amount not match');
     }
 
     /**
