@@ -639,6 +639,22 @@ contract('DPoS and SGN contracts', async accounts => {
                         });
                     });
 
+                    it('should fail withdrawFromUnbondedCandidate', async () => {
+                        try {
+                            await dposInstance.withdrawFromUnbondedCandidate(
+                                CANDIDATE,
+                                DELEGATOR_WITHDRAW
+                            );
+                        } catch (error) {
+                            assert.isAbove(
+                                error.message.search("invalid status"),
+                                -1
+                            );
+                            return;
+                        }
+                        assert.fail('should have thrown before');;
+                    });
+
                     it('should intendWithdraw a small amount by delegator successfully', async () => {
                         const smallAmount = 5;
                         const tx = await dposInstance.intendWithdraw(
