@@ -125,7 +125,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _celerTokenAddress address of Celer Token Contract
      * @param _governProposalDeposit required deposit amount for a governance proposal
      * @param _governVoteTimeout voting timeout for a governance proposal
-     * @param _blameTimeout the locking timeout of funds for blaming malicious behaviors
+     * @param _slashTimeout the locking time for funds to be potentially slashed
      * @param _minValidatorNum the minimum number of validators
      * @param _maxValidatorNum the maximum number of validators
      * @param _minStakeInPool the global minimum requirement of staking pool for each validator
@@ -136,7 +136,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         address _celerTokenAddress,
         uint256 _governProposalDeposit,
         uint256 _governVoteTimeout,
-        uint256 _blameTimeout,
+        uint256 _slashTimeout,
         uint256 _minValidatorNum,
         uint256 _maxValidatorNum,
         uint256 _minStakeInPool,
@@ -148,7 +148,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             _celerTokenAddress,
             _governProposalDeposit,
             _governVoteTimeout,
-            _blameTimeout,
+            _slashTimeout,
             _minValidatorNum,
             _maxValidatorNum,
             _minStakeInPool,
@@ -575,11 +575,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             i++
         ) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];
-            uint256 blameTimeout = getUIntValue(
-                uint256(ParamNames.BlameTimeout)
+            uint256 slashTimeout = getUIntValue(
+                uint256(ParamNames.SlashTimeout)
             );
-            if (isUnbonded || wi.proposedTime.add(blameTimeout) <= bn) {
-                // withdraw intent is undelegated when the validator becomes unbonded or the blameTimeout
+            if (isUnbonded || wi.proposedTime.add(slashTimeout) <= bn) {
+                // withdraw intent is undelegated when the validator becomes unbonded or the slashTimeout
                 // for the withdraw intent is up.
                 delete delegator.withdrawIntents[i];
                 continue;
@@ -610,10 +610,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
-     * @notice Punish malicious validators
+     * @notice Slash validators
      * @param _penaltyRequest penalty request bytes coded in protobuf
      */
-    function punish(bytes calldata _penaltyRequest)
+    function slash(bytes calldata _penaltyRequest)
         external
         whenNotPaused
         onlyValidDPoS
@@ -638,7 +638,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         for (uint256 i = 0; i < penalty.penalizedDelegators.length; i++) {
             PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
             totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
-            emit Punish(
+            emit Slash(
                 penalty.validatorAddress,
                 penalizedDelegator.account,
                 penalizedDelegator.amt
@@ -984,9 +984,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         candidateProfiles[removedValidator].status = DPoSCommon
             .CandidateStatus
             .Unbonding;
-        uint256 blameTimeout = getUIntValue(uint256(ParamNames.BlameTimeout));
+        uint256 slashTimeout = getUIntValue(uint256(ParamNames.SlashTimeout));
         candidateProfiles[removedValidator].unbondTime = block.number.add(
-            blameTimeout
+            slashTimeout
         );
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }

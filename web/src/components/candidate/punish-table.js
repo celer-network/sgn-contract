@@ -16,20 +16,20 @@ const columns = [
     }
 ];
 
-class PunishTable extends React.Component {
+class SlashTable extends React.Component {
     render() {
-        const { punishes } = this.props;
+        const { slashes } = this.props;
 
-        const dataSource = punishes
-            .sort((punish0, punish1) => {
-                return punish0.validator > punish1.validator;
+        const dataSource = slashes
+            .sort((slash0, slash1) => {
+                return slash0.validator > slash1.validator;
             })
-            .map(punish => ({
-                ...punish,
-                amount: formatCelrValue(punish.amount)
+            .map(slash => ({
+                ...slash,
+                amount: formatCelrValue(slash.amount)
             }));
 
-        console.log(punishes);
+        console.log(slashes);
         return (
             <Table
                 dataSource={dataSource}
@@ -40,12 +40,12 @@ class PunishTable extends React.Component {
     }
 }
 
-PunishTable.propTypes = {
-    punishes: PropTypes.array.isRequired
+SlashTable.propTypes = {
+    slashes: PropTypes.array.isRequired
 };
 
 function mapStateToProps(state) {
     return {};
 }
 
-export default drizzleConnect(PunishTable, mapStateToProps);
+export default drizzleConnect(SlashTable, mapStateToProps);

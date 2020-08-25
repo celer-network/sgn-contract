@@ -4,7 +4,7 @@ const CELRToken = artifacts.require('CELRToken');
 const GANACHE_ACCOUNT_NUM = 5;
 const GOVERN_PROPOSAL_DEPOSIT = 100;
 const GOVERN_VOTE_TIMEOUT = 20;
-const BLAME_TIMEOUT = 50;
+const SLASH_TIMEOUT = 50;
 const MIN_VALIDATOR_NUM = 1;
 const MIN_STAKING_POOL = 80;
 const DPOS_GO_LIVE_TIMEOUT = 50;
@@ -31,7 +31,7 @@ contract('DPoS edge case', async accounts => {
             celerToken.address,
             GOVERN_PROPOSAL_DEPOSIT,
             GOVERN_VOTE_TIMEOUT,
-            BLAME_TIMEOUT,
+            SLASH_TIMEOUT,
             MIN_VALIDATOR_NUM,
             MAX_VALIDATOR_NUM,
             MIN_STAKING_POOL,

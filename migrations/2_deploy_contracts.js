@@ -4,7 +4,7 @@ const SGN = artifacts.require('SGN');
 
 const governProposalDeposit = '1000000000000000000';
 const governVoteTimeout = 2;
-const blameTimeout = 0;
+const slashTimeout = 0;
 const minValidatorNum = 0;
 const maxValidatorNum = 10;
 const minStakeInPool = '1000000000000000000';
@@ -27,7 +27,7 @@ module.exports = function (deployer, network, accounts) {
         CELRToken.address,
         governProposalDeposit,
         governVoteTimeout,
-        blameTimeout,
+        slashTimeout,
         minValidatorNum,
         maxValidatorNum,
         minStakeInPool,

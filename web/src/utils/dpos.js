@@ -3,7 +3,7 @@ export const CANDIDATE_STATUS = ['Unbonded', 'Bonded', 'Unbonding'];
 export const PARAM_NAMES = [
     'ProposalDeposit',
     'GovernVoteTimeout',
-    'BlameTimeout',
+    'SlashTimeout',
     'MinValidatorNum',
     'MaxValidatorNum',
     'MinStakeInPool',
