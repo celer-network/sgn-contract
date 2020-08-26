@@ -675,7 +675,7 @@
         "type": "uint256"
       },
       {
-        "name": "_blameTimeout",
+        "name": "_slashTimeout",
         "type": "uint256"
       },
       {
@@ -1210,7 +1210,7 @@
         "type": "uint256"
       }
     ],
-    "name": "Punish",
+    "name": "Slash",
     "type": "event"
   },
   {
@@ -1617,7 +1617,7 @@
         "type": "bytes"
       }
     ],
-    "name": "punish",
+    "name": "slash",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
