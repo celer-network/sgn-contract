@@ -35,7 +35,7 @@ interface IDPoS {
 
     function confirmUnbondedCandidate(address _candidateAddr) external;
 
-    function punish(bytes calldata _penaltyRequest) external;
+    function slash(bytes calldata _penaltyRequest) external;
 
     function validateMultiSigMessage(bytes calldata _request) external returns(bool);
 
@@ -83,7 +83,7 @@ interface IDPoS {
 
     event ConfirmWithdraw(address indexed delegator, address indexed candidate, uint amount);
 
-    event Punish(address indexed validator, address indexed delegator, uint amount);
+    event Slash(address indexed validator, address indexed delegator, uint amount);
 
     event UpdateDelegatedStake(address indexed delegator, address indexed candidate, uint delegatorStake, uint candidatePool);
 

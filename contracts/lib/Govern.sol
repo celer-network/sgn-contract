@@ -52,7 +52,7 @@ contract Govern is IGovern, Ownable {
      * @param _governTokenAddress address of the governance token
      * @param _governProposalDeposit required deposit amount for a governance proposal
      * @param _governVoteTimeout voting timeout for a governance proposal
-     * @param _blameTimeout the locking timeout of funds for blaming malicious behaviors
+     * @param _slashTimeout the locking time for funds to be potentially slashed
      * @param _minValidatorNum the minimum number of validators
      * @param _maxValidatorNum the maximum number of validators
      * @param _minStakeInPool the global minimum requirement of staking pool for each validator
@@ -62,7 +62,7 @@ contract Govern is IGovern, Ownable {
         address _governTokenAddress,
         uint _governProposalDeposit,
         uint _governVoteTimeout,
-        uint _blameTimeout,
+        uint _slashTimeout,
         uint _minValidatorNum,
         uint _maxValidatorNum,
         uint _minStakeInPool,
@@ -74,7 +74,7 @@ contract Govern is IGovern, Ownable {
 
         UIntStorage[uint(ParamNames.ProposalDeposit)] = _governProposalDeposit;
         UIntStorage[uint(ParamNames.GovernVoteTimeout)] = _governVoteTimeout;
-        UIntStorage[uint(ParamNames.BlameTimeout)] = _blameTimeout;
+        UIntStorage[uint(ParamNames.SlashTimeout)] = _slashTimeout;
         UIntStorage[uint(ParamNames.MinValidatorNum)] = _minValidatorNum;
         UIntStorage[uint(ParamNames.MaxValidatorNum)] = _maxValidatorNum;
         UIntStorage[uint(ParamNames.MinStakeInPool)] = _minStakeInPool;

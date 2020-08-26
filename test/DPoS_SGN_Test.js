@@ -11,7 +11,7 @@ const CELRToken = artifacts.require('CELRToken');
 const GANACHE_ACCOUNT_NUM = 20; // defined in .circleci/config.yml
 const GOVERN_PROPOSAL_DEPOSIT = 100;
 const GOVERN_VOTE_TIMEOUT = 20;
-const BLAME_TIMEOUT = 50;
+const SLASH_TIMEOUT = 50;
 const VALIDATOR_ADD = 0;
 const VALIDATOR_REMOVAL = 1;
 const MIN_VALIDATOR_NUM = 1;
@@ -35,7 +35,7 @@ const MIN_SELF_STAKE = 20;
 const HIGHER_MIN_SELF_STAKE = 25;
 const LOWER_MIN_SELF_STAKE = 15;
 
-const ENUM_BLAME_TIMEOUT = 2;
+const ENUM_SLASH_TIMEOUT = 2;
 const ENUM_MIGRATION_TIME = 7;
 const MIGRATOIN_START_TIME = 10;
 
@@ -75,7 +75,7 @@ contract('DPoS and SGN contracts', async accounts => {
             celerToken.address,
             GOVERN_PROPOSAL_DEPOSIT,
             GOVERN_VOTE_TIMEOUT,
-            BLAME_TIMEOUT,
+            SLASH_TIMEOUT,
             MIN_VALIDATOR_NUM,
             MAX_VALIDATOR_NUM,
             MIN_STAKING_POOL,
@@ -812,7 +812,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             assert.equal(args.amount, SUB_FEE);
                         });
 
-                        it('should fail to punish for unpaused state', async () => {
+                        it('should fail to slash for unpaused state', async () => {
                             await dposInstance.pause();
 
                             try {
@@ -826,7 +826,7 @@ contract('DPoS and SGN contracts', async accounts => {
                                     beneficiaryAmts: [7, 8],
                                     signers: [CANDIDATE]
                                 });
-                                await dposInstance.punish(request);
+                                await dposInstance.slash(request);
                             } catch (e) {
                                 assert.isAbove(
                                     e.message.search(
@@ -840,7 +840,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             assert.fail('should have thrown before');
                         });
 
-                        it('should punish successfully', async () => {
+                        it('should slash successfully', async () => {
                             const oldMiningPool = await dposInstance.miningPool();
                             const oldTokenAmt = await celerToken.balanceOf(
                                 SUBSCRIBER
@@ -856,18 +856,18 @@ contract('DPoS and SGN contracts', async accounts => {
                                 beneficiaryAmts: [7, 8],
                                 signers: [CANDIDATE]
                             });
-                            const tx = await dposInstance.punish(request);
+                            const tx = await dposInstance.slash(request);
                             const newMiningPool = await dposInstance.miningPool();
                             const newTokenAmt = await celerToken.balanceOf(
                                 SUBSCRIBER
                             );
 
-                            assert.equal(tx.logs[0].event, 'Punish');
+                            assert.equal(tx.logs[0].event, 'Slash');
                             assert.equal(tx.logs[0].args.validator, CANDIDATE);
                             assert.equal(tx.logs[0].args.delegator, CANDIDATE);
                             assert.equal(tx.logs[0].args.amount, 5);
 
-                            assert.equal(tx.logs[2].event, 'Punish');
+                            assert.equal(tx.logs[2].event, 'Slash');
                             assert.equal(tx.logs[2].args.validator, CANDIDATE);
                             assert.equal(tx.logs[2].args.delegator, DELEGATOR);
                             assert.equal(tx.logs[2].args.amount, 10);
@@ -882,7 +882,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             );
                         });
 
-                        it('should fail to punish with same request twice', async () => {
+                        it('should fail to slash with same request twice', async () => {
                             const request = await getPenaltyRequestBytes({
                                 nonce: 1,
                                 expireTime: 1000000,
@@ -893,10 +893,10 @@ contract('DPoS and SGN contracts', async accounts => {
                                 beneficiaryAmts: [7, 8],
                                 signers: [CANDIDATE]
                             });
-                            await dposInstance.punish(request);
+                            await dposInstance.slash(request);
 
                             try {
-                                await dposInstance.punish(request);
+                                await dposInstance.slash(request);
                             } catch (error) {
                                 assert.isAbove(
                                     error.message.search('Used penalty nonce'),
@@ -908,7 +908,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             assert.fail('should have thrown before');
                         });
 
-                        it('should fail to punish with expired request', async () => {
+                        it('should fail to slash with expired request', async () => {
                             const request = await getPenaltyRequestBytes({
                                 nonce: 1,
                                 expireTime: 1,
@@ -921,7 +921,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             });
 
                             try {
-                                await dposInstance.punish(request);
+                                await dposInstance.slash(request);
                             } catch (error) {
                                 assert.isAbove(
                                     error.message.search('Penalty expired'),
@@ -933,7 +933,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             assert.fail('should have thrown before');
                         });
 
-                        it("should fail to punish if amount sums don't match", async () => {
+                        it("should fail to slash if amount sums don't match", async () => {
                             const request = await getPenaltyRequestBytes({
                                 nonce: 1,
                                 expireTime: 1000000,
@@ -946,7 +946,7 @@ contract('DPoS and SGN contracts', async accounts => {
                             });
 
                             try {
-                                await dposInstance.punish(request);
+                                await dposInstance.slash(request);
                             } catch (error) {
                                 assert.isAbove(
                                     error.message.search(
@@ -1119,7 +1119,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
                         describe('after withdrawTimeout', async () => {
                             beforeEach(async () => {
-                                await Timetravel.advanceBlocks(BLAME_TIMEOUT);
+                                await Timetravel.advanceBlocks(SLASH_TIMEOUT);
                             });
 
                             it('should confirmWithdraw successfully', async () => {
@@ -1197,7 +1197,7 @@ contract('DPoS and SGN contracts', async accounts => {
             await Timetravel.advanceBlocks(DPOS_GO_LIVE_TIMEOUT);
         });
 
-        it('should call punish successfully with sufficient delegation', async () => {
+        it('should call slash successfully with sufficient delegation', async () => {
             const request = await getPenaltyRequestBytes({
                 nonce: 1,
                 expireTime: 1000000,
@@ -1209,15 +1209,15 @@ contract('DPoS and SGN contracts', async accounts => {
                 signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
             });
 
-            const tx = await dposInstance.punish(request);
+            const tx = await dposInstance.slash(request);
 
-            assert.equal(tx.logs[0].event, 'Punish');
+            assert.equal(tx.logs[0].event, 'Slash');
             assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.amount, 10);
         });
 
-        it('should fail to call punish with duplicate signatures and insufficient delegation', async () => {
+        it('should fail to call slash with duplicate signatures and insufficient delegation', async () => {
             const request = await getPenaltyRequestBytes({
                 nonce: 1,
                 expireTime: 1000000,
@@ -1235,7 +1235,7 @@ contract('DPoS and SGN contracts', async accounts => {
             });
 
             try {
-                await dposInstance.punish(request);
+                await dposInstance.slash(request);
             } catch (error) {
                 assert.isAbove(
                     error.message.search('Fail to check validator sigs'),
@@ -1247,7 +1247,7 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.fail('should have thrown before');
         });
 
-        it('should call punish twice successfully with the same group of signers', async () => {
+        it('should call slash twice successfully with the same group of signers', async () => {
             let request = await getPenaltyRequestBytes({
                 nonce: 1,
                 expireTime: 1000000,
@@ -1259,9 +1259,9 @@ contract('DPoS and SGN contracts', async accounts => {
                 signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
             });
 
-            let tx = await dposInstance.punish(request);
+            let tx = await dposInstance.slash(request);
 
-            assert.equal(tx.logs[0].event, 'Punish');
+            assert.equal(tx.logs[0].event, 'Slash');
             assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.amount, 10);
@@ -1277,24 +1277,24 @@ contract('DPoS and SGN contracts', async accounts => {
                 signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
             });
 
-            tx = await dposInstance.punish(request);
+            tx = await dposInstance.slash(request);
 
-            assert.equal(tx.logs[0].event, 'Punish');
+            assert.equal(tx.logs[0].event, 'Slash');
             assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
             assert.equal(tx.logs[0].args.amount, 10);
         });
 
         it('should createParamProposal successfully', async () => {
-            const newBlameTimeout = BLAME_TIMEOUT + 1;
+            const newSlashTimeout = SLASH_TIMEOUT + 1;
 
             await celerToken.approve(
                 dposInstance.address,
                 GOVERN_PROPOSAL_DEPOSIT
             );
             const tx = await dposInstance.createParamProposal(
-                ENUM_BLAME_TIMEOUT,
-                newBlameTimeout
+                ENUM_SLASH_TIMEOUT,
+                newSlashTimeout
             );
             const block = await web3.eth.getBlock('latest');
             const { event, args } = tx.logs[0];
@@ -1304,8 +1304,8 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(args.proposer, accounts[0]);
             assert.equal(args.deposit, GOVERN_PROPOSAL_DEPOSIT);
             assert.equal(args.voteDeadline, block.number + GOVERN_VOTE_TIMEOUT);
-            assert.equal(args.record, ENUM_BLAME_TIMEOUT);
-            assert.equal(args.newValue, newBlameTimeout);
+            assert.equal(args.record, ENUM_SLASH_TIMEOUT);
+            assert.equal(args.newValue, newSlashTimeout);
         });
 
         describe('after someone createParamProposal successfully', async () => {
@@ -1512,7 +1512,7 @@ contract('DPoS and SGN contracts', async accounts => {
                         assert.equal(queriedMigrationTime, MIGRATOIN_START_TIME);
                     });
 
-                    it('should fail to punish in migrating state', async () => {
+                    it('should fail to slash in migrating state', async () => {
                         await dposInstance.confirmParamProposal(proposalId);
                         const request = await getPenaltyRequestBytes({
                             nonce: 1,
@@ -1526,7 +1526,7 @@ contract('DPoS and SGN contracts', async accounts => {
                         });
 
                         try {
-                            await dposInstance.punish(request);
+                            await dposInstance.slash(request);
                         } catch (error) {
                             assert.isAbove(
                                 error.message.search('contract migrating'),

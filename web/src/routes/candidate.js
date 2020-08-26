@@ -21,7 +21,7 @@ import WithdrawForm from '../components/candidate/withdraw-form';
 import CommissionForm from '../components/candidate/commission-form';
 import DelegatorTable from '../components/candidate/delegator-table';
 import SidechainInfo from '../components/candidate/sidechain-info';
-import PunishTable from '../components/candidate/punish-table';
+import SlashTable from '../components/candidate/slash-table';
 import { formatCelrValue } from '../utils/unit';
 import { CANDIDATE_STATUS } from '../utils/dpos';
 import { RATE_BASE } from '../utils/constant';
@@ -33,7 +33,7 @@ class Candidate extends React.Component {
         this.contracts = context.drizzle.contracts;
         this.state = {
             candidate: null,
-            punishes: [],
+            slashes: [],
             isDelegateModalVisible: false,
             isWithdrawModalVisible: false,
             isCommissionModalVisible: false
@@ -59,7 +59,7 @@ class Candidate extends React.Component {
             }
         );
 
-        this.contracts.DPoS.events.Punish(
+        this.contracts.DPoS.events.Slash(
             {
                 fromBlock: 0,
                 filter: { validator: candidateId }
@@ -70,7 +70,7 @@ class Candidate extends React.Component {
                 }
 
                 this.setState({
-                    punishes: [...this.state.punishes, event.returnValues]
+                    slashes: [...this.state.slashes, event.returnValues]
                 });
             }
         );
@@ -176,7 +176,7 @@ class Candidate extends React.Component {
 
     renderCandidateDetail = () => {
         const { SGN } = this.props;
-        const { candidate, delegators, punishes } = this.state;
+        const { candidate, delegators, slashes } = this.state;
         const candidateId = candidate.args[0];
         const {
             minSelfStake,
@@ -245,8 +245,8 @@ class Candidate extends React.Component {
                         <Tabs.TabPane tab="Sidechain" key="sidechain">
                             <SidechainInfo candidateId={candidateId} />
                         </Tabs.TabPane>
-                        <Tabs.TabPane tab="Punishes" key="punishes">
-                            <PunishTable punishes={punishes} />
+                        <Tabs.TabPane tab="Slashes" key="slashes">
+                            <SlashTable slashes={slashes} />
                         </Tabs.TabPane>
                     </Tabs>
                 </Col>
