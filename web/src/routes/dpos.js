@@ -61,16 +61,16 @@ class DPoS extends React.Component {
 
     renderCandidates = () => {
         const { DPoS } = this.props;
-        const data = _.values(DPoS.getCandidateInfo).sort(
-            (candidate0, candidate1) => {
-                return candidate0.args[0] > candidate1.args[0];
-            }
-        );
+        const candidates = _(DPoS.getCandidateInfo)
+            .values()
+            .sortBy(['value.status', 'args.0'])
+            .reverse()
+            .value();
 
         return (
             <List
                 grid={{ gutter: 16, column: 3 }}
-                dataSource={data}
+                dataSource={candidates}
                 renderItem={this.renderCandidate}
             />
         );
