@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
+import web3 from 'web3';
 import { Table } from 'antd';
 
 import { formatCelrValue } from '../../utils/unit';
@@ -13,7 +14,12 @@ const columns = [
     },
     {
         title: 'Delegated Stake',
-        dataIndex: 'delegatedStake'
+        dataIndex: 'delegatedStake',
+        sorter: (a, b) =>
+            web3.utils
+                .toBN(a.delegatedStake)
+                .cmp(web3.utils.toBN(b.delegatedStake)),
+        render: text => formatCelrValue(text)
     },
     {
         title: 'Undelegating Stake',
@@ -60,11 +66,7 @@ class DelegatorTable extends React.Component {
             })
             .map(delegator => ({
                 ...delegator.value,
-                delegator: delegator.args[1],
-                delegatedStake: formatCelrValue(delegator.value.delegatedStake),
-                undelegatingStake: formatCelrValue(
-                    delegator.value.undelegatingStake
-                )
+                delegator: delegator.args[1]
             }));
 
         return (
