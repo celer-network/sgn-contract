@@ -8,6 +8,9 @@ checkout_pr_merge: &checkout_pr_merge
 
 jobs:
     build:
+        branches:
+            ignore:
+                - gh-pages
         docker:
             - image: circleci/node:10.15.3
         steps:
