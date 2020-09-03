@@ -192,7 +192,7 @@ class Candidate extends React.Component {
         const sidechainAddr =
             sidechainHexAddr &&
             bech32.encode(
-                'cosmos',
+                'sgn',
                 bech32.toWords(web3.utils.hexToBytes(sidechainHexAddr))
             );
 
