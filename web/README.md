@@ -40,10 +40,12 @@ SKIP_PREFLIGHT_CHECK=true npm run build
 npm run deploy
 ```
 
-8. Check out the `gh-pages` branch:
+8. Update the local `gh-pages` branch:
 
 ```shellscript
+cd ..
 git checkout gh-pages
+git pull
 ```
 
 9. Edit `index.html` to remove all references to `/sgn-contract`
