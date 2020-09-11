@@ -101,4 +101,3 @@ ENV/
 
 # my gitignore
 node_modules/
-web/src/contracts
