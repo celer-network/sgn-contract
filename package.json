@@ -6,7 +6,8 @@
         "coverage": "npx solidity-coverage",
         "lint": "npx solhint 'contracts/**/*.sol'",
         "lint:js": "npx eslint test/*",
-        "migrate": "npx truffle migrate --reset"
+        "migrate": "npx truffle migrate --reset",
+        "prettier": "prettier --write contracts/*.sol"
     },
     "dependencies": {
         "buffer": "^5.6.0",
@@ -28,6 +29,8 @@
         "ganache-cli": "^6.10.1",
         "kind-of": ">=6.0.3",
         "minimist": ">=0.2.1",
+        "prettier": "^2.1.1",
+        "prettier-plugin-solidity": "^1.0.0-alpha.57",
         "solhint": "^3.1.0",
         "truffle": "5.1.36"
     }

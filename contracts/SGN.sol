@@ -66,8 +66,7 @@ contract SGN is ISGN, Ownable, Pausable {
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
 
-        (bool initialized, , , uint256 status, , , ) = DPoSContract
-            .getCandidateInfo(msgSender);
+        (bool initialized, , , uint256 status, , , ) = DPoSContract.getCandidateInfo(msgSender);
         require(
             status == uint256(DPoSCommon.CandidateStatus.Unbonded),
             'msg.sender is not unbonded'
@@ -84,17 +83,11 @@ contract SGN is ISGN, Ownable, Pausable {
      * @notice Subscribe the guardian service
      * @param _amount subscription fee paid along this function call in CELR tokens
      */
-    function subscribe(uint256 _amount)
-        external
-        whenNotPaused
-        onlyValidSidechain
-    {
+    function subscribe(uint256 _amount) external whenNotPaused onlyValidSidechain {
         address msgSender = msg.sender;
 
         servicePool = servicePool.add(_amount);
-        subscriptionDeposits[msgSender] = subscriptionDeposits[msgSender].add(
-            _amount
-        );
+        subscriptionDeposits[msgSender] = subscriptionDeposits[msgSender].add(_amount);
 
         celerToken.safeTransferFrom(msgSender, address(this), _amount);
 
@@ -107,19 +100,13 @@ contract SGN is ISGN, Ownable, Pausable {
      * @dev SGN contract acts as an interface for users to redeem mining rewards
      * @param _rewardRequest reward request bytes coded in protobuf
      */
-    function redeemReward(bytes calldata _rewardRequest)
-        external
-        whenNotPaused
-        onlyValidSidechain
-    {
+    function redeemReward(bytes calldata _rewardRequest) external whenNotPaused onlyValidSidechain {
         require(
             DPoSContract.validateMultiSigMessage(_rewardRequest),
             'Fail to check validator sigs'
         );
 
-        PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(
-            _rewardRequest
-        );
+        PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(_rewardRequest);
         PbSgn.Reward memory reward = PbSgn.decReward(rewardRequest.reward);
         uint256 newServiceReward = reward.cumulativeServiceReward.sub(
             redeemedServiceReward[reward.receiver]
@@ -128,10 +115,7 @@ contract SGN is ISGN, Ownable, Pausable {
 
         servicePool = servicePool.sub(newServiceReward);
 
-        DPoSContract.redeemMiningReward(
-            reward.receiver,
-            reward.cumulativeMiningReward
-        );
+        DPoSContract.redeemMiningReward(reward.receiver, reward.cumulativeMiningReward);
         celerToken.safeTransfer(reward.receiver, newServiceReward);
 
         emit RedeemReward(
