@@ -21,25 +21,12 @@ contract SGN is ISGN, Ownable, Pausable {
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
 
-    struct ValidatorCandidate {
-        bytes sidechainAddr;
-    }
-
     IERC20 public celerToken;
     IDPoS public DPoSContract;
     mapping(address => uint256) public subscriptionDeposits;
     uint256 public servicePool;
     mapping(address => uint256) public redeemedServiceReward;
     mapping(address => bytes) public sidechainAddrMap;
-
-    /**
-     * @notice Throws if the given address is zero address
-     * @param _addr address to be checked
-     */
-    modifier onlyNonZeroAddr(address _addr) {
-        require(_addr != address(0), '0 address');
-        _;
-    }
 
     /**
      * @notice Throws if SGN sidechain is not valid

@@ -364,7 +364,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             uint256(ParamNames.AdvanceNoticePeriod)
         );
         require(
-            block.number > candidate.announcementTime + advanceNoticePeriod,
+            block.number > candidate.announcementTime.add(advanceNoticePeriod),
             'Still in notice period'
         );
 
@@ -390,7 +390,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             uint256 advanceNoticePeriod = getUIntValue(
                 uint256(ParamNames.AdvanceNoticePeriod)
             );
-            candidate.earliestBondTime = block.number + advanceNoticePeriod;
+            candidate.earliestBondTime = block.number.add(advanceNoticePeriod);
         }
         candidate.minSelfStake = _minSelfStake;
         emit UpdateMinSelfStake(msg.sender, _minSelfStake);
@@ -610,7 +610,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
-     * @notice Slash validators
+     * @notice Slash a validator and its delegators
      * @param _penaltyRequest penalty request bytes coded in protobuf
      */
     function slash(bytes calldata _penaltyRequest)
@@ -766,21 +766,12 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             uint256(ParamNames.MaxValidatorNum)
         );
 
-        uint256 minStakingPool = 0;
-        uint256 i = 0;
-        for (; i < maxValidatorNum; i++) {
+        uint256 minStakingPool = candidateProfiles[validatorSet[0]].stakingPool;
+        for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (validatorSet[i] == address(0)) {
-                continue;
+                return 0;
             }
-
-            minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
-            break;
-        }
-
-        for (i++; i < maxValidatorNum; i++) {
-            if (
-                candidateProfiles[validatorSet[i]].stakingPool < minStakingPool
-            ) {
+            if (candidateProfiles[validatorSet[i]].stakingPool < minStakingPool) {
                 minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
             }
         }
