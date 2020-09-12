@@ -47,8 +47,8 @@ class SidechainInfo extends React.Component {
 
     render() {
         const {
-            commissionRate,
-            stakingPool,
+            commission_rate: commissionRate,
+            staking_pool: stakingPool,
             delegators,
             description = {}
         } = this.state;
