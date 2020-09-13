@@ -23,7 +23,7 @@
         "strict": ["error", "global"],
 
         // Code style
-        "camelcase": ["error", { "properties": "always" }],
+        "camelcase": ["error", { "properties": "never" }],
         // "comma-dangle": ["error", "always-multiline"],
         "comma-spacing": ["error", { "before": false, "after": true }],
         "dot-notation": [
@@ -50,10 +50,6 @@
         // "semi": ["error", "always"],
 
         "promise/always-return": "off",
-        "promise/avoid-new": "off",
-        "prettier/prettier": [
-            "error",
-            { "singleQuote": true, "parser": "flow" }
-        ]
+        "promise/avoid-new": "off"
     }
 }

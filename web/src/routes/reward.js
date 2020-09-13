@@ -8,144 +8,143 @@ import axios from 'axios';
 import { formatCelrValue } from '../utils/unit';
 
 class Reward extends React.Component {
-    constructor(props, context) {
-        super(props);
+  constructor(props, context) {
+    super(props);
 
-        const {
-            accounts,
-            network: { setting }
-        } = props;
-        this.currentUser = accounts[0];
-        this.contracts = context.drizzle.contracts;
-        this.state = {};
+    const {
+      accounts,
+      network: { setting }
+    } = props;
+    this.currentUser = accounts[0];
+    this.contracts = context.drizzle.contracts;
+    this.state = {};
 
-        this.contracts.SGN.methods.redeemedServiceReward.cacheCall(
-            this.currentUser
-        );
-        this.contracts.DPoS.methods.redeemedMiningReward.cacheCall(
-            this.currentUser
-        );
+    this.contracts.SGN.methods.redeemedServiceReward.cacheCall(
+      this.currentUser
+    );
+    this.contracts.DPoS.methods.redeemedMiningReward.cacheCall(
+      this.currentUser
+    );
 
-        this.gateway = axios.create({
-            baseURL: setting.gateway,
-            timeout: 1000
+    this.gateway = axios.create({
+      baseURL: setting.gateway,
+      timeout: 1000
+    });
+
+    this.gateway
+      .get(`/validator/reward/${this.currentUser}`)
+      .then(res => {
+        this.setState({
+          ...res.data.result
         });
-
-        this.gateway
-            .get(`/validator/reward/${this.currentUser}`)
-            .then(res => {
-                this.setState({
-                    ...res.data.result
-                });
-            })
-            .catch(err => {
-                console.error(err);
-                message.warning(
-                    'Please config gateway url in setting to load sgn reward correctly'
-                );
-            });
-    }
-
-    intendWithdraw = () => {
-        this.gateway
-            .post('/validator/withdrawReward', {
-                ethAddr: this.currentUser
-            })
-            .then(() => {
-                message.success(
-                    'Success! Please wait a few seconds to trigger redeem.'
-                );
-            });
-    };
-
-    redeemReward = () => {
-        this.gateway
-            .get(`/validator/rewardRequest/${this.currentUser}`)
-            .then(res => {
-                this.contracts.SGN.methods.redeemReward.cacheSend(
-                    '0x' + res.data.result
-                );
-            });
-    };
-
-    renderActions = () => {
-        return [
-            <Button type="primary" onClick={this.intendWithdraw}>
-                Initialize Redeem
-            </Button>,
-            <Button type="primary" onClick={this.redeemReward}>
-                Redeem Reward
-            </Button>
-        ];
-    };
-
-    render() {
-        const { DPoS, SGN } = this.props;
-        const { miningReward, serviceReward } = this.state;
-        const { redeemedMiningReward } = DPoS;
-        const { redeemedServiceReward } = SGN;
-
-        if (
-            _.isEmpty(redeemedServiceReward) ||
-            _.isEmpty(redeemedMiningReward)
-        ) {
-            return <Skeleton />;
-        }
-
-        return (
-            <Card title="Reward" actions={this.renderActions()}>
-                <Row style={{ marginTop: '10px' }}>
-                    <Col span={12}>
-                        <Statistic
-                            title="Cumulative Mining Reward"
-                            value={formatCelrValue(miningReward)}
-                        />
-                    </Col>
-                    <Col span={12}>
-                        <Statistic
-                            title="Cumulative Service Reward"
-                            value={formatCelrValue(serviceReward)}
-                        />
-                    </Col>
-                    <Col span={12}>
-                        <Statistic
-                            title="Redeemed Mining Reward"
-                            value={formatCelrValue(
-                                _.values(redeemedMiningReward)[0].value
-                            )}
-                        />
-                    </Col>
-                    <Col span={12}>
-                        <Statistic
-                            title="Redeemed Service Reward"
-                            value={formatCelrValue(
-                                _.values(redeemedServiceReward)[0].value
-                            )}
-                        />
-                    </Col>
-                </Row>
-            </Card>
+      })
+      .catch(err => {
+        console.error(err);
+        message.warning(
+          'Please config gateway url in setting to load sgn reward correctly'
         );
+      });
+  }
+
+  intendWithdraw = () => {
+    this.gateway
+      .post('/validator/withdrawReward', {
+        eth_addr: this.currentUser
+      })
+      .then(() => {
+        message.success(
+          'Success! Please wait a few seconds to trigger redeem.'
+        );
+      })
+      .catch(err => {
+        console.error(err);
+      });
+  };
+
+  redeemReward = () => {
+    this.gateway
+      .get(`/validator/rewardRequest/${this.currentUser}`)
+      .then(res => {
+        this.contracts.SGN.methods.redeemReward.cacheSend(
+          '0x' + res.data.result
+        );
+      })
+      .catch(err => {
+        console.error(err);
+      });
+  };
+
+  renderActions = () => {
+    return [
+      <Button type="primary" onClick={this.intendWithdraw}>
+        Initialize Redeem
+      </Button>,
+      <Button type="primary" onClick={this.redeemReward}>
+        Redeem Reward
+      </Button>
+    ];
+  };
+
+  render() {
+    const { DPoS, SGN } = this.props;
+    const { miningReward, serviceReward } = this.state;
+    const { redeemedMiningReward } = DPoS;
+    const { redeemedServiceReward } = SGN;
+
+    if (_.isEmpty(redeemedServiceReward) || _.isEmpty(redeemedMiningReward)) {
+      return <Skeleton />;
     }
+
+    return (
+      <Card title="Reward" actions={this.renderActions()}>
+        <Row style={{ marginTop: '10px' }}>
+          <Col span={12}>
+            <Statistic
+              title="Cumulative Mining Reward"
+              value={formatCelrValue(miningReward)}
+            />
+          </Col>
+          <Col span={12}>
+            <Statistic
+              title="Cumulative Service Reward"
+              value={formatCelrValue(serviceReward)}
+            />
+          </Col>
+          <Col span={12}>
+            <Statistic
+              title="Redeemed Mining Reward"
+              value={formatCelrValue(_.values(redeemedMiningReward)[0].value)}
+            />
+          </Col>
+          <Col span={12}>
+            <Statistic
+              title="Redeemed Service Reward"
+              value={formatCelrValue(_.values(redeemedServiceReward)[0].value)}
+            />
+          </Col>
+        </Row>
+      </Card>
+    );
+  }
 }
 
 Reward.propTypes = {
-    dispatch: PropTypes.func.isRequired
+  dispatch: PropTypes.func.isRequired
 };
 
 Reward.contextTypes = {
-    drizzle: PropTypes.object
+  drizzle: PropTypes.object
 };
 
 function mapStateToProps(state) {
-    const { network, accounts, contracts, DPoS, SGN } = state;
+  const { network, accounts, contracts, DPoS, SGN } = state;
 
-    return {
-        network,
-        accounts,
-        DPoS: { ...DPoS, ...contracts.DPoS },
-        SGN: { ...SGN, ...contracts.SGN }
-    };
+  return {
+    network,
+    accounts,
+    DPoS: { ...DPoS, ...contracts.DPoS },
+    SGN: { ...SGN, ...contracts.SGN }
+  };
 }
 
 export default drizzleConnect(Reward, mapStateToProps);
