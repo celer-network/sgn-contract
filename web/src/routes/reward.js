@@ -34,12 +34,20 @@ class Reward extends React.Component {
     this.gateway
       .get(`/validator/reward/${this.currentUser}`)
       .then(res => {
+        const { result } = res.data;
         this.setState({
-          ...res.data.result
+          miningReward: result.mining_reward,
+          serviceReward: result.service_reward
         });
       })
       .catch(err => {
         console.error(err);
+
+        if (err.response) {
+          message.error(err.response.data.error);
+          return;
+        }
+
         message.warning(
           'Please config gateway url in setting to load sgn reward correctly'
         );
