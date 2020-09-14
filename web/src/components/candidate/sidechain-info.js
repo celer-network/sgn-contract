@@ -33,8 +33,36 @@ class SidechainInfo extends React.Component {
     axios
       .get(`${setting.gateway}/validator/candidate/${candidateId}`)
       .then(res => {
+        const { result } = res.data;
+
         this.setState({
-          ...res.data.result
+          commissionRate: result.commission_rate,
+          stakingPool: result.staking_pool
+        });
+      })
+      .catch(err => {
+        console.error(err);
+
+        if (err.response) {
+          message.error(err.response.data.error);
+          return;
+        }
+
+        message.warning(
+          'Please config gateway url in setting to load sidechain info correctly'
+        );
+      });
+
+    axios
+      .get(`${setting.gateway}/validator/candidate-delegators/${candidateId}`)
+      .then(res => {
+        const delegators = res.data.result.map(delegator => ({
+          candidateAddr: delegator.candidate_addr,
+          delegatedStake: delegator.delegated_stake,
+          delegatorAddr: delegator.delegator_addr
+        }));
+        this.setState({
+          delegators
         });
       })
       .catch(err => {
@@ -53,8 +81,8 @@ class SidechainInfo extends React.Component {
 
   render() {
     const {
-      commission_rate: commissionRate,
-      staking_pool: stakingPool,
+      commissionRate,
+      stakingPool,
       delegators,
       description = {}
     } = this.state;
