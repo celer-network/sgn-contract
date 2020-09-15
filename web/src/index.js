@@ -2,9 +2,9 @@ import dva from 'dva';
 import createLoading from 'dva-loading';
 import { all, fork } from 'redux-saga/effects';
 import {
-    generateContractsInitialState,
-    drizzleReducers,
-    drizzleSagas
+  generateContractsInitialState,
+  drizzleReducers,
+  drizzleSagas
 } from 'drizzle';
 import { message } from 'antd';
 
@@ -16,36 +16,36 @@ import SGNModel from './models/sgn';
 import NetworkModel from './models/network';
 
 function* rootSaga() {
-    yield all(drizzleSagas.map(saga => fork(saga)));
+  yield all(drizzleSagas.map(saga => fork(saga)));
 }
 
 checkNetworkCompatbility();
 
 // 1. Initialize
 const app = dva({
-    initialState: {
-        ...generateContractsInitialState(contractOptions)
-    },
-    extraReducers: {
-        ...drizzleReducers
-    },
-    onError(err) {
-        if (err.resp) {
-            message.error(err.resp.msg);
-        } else if (err.srv) {
-            message.error(err.srv.msg);
-        } else {
-            message.error(err);
-        }
+  initialState: {
+    ...generateContractsInitialState(contractOptions)
+  },
+  extraReducers: {
+    ...drizzleReducers
+  },
+  onError(err) {
+    if (err.resp) {
+      message.error(err.resp.msg);
+    } else if (err.srv) {
+      message.error(err.srv.msg);
+    } else {
+      message.error(err);
     }
+  }
 });
 
 // 2. Plugins
 app.use(
-    createLoading({
-        namespace: 'loading'
-        // effects: enable effects level loading state
-    })
+  createLoading({
+    namespace: 'loading'
+    // effects: enable effects level loading state
+  })
 );
 
 // 3. Model
