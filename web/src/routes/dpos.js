@@ -2,99 +2,32 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { drizzleConnect } from 'drizzle-react';
-import { Link } from 'dva/router';
-import { Card, List, Statistic, Row, Col, Icon } from 'antd';
+import { Card } from 'antd';
 
-import { CANDIDATE_STATUS } from '../utils/dpos';
-import { formatCelrValue } from '../utils/unit';
+import CandidateTable from '../components/dpos/candidate-table';
 
 class DPoS extends React.Component {
-    constructor(props, context) {
-        super(props);
+  render() {
+    const { DPoS } = this.props;
 
-        this.state = {};
-        this.contracts = context.drizzle.contracts;
-    }
-
-    renderCandidate = candidate => {
-        const { minSelfStake, stakingPool, status } = candidate.value;
-
-        return (
-            <List.Item>
-                <Card
-                    actions={[
-                        <Link to={`/candidate/${candidate.args[0]}`}>
-                            <Icon type="eye" title="View Detail" />
-                        </Link>
-                    ]}
-                >
-                    <Row>
-                        <Col span={12}>
-                            <Statistic
-                                title="Address"
-                                value={candidate.args[0]}
-                            />
-                        </Col>
-                        <Col span={12}>
-                            <Statistic
-                                title="Status"
-                                value={CANDIDATE_STATUS[status]}
-                            />
-                        </Col>
-                        <Col span={12}>
-                            <Statistic
-                                title="Min Self Stake"
-                                value={formatCelrValue(minSelfStake)}
-                            />
-                        </Col>
-                        <Col span={12}>
-                            <Statistic
-                                title="Staking Pool"
-                                value={formatCelrValue(stakingPool)}
-                            />
-                        </Col>
-                    </Row>
-                </Card>
-            </List.Item>
-        );
-    };
-
-    renderCandidates = () => {
-        const { DPoS } = this.props;
-        const candidates = _(DPoS.getCandidateInfo)
-            .values()
-            .sortBy(['value.status', 'args.0'])
-            .reverse()
-            .value();
-
-        return (
-            <List
-                grid={{ gutter: 16, column: 3 }}
-                dataSource={candidates}
-                renderItem={this.renderCandidate}
-            />
-        );
-    };
-
-    render() {
-        return <Card title="Validators">{this.renderCandidates()}</Card>;
-    }
+    return (
+      <Card title="Validators">
+        <CandidateTable candidates={_.values(DPoS.getCandidateInfo)} />
+      </Card>
+    );
+  }
 }
 
-DPoS.propTypes = {
-    dispatch: PropTypes.func.isRequired
-};
-
 DPoS.contextTypes = {
-    drizzle: PropTypes.object
+  drizzle: PropTypes.object
 };
 
 function mapStateToProps(state) {
-    const { contracts, DPoS } = state;
+  const { contracts, DPoS } = state;
 
-    return {
-        DPoS: { ...DPoS, ...contracts.DPoS }
-    };
+  return {
+    DPoS: { ...DPoS, ...contracts.DPoS }
+  };
 }
 
 export default drizzleConnect(DPoS, mapStateToProps);

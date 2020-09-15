@@ -15,8 +15,12 @@ const columns = [
   {
     title: 'Delegated Stake',
     dataIndex: 'delegatedStake',
-    sorter: (a, b) =>
-      web3.utils.toBN(a.delegatedStake).cmp(web3.utils.toBN(b.delegatedStake)),
+    sorter: (a, b) => {
+      return web3.utils
+        .toBN(a.delegatedStake)
+        .cmp(web3.utils.toBN(b.delegatedStake));
+    },
+    sortOrder: 'descend',
     render: text => formatCelrValue(text)
   },
   {
