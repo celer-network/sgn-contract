@@ -120,6 +120,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
+     * @notice Throws if amount is smaller than minimum
+     */
+    modifier minAmount(uint256 _amount, uint256 _min) {
+        require(_amount >= _min, 'Amount is smaller than minimum requirement');
+        _;
+    }
+
+    /**
      * @notice DPoS constructor
      * @dev will initialize parent contract Govern first
      * @param _celerTokenAddress address of Celer Token Contract
@@ -263,8 +271,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyRegisteredSidechains
     {
         uint256 newReward = _cumulativeReward.sub(redeemedMiningReward[_receiver]);
-        redeemedMiningReward[_receiver] = _cumulativeReward;
+        require(miningPool > newReward, 'Mining pool is smaller than new reward');
 
+        redeemedMiningReward[_receiver] = _cumulativeReward;
         miningPool = miningPool.sub(newReward);
         celerToken.safeTransfer(_receiver, newReward);
 
@@ -367,6 +376,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         external
         whenNotPaused
         onlyNonZeroAddr(_candidateAddr)
+        minAmount(_amount, 1 ether)
     {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, 'Candidate is not initialized');
@@ -442,6 +452,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function withdrawFromUnbondedCandidate(address _candidateAddr, uint256 _amount)
         external
         onlyNonZeroAddr(_candidateAddr)
+        minAmount(_amount, 1 ether)
     {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(
@@ -465,6 +476,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function intendWithdraw(address _candidateAddr, uint256 _amount)
         external
         onlyNonZeroAddr(_candidateAddr)
+        minAmount(_amount, 1 ether)
     {
         address msgSender = msg.sender;
 
