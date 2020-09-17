@@ -111,8 +111,9 @@ contract SGN is ISGN, Ownable, Pausable {
         uint256 newServiceReward = reward.cumulativeServiceReward.sub(
             redeemedServiceReward[reward.receiver]
         );
-        redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;
 
+        require(servicePool > newServiceReward, 'Service pool is smaller than new service reward');
+        redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;
         servicePool = servicePool.sub(newServiceReward);
 
         DPoSContract.redeemMiningReward(reward.receiver, reward.cumulativeMiningReward);
