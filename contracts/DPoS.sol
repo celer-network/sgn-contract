@@ -376,7 +376,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         external
         whenNotPaused
         onlyNonZeroAddr(_candidateAddr)
-        minAmount(_amount, 1 ether)
+        minAmount(_amount, 1 ether) // minimal amount per delegate operation is 1 CELR
     {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, 'Candidate is not initialized');
