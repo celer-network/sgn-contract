@@ -8,13 +8,13 @@ import web3 from 'web3';
 
 import { CANDIDATE_STATUS } from '../../utils/dpos';
 import { formatCelrValue } from '../../utils/unit';
+import { RATE_BASE } from '../../utils/constant';
 
 const columns = [
   {
     title: 'Address',
     dataIndex: 'address',
-    width: 400,
-    defaultSortOrder: 'ascend',
+    width: 450,
     sorter: (a, b) => a.address - b.address
   },
   {
@@ -33,6 +33,7 @@ const columns = [
   {
     title: 'Staking Pool',
     dataIndex: 'stakingPool',
+    defaultSortOrder: 'descend',
     sorter: (a, b) => {
       return web3.utils.toBN(a.stakingPool).cmp(web3.utils.toBN(b.stakingPool));
     },
@@ -47,6 +48,13 @@ const columns = [
         .cmp(web3.utils.toBN(b.minSelfStake));
     },
     render: text => formatCelrValue(text)
+  },
+  {
+    title: 'Commission',
+    dataIndex: 'commissionRate',
+    width: 140,
+    sorter: (a, b) => a.commissionRate - b.commissionRate,
+    render: text => `${text / RATE_BASE} %`
   }
 ];
 

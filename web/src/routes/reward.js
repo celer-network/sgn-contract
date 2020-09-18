@@ -109,25 +109,31 @@ class Reward extends React.Component {
           <Col span={12}>
             <Statistic
               title="Cumulative Mining Reward"
-              value={formatCelrValue(miningReward)}
+              value={formatCelrValue(miningReward, true)}
             />
           </Col>
           <Col span={12}>
             <Statistic
               title="Cumulative Service Reward"
-              value={formatCelrValue(serviceReward)}
+              value={formatCelrValue(serviceReward, true)}
             />
           </Col>
           <Col span={12}>
             <Statistic
               title="Redeemed Mining Reward"
-              value={formatCelrValue(_.values(redeemedMiningReward)[0].value)}
+              value={formatCelrValue(
+                _.values(redeemedMiningReward)[0].value,
+                true
+              )}
             />
           </Col>
           <Col span={12}>
             <Statistic
               title="Redeemed Service Reward"
-              value={formatCelrValue(_.values(redeemedServiceReward)[0].value)}
+              value={formatCelrValue(
+                _.values(redeemedServiceReward)[0].value,
+                true
+              )}
             />
           </Col>
         </Row>
