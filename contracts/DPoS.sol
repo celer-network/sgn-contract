@@ -71,6 +71,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     uint256 public dposGoLiveTime;
     uint256 public miningPool;
     bool public enableWhitelist;
+    bool public enableSlash;
 
     /**
      * @notice Throws if given address is zero address
@@ -165,6 +166,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     {
         celerToken = IERC20(_celerTokenAddress);
         dposGoLiveTime = block.number.add(_dposGoLiveTimeout);
+        enableSlash = true;
     }
 
     /**
@@ -173,6 +175,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      */
     function updateEnableWhitelist(bool _enable) external onlyOwner {
         enableWhitelist = _enable;
+    }
+
+    /**
+     * @notice Update enableSlash
+     * @param _enable enable whitelist flag
+     */
+    function updateEnableSlash(bool _enable) external onlyOwner {
+        enableSlash = _enable;
     }
 
     /**
@@ -550,6 +560,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyValidDPoS
         onlyNotMigrating
     {
+        require(enableSlash, 'Slash is disanled');
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
 
