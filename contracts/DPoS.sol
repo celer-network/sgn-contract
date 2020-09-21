@@ -179,7 +179,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
 
     /**
      * @notice Update enableSlash
-     * @param _enable enable whitelist flag
+     * @param _enable enable slash flag
      */
     function updateEnableSlash(bool _enable) external onlyOwner {
         enableSlash = _enable;
@@ -560,7 +560,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyValidDPoS
         onlyNotMigrating
     {
-        require(enableSlash, 'Slash is disanled');
+        require(enableSlash, 'Slash is disabled');
         PbSgn.PenaltyRequest memory penaltyRequest = PbSgn.decPenaltyRequest(_penaltyRequest);
         PbSgn.Penalty memory penalty = PbSgn.decPenalty(penaltyRequest.penalty);
 
