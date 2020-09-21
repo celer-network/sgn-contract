@@ -337,6 +337,20 @@
   },
   {
     "constant": true,
+    "inputs": [],
+    "name": "enableSlash",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [
       {
         "name": "",
@@ -1322,6 +1336,20 @@
       }
     ],
     "name": "updateEnableWhitelist",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_enable",
+        "type": "bool"
+      }
+    ],
+    "name": "updateEnableSlash",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
