@@ -222,6 +222,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         }
 
         bool passed = yesVotes >= getMinQuorumStakingPool();
+        if (!passed) {
+            miningPool = miningPool.add(paramProposals[_proposalId].deposit);
+        }
         internalConfirmParamProposal(_proposalId, passed);
     }
 
