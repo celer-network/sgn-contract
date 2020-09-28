@@ -7,51 +7,14 @@ const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
-
-const GANACHE_ACCOUNT_NUM = 20; // defined in .circleci/config.yml
-const GOVERN_PROPOSAL_DEPOSIT = 100;
-const GOVERN_VOTE_TIMEOUT = 20;
-const SLASH_TIMEOUT = 50;
-const VALIDATOR_ADD = 0;
-const VALIDATOR_REMOVAL = 1;
-const MIN_VALIDATOR_NUM = 1;
-const DPOS_GO_LIVE_TIMEOUT = 50;
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-const ONE_ADDR = '0x0000000000000000000000000000000000000001';
-// value of an indexed null bytes
-const HASHED_NULL =
-  '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';
-
-const COMMISSION_RATE = 100;
-const LOWER_RATE = 50;
-const HIGHER_RATE = 200;
-const RATE_LOCK_END_TIME = 2;
-const LARGER_LOCK_END_TIME = 100000;
-const ADVANCE_NOTICE_PERIOD = 100; // in practice, this should be 80640 (2 weeks)
-
-const MIN_STAKING_POOL = '4000000000000000000'; // need to be larger than CANDIDATE_STAKE for test purpose
-const MIN_SELF_STAKE = '2000000000000000000';
-const HIGHER_MIN_SELF_STAKE = '3000000000000000000';
-const LOWER_MIN_SELF_STAKE = '1000000000000000000';
-
-const ENUM_SLASH_TIMEOUT = 2;
-const ENUM_MIGRATION_TIME = 7;
-const MIGRATOIN_START_TIME = 10;
-
-const ENUM_VOTE_TYPE_YES = 1;
+const consts = require('./constants.js')
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
 contract('DPoS and SGN contracts', async accounts => {
   const DELEGATOR = accounts[0];
-  const DELEGATOR_STAKE = '5000000000000000000';
-  const DELEGATOR_WITHDRAW = '5000000000000000000';
   const CANDIDATE = accounts[1];
-  const CANDIDATE_STAKE = '3000000000000000000';
-  const CANDIDATE_WITHDRAW_UNDER_MIN = '1000000000000000001'; // CANDIDATE_STAKE - CANDIDATE_WITHDRAW_UNDER_MIN < MIN_SELF_STAKE
   const SUBSCRIBER = accounts[2];
-  const SUB_FEE = 100;
-  const MAX_VALIDATOR_NUM = 11;
 
   let celerToken;
   // let instance;
@@ -71,14 +34,14 @@ contract('DPoS and SGN contracts', async accounts => {
 
     dposInstance = await DPoS.new(
       celerToken.address,
-      GOVERN_PROPOSAL_DEPOSIT,
-      GOVERN_VOTE_TIMEOUT,
-      SLASH_TIMEOUT,
-      MIN_VALIDATOR_NUM,
-      MAX_VALIDATOR_NUM,
-      MIN_STAKING_POOL,
-      ADVANCE_NOTICE_PERIOD,
-      DPOS_GO_LIVE_TIMEOUT
+      consts.GOVERN_PROPOSAL_DEPOSIT,
+      consts.GOVERN_VOTE_TIMEOUT,
+      consts.SLASH_TIMEOUT,
+      consts.MIN_VALIDATOR_NUM,
+      consts.MAX_VALIDATOR_NUM,
+      consts.MIN_STAKING_POOL,
+      consts.ADVANCE_NOTICE_PERIOD,
+      consts.DPOS_GO_LIVE_TIMEOUT
     );
 
     sgnInstance = await SGN.new(celerToken.address, dposInstance.address);
@@ -86,16 +49,16 @@ contract('DPoS and SGN contracts', async accounts => {
     await dposInstance.registerSidechain(sgnInstance.address);
 
     // give enough money to other accounts
-    for (let i = 1; i < GANACHE_ACCOUNT_NUM; i++) {
+    for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
       await celerToken.transfer(accounts[i], '10000000000000000000');
     }
   });
 
   it('should fail to delegate to an uninitialized candidate', async () => {
-    await celerToken.approve(dposInstance.address, DELEGATOR_STAKE);
+    await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
 
     try {
-      await dposInstance.delegate(CANDIDATE, DELEGATOR_STAKE);
+      await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
     } catch (error) {
       assert.isAbove(error.message.search('Candidate is not initialized'), -1);
       return;
@@ -105,12 +68,12 @@ contract('DPoS and SGN contracts', async accounts => {
   });
 
   it('should fail to subscribe before sidechain goes live', async () => {
-    await celerToken.approve(sgnInstance.address, SUB_FEE, {
+    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
       from: SUBSCRIBER
     });
 
     try {
-      await sgnInstance.subscribe(SUB_FEE, {
+      await sgnInstance.subscribe(consts.SUB_FEE, {
         from: SUBSCRIBER
       });
     } catch (error) {
@@ -122,13 +85,13 @@ contract('DPoS and SGN contracts', async accounts => {
   });
 
   it('should fail to subscribe before there are enough validators', async () => {
-    await Timetravel.advanceBlocks(DPOS_GO_LIVE_TIMEOUT);
-    await celerToken.approve(sgnInstance.address, SUB_FEE, {
+    await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
+    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
       from: SUBSCRIBER
     });
 
     try {
-      await sgnInstance.subscribe(SUB_FEE, {
+      await sgnInstance.subscribe(consts.SUB_FEE, {
         from: SUBSCRIBER
       });
     } catch (error) {
@@ -143,9 +106,9 @@ contract('DPoS and SGN contracts', async accounts => {
     await dposInstance.pause();
     try {
       await dposInstance.initializeCandidate(
-        MIN_SELF_STAKE,
-        COMMISSION_RATE,
-        RATE_LOCK_END_TIME,
+        consts.MIN_SELF_STAKE,
+        consts.COMMISSION_RATE,
+        consts.RATE_LOCK_END_TIME,
         { from: CANDIDATE }
       );
     } catch (e) {
@@ -163,9 +126,9 @@ contract('DPoS and SGN contracts', async accounts => {
     await dposInstance.updateEnableWhitelist(true);
     try {
       await dposInstance.initializeCandidate(
-        MIN_SELF_STAKE,
-        COMMISSION_RATE,
-        RATE_LOCK_END_TIME,
+        consts.MIN_SELF_STAKE,
+        consts.COMMISSION_RATE,
+        consts.RATE_LOCK_END_TIME,
         { from: CANDIDATE }
       );
     } catch (e) {
@@ -183,16 +146,16 @@ contract('DPoS and SGN contracts', async accounts => {
 
   it('should initialize a candidate successfully', async () => {
     let tx = await dposInstance.initializeCandidate(
-      MIN_SELF_STAKE,
-      COMMISSION_RATE,
-      RATE_LOCK_END_TIME,
+      consts.MIN_SELF_STAKE,
+      consts.COMMISSION_RATE,
+      consts.RATE_LOCK_END_TIME,
       { from: CANDIDATE }
     );
     assert.equal(tx.logs[0].event, 'InitializeCandidate');
     assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-    assert.equal(tx.logs[0].args.minSelfStake, MIN_SELF_STAKE);
-    assert.equal(tx.logs[0].args.commissionRate, COMMISSION_RATE);
-    assert.equal(tx.logs[0].args.rateLockEndTime, RATE_LOCK_END_TIME);
+    assert.equal(tx.logs[0].args.minSelfStake, consts.MIN_SELF_STAKE);
+    assert.equal(tx.logs[0].args.commissionRate, consts.COMMISSION_RATE);
+    assert.equal(tx.logs[0].args.rateLockEndTime, consts.RATE_LOCK_END_TIME);
 
     const sidechainAddr = sha3(CANDIDATE);
     tx = await sgnInstance.updateSidechainAddr(sidechainAddr, {
@@ -200,7 +163,7 @@ contract('DPoS and SGN contracts', async accounts => {
     });
     assert.equal(tx.logs[0].event, 'UpdateSidechainAddr');
     assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-    assert.equal(tx.logs[0].args.oldSidechainAddr, HASHED_NULL);
+    assert.equal(tx.logs[0].args.oldSidechainAddr, consts.HASHED_NULL);
     assert.equal(tx.logs[0].args.newSidechainAddr, sha3(sidechainAddr));
   });
 
@@ -208,9 +171,9 @@ contract('DPoS and SGN contracts', async accounts => {
     await dposInstance.updateEnableWhitelist(true);
     await dposInstance.addWhitelisted(CANDIDATE);
     await dposInstance.initializeCandidate(
-      MIN_SELF_STAKE,
-      COMMISSION_RATE,
-      RATE_LOCK_END_TIME,
+      consts.MIN_SELF_STAKE,
+      consts.COMMISSION_RATE,
+      consts.RATE_LOCK_END_TIME,
       { from: CANDIDATE }
     );
   });
@@ -220,9 +183,9 @@ contract('DPoS and SGN contracts', async accounts => {
 
     beforeEach(async () => {
       await dposInstance.initializeCandidate(
-        MIN_SELF_STAKE,
-        COMMISSION_RATE,
-        RATE_LOCK_END_TIME,
+        consts.MIN_SELF_STAKE,
+        consts.COMMISSION_RATE,
+        consts.RATE_LOCK_END_TIME,
         { from: CANDIDATE }
       );
       await sgnInstance.updateSidechainAddr(sidechainAddr, {
@@ -232,21 +195,21 @@ contract('DPoS and SGN contracts', async accounts => {
 
     it('should increase the rate lock end time successfully', async () => {
       const tx = await dposInstance.nonIncreaseCommissionRate(
-        COMMISSION_RATE,
-        LARGER_LOCK_END_TIME,
+        consts.COMMISSION_RATE,
+        consts.LARGER_LOCK_END_TIME,
         { from: CANDIDATE }
       );
       const { event, args } = tx.logs[0];
 
       assert.equal(event, 'UpdateCommissionRate');
       assert.equal(args.candidate, CANDIDATE);
-      assert.equal(args.newRate, COMMISSION_RATE);
-      assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+      assert.equal(args.newRate, consts.COMMISSION_RATE);
+      assert.equal(args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
     });
 
     it('should fail to update the rate lock end time to an outdated block number', async () => {
       try {
-        await dposInstance.nonIncreaseCommissionRate(COMMISSION_RATE, 1, {
+        await dposInstance.nonIncreaseCommissionRate(consts.COMMISSION_RATE, 1, {
           from: CANDIDATE
         });
       } catch (error) {
@@ -260,8 +223,8 @@ contract('DPoS and SGN contracts', async accounts => {
     it('should fail to decrease the rate lock end time', async () => {
       // increase the lock end time first
       await dposInstance.nonIncreaseCommissionRate(
-        COMMISSION_RATE,
-        LARGER_LOCK_END_TIME,
+        consts.COMMISSION_RATE,
+        consts.LARGER_LOCK_END_TIME,
         { from: CANDIDATE }
       );
 
@@ -270,7 +233,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
       try {
         await dposInstance.nonIncreaseCommissionRate(
-          COMMISSION_RATE,
+          consts.COMMISSION_RATE,
           block.number + 10,
           { from: CANDIDATE }
         );
@@ -284,47 +247,47 @@ contract('DPoS and SGN contracts', async accounts => {
 
     it('should decrease the commission rate anytime', async () => {
       let tx = await dposInstance.nonIncreaseCommissionRate(
-        LOWER_RATE,
-        LARGER_LOCK_END_TIME,
+        consts.LOWER_RATE,
+        consts.LARGER_LOCK_END_TIME,
         { from: CANDIDATE }
       );
 
       assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
       assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-      assert.equal(tx.logs[0].args.newRate, LOWER_RATE);
-      assert.equal(tx.logs[0].args.newLockEndTime, LARGER_LOCK_END_TIME);
+      assert.equal(tx.logs[0].args.newRate, consts.LOWER_RATE);
+      assert.equal(tx.logs[0].args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
 
       tx = await dposInstance.nonIncreaseCommissionRate(
-        LOWER_RATE - 10,
-        LARGER_LOCK_END_TIME,
+        consts.LOWER_RATE - 10,
+        consts.LARGER_LOCK_END_TIME,
         { from: CANDIDATE }
       );
 
       assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
       assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-      assert.equal(tx.logs[0].args.newRate, LOWER_RATE - 10);
-      assert.equal(tx.logs[0].args.newLockEndTime, LARGER_LOCK_END_TIME);
+      assert.equal(tx.logs[0].args.newRate, consts.LOWER_RATE - 10);
+      assert.equal(tx.logs[0].args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
     });
 
     it('should announce increase commission rate successfully', async () => {
       const tx = await dposInstance.announceIncreaseCommissionRate(
-        HIGHER_RATE,
-        LARGER_LOCK_END_TIME,
+        consts.HIGHER_RATE,
+        consts.LARGER_LOCK_END_TIME,
         { from: CANDIDATE }
       );
       const { event, args } = tx.logs[0];
 
       assert.equal(event, 'CommissionRateAnnouncement');
       assert.equal(args.candidate, CANDIDATE);
-      assert.equal(args.announcedRate, HIGHER_RATE);
-      assert.equal(args.announcedLockEndTime, LARGER_LOCK_END_TIME);
+      assert.equal(args.announcedRate, consts.HIGHER_RATE);
+      assert.equal(args.announcedLockEndTime, consts.LARGER_LOCK_END_TIME);
     });
 
     describe('after announceIncreaseCommissionRate', async () => {
       beforeEach(async () => {
         await dposInstance.announceIncreaseCommissionRate(
-          HIGHER_RATE,
-          LARGER_LOCK_END_TIME,
+          consts.HIGHER_RATE,
+          consts.LARGER_LOCK_END_TIME,
           { from: CANDIDATE }
         );
       });
@@ -344,20 +307,20 @@ contract('DPoS and SGN contracts', async accounts => {
 
       it('should fail to confirmIncreaseCommissionRate after new rate can take effect but before lock end time', async () => {
         await dposInstance.nonIncreaseCommissionRate(
-          COMMISSION_RATE,
-          LARGER_LOCK_END_TIME,
+          consts.COMMISSION_RATE,
+          consts.LARGER_LOCK_END_TIME,
           { from: CANDIDATE }
         );
 
         // need to announceIncreaseCommissionRate again because _updateCommissionRate
         // will remove the previous announcement of increasing commission rate
         await dposInstance.announceIncreaseCommissionRate(
-          HIGHER_RATE,
-          LARGER_LOCK_END_TIME,
+          consts.HIGHER_RATE,
+          consts.LARGER_LOCK_END_TIME,
           { from: CANDIDATE }
         );
 
-        await Timetravel.advanceBlocks(ADVANCE_NOTICE_PERIOD);
+        await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
 
         try {
           await dposInstance.confirmIncreaseCommissionRate({
@@ -372,7 +335,7 @@ contract('DPoS and SGN contracts', async accounts => {
       });
 
       it('should confirmIncreaseCommissionRate successfully after new rate takes effect ', async () => {
-        await Timetravel.advanceBlocks(ADVANCE_NOTICE_PERIOD);
+        await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
         const tx = await dposInstance.confirmIncreaseCommissionRate({
           from: CANDIDATE
         });
@@ -380,17 +343,17 @@ contract('DPoS and SGN contracts', async accounts => {
 
         assert.equal(event, 'UpdateCommissionRate');
         assert.equal(args.candidate, CANDIDATE);
-        assert.equal(args.newRate, HIGHER_RATE);
-        assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+        assert.equal(args.newRate, consts.HIGHER_RATE);
+        assert.equal(args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
       });
     });
 
     it('should fail to initialize the same candidate twice', async () => {
       try {
         await dposInstance.initializeCandidate(
-          MIN_SELF_STAKE,
-          COMMISSION_RATE,
-          RATE_LOCK_END_TIME,
+          consts.MIN_SELF_STAKE,
+          consts.COMMISSION_RATE,
+          consts.RATE_LOCK_END_TIME,
           { from: CANDIDATE }
         );
       } catch (error) {
@@ -417,9 +380,9 @@ contract('DPoS and SGN contracts', async accounts => {
     it('should fail to delegate for paused contract', async () => {
       await dposInstance.pause();
 
-      await celerToken.approve(dposInstance.address, DELEGATOR_STAKE);
+      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
       try {
-        await dposInstance.delegate(CANDIDATE, DELEGATOR_STAKE);
+        await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
       } catch (e) {
         assert.isAbove(
           e.message.search('VM Exception while processing transaction'),
@@ -432,20 +395,20 @@ contract('DPoS and SGN contracts', async accounts => {
     });
 
     it('should delegate to candidate by a delegator successfully', async () => {
-      await celerToken.approve(dposInstance.address, DELEGATOR_STAKE);
+      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
 
-      const tx = await dposInstance.delegate(CANDIDATE, DELEGATOR_STAKE);
+      const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
       const { event, args } = tx.logs[1];
 
       assert.equal(event, 'Delegate');
       assert.equal(args.delegator, DELEGATOR);
       assert.equal(args.candidate, CANDIDATE);
-      assert.equal(args.newStake, DELEGATOR_STAKE);
-      assert.equal(args.stakingPool, DELEGATOR_STAKE);
+      assert.equal(args.newStake, consts.DELEGATOR_STAKE);
+      assert.equal(args.stakingPool, consts.DELEGATOR_STAKE);
     });
 
     it('should fail to claimValidator before delegating enough stake', async () => {
-      const stakingPool = (parseInt(MIN_STAKING_POOL) - 10000).toString();
+      const stakingPool = (parseInt(consts.MIN_STAKING_POOL) - 10000).toString();
       await celerToken.approve(dposInstance.address, stakingPool);
       await dposInstance.delegate(CANDIDATE, stakingPool);
 
@@ -493,8 +456,8 @@ contract('DPoS and SGN contracts', async accounts => {
 
     describe('after one delegator delegates enough stake to the candidate', async () => {
       beforeEach(async () => {
-        await celerToken.approve(dposInstance.address, DELEGATOR_STAKE);
-        await dposInstance.delegate(CANDIDATE, DELEGATOR_STAKE);
+        await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
+        await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
       });
 
       it('should fail to claimValidator before self delegating minSelfStake', async () => {
@@ -513,22 +476,22 @@ contract('DPoS and SGN contracts', async accounts => {
       it('should withdrawFromUnbondedCandidate by delegator successfully', async () => {
         const tx = await dposInstance.withdrawFromUnbondedCandidate(
           CANDIDATE,
-          DELEGATOR_WITHDRAW
+          consts.DELEGATOR_WITHDRAW
         );
         const { event, args } = tx.logs[1];
 
         assert.equal(event, 'WithdrawFromUnbondedCandidate');
         assert.equal(args.delegator, DELEGATOR);
         assert.equal(args.candidate, CANDIDATE);
-        assert.equal(args.amount, DELEGATOR_WITHDRAW);
+        assert.equal(args.amount, consts.DELEGATOR_WITHDRAW);
       });
 
       describe('after one candidate self delegates minSelfStake', async () => {
         beforeEach(async () => {
-          await celerToken.approve(dposInstance.address, CANDIDATE_STAKE, {
+          await celerToken.approve(dposInstance.address, consts.CANDIDATE_STAKE, {
             from: CANDIDATE
           });
-          await dposInstance.delegate(CANDIDATE, CANDIDATE_STAKE, {
+          await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {
             from: CANDIDATE
           });
         });
@@ -541,33 +504,33 @@ contract('DPoS and SGN contracts', async accounts => {
 
           assert.equal(event, 'ValidatorChange');
           assert.equal(args.ethAddr, CANDIDATE);
-          assert.equal(args.changeType, VALIDATOR_ADD);
+          assert.equal(args.changeType, consts.VALIDATOR_ADD);
         });
 
         it('should increase min self stake and claimValidator successfully', async () => {
           let tx = await dposInstance.updateMinSelfStake(
-            HIGHER_MIN_SELF_STAKE,
+            consts.HIGHER_MIN_SELF_STAKE,
             { from: CANDIDATE }
           );
           assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
           assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-          assert.equal(tx.logs[0].args.minSelfStake, HIGHER_MIN_SELF_STAKE);
+          assert.equal(tx.logs[0].args.minSelfStake, consts.HIGHER_MIN_SELF_STAKE);
 
           tx = await dposInstance.claimValidator({ from: CANDIDATE });
           assert.equal(tx.logs[0].event, 'ValidatorChange');
           assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
-          assert.equal(tx.logs[0].args.changeType, VALIDATOR_ADD);
+          assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_ADD);
         });
 
         it('should decrease min self stake successfully but fail to claimValidator before notice period', async () => {
           const tx = await dposInstance.updateMinSelfStake(
-            LOWER_MIN_SELF_STAKE,
+            consts.LOWER_MIN_SELF_STAKE,
             { from: CANDIDATE }
           );
           const { event, args } = tx.logs[0];
           assert.equal(event, 'UpdateMinSelfStake');
           assert.equal(args.candidate, CANDIDATE);
-          assert.equal(args.minSelfStake, LOWER_MIN_SELF_STAKE);
+          assert.equal(args.minSelfStake, consts.LOWER_MIN_SELF_STAKE);
 
           try {
             await dposInstance.claimValidator({ from: CANDIDATE });
@@ -583,16 +546,16 @@ contract('DPoS and SGN contracts', async accounts => {
         });
 
         it('should decrease min self stake and claimValidator after notice period successfully', async () => {
-          await dposInstance.updateMinSelfStake(LOWER_MIN_SELF_STAKE, {
+          await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {
             from: CANDIDATE
           });
 
-          await Timetravel.advanceBlocks(ADVANCE_NOTICE_PERIOD);
+          await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
 
           const tx = await dposInstance.claimValidator({ from: CANDIDATE });
           assert.equal(tx.logs[0].event, 'ValidatorChange');
           assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
-          assert.equal(tx.logs[0].args.changeType, VALIDATOR_ADD);
+          assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_ADD);
         });
 
         describe('after one candidate claimValidator', async () => {
@@ -606,7 +569,7 @@ contract('DPoS and SGN contracts', async accounts => {
             try {
               await dposInstance.withdrawFromUnbondedCandidate(
                 CANDIDATE,
-                DELEGATOR_WITHDRAW
+                consts.DELEGATOR_WITHDRAW
               );
             } catch (error) {
               assert.isAbove(error.message.search('invalid status'), -1);
@@ -648,21 +611,21 @@ contract('DPoS and SGN contracts', async accounts => {
           it('should remove the validator after validator intendWithdraw to an amount under minSelfStake', async () => {
             const tx = await dposInstance.intendWithdraw(
               CANDIDATE,
-              CANDIDATE_WITHDRAW_UNDER_MIN,
+              consts.CANDIDATE_WITHDRAW_UNDER_MIN,
               { from: CANDIDATE }
             );
             const block = await web3.eth.getBlock('latest');
 
             assert.equal(tx.logs[1].event, 'ValidatorChange');
             assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
-            assert.equal(tx.logs[1].args.changeType, VALIDATOR_REMOVAL);
+            assert.equal(tx.logs[1].args.changeType, consts.VALIDATOR_REMOVAL);
 
             assert.equal(tx.logs[2].event, 'IntendWithdraw');
             assert.equal(tx.logs[2].args.delegator, CANDIDATE);
             assert.equal(tx.logs[2].args.candidate, CANDIDATE);
             assert.equal(
               tx.logs[2].args.withdrawAmount,
-              CANDIDATE_WITHDRAW_UNDER_MIN
+              consts.CANDIDATE_WITHDRAW_UNDER_MIN
             );
             assert.equal(tx.logs[2].args.proposedTime.toNumber(), block.number);
           });
@@ -670,34 +633,34 @@ contract('DPoS and SGN contracts', async accounts => {
           it('should remove the validator after delegator intendWithdraw to an amount under minStakingPool', async () => {
             const tx = await dposInstance.intendWithdraw(
               CANDIDATE,
-              DELEGATOR_WITHDRAW
+              consts.DELEGATOR_WITHDRAW
             );
             const block = await web3.eth.getBlock('latest');
 
             assert.equal(tx.logs[1].event, 'ValidatorChange');
             assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
-            assert.equal(tx.logs[1].args.changeType, VALIDATOR_REMOVAL);
+            assert.equal(tx.logs[1].args.changeType, consts.VALIDATOR_REMOVAL);
 
             assert.equal(tx.logs[2].event, 'IntendWithdraw');
             assert.equal(tx.logs[2].args.delegator, DELEGATOR);
             assert.equal(tx.logs[2].args.candidate, CANDIDATE);
-            assert.equal(tx.logs[2].args.withdrawAmount, DELEGATOR_WITHDRAW);
+            assert.equal(tx.logs[2].args.withdrawAmount, consts.DELEGATOR_WITHDRAW);
             assert.equal(tx.logs[2].args.proposedTime.toNumber(), block.number);
           });
 
           it('should increase min self stake successfully', async () => {
             const tx = await dposInstance.updateMinSelfStake(
-              HIGHER_MIN_SELF_STAKE,
+              consts.HIGHER_MIN_SELF_STAKE,
               { from: CANDIDATE }
             );
             assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
             assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-            assert.equal(tx.logs[0].args.minSelfStake, HIGHER_MIN_SELF_STAKE);
+            assert.equal(tx.logs[0].args.minSelfStake, consts.HIGHER_MIN_SELF_STAKE);
           });
 
           it('should fail to decrease min self stake', async () => {
             try {
-              await dposInstance.updateMinSelfStake(LOWER_MIN_SELF_STAKE, {
+              await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {
                 from: CANDIDATE
               });
             } catch (error) {
@@ -711,16 +674,16 @@ contract('DPoS and SGN contracts', async accounts => {
 
           describe('after DPoS goes live', async () => {
             beforeEach(async () => {
-              await Timetravel.advanceBlocks(DPOS_GO_LIVE_TIMEOUT);
+              await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
             });
 
             it('should fail to subscribe for unpaused state', async () => {
               await sgnInstance.pause();
-              await celerToken.approve(sgnInstance.address, SUB_FEE, {
+              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
               try {
-                await sgnInstance.subscribe(SUB_FEE, {
+                await sgnInstance.subscribe(consts.SUB_FEE, {
                   from: SUBSCRIBER
                 });
               } catch (e) {
@@ -736,17 +699,17 @@ contract('DPoS and SGN contracts', async accounts => {
 
             // TODO: use a describe for the following when condition
             it('should subscribe successfully when there are enough validators', async () => {
-              await celerToken.approve(sgnInstance.address, SUB_FEE, {
+              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
-              const tx = await sgnInstance.subscribe(SUB_FEE, {
+              const tx = await sgnInstance.subscribe(consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
               const { event, args } = tx.logs[0];
 
               assert.equal(event, 'AddSubscriptionBalance');
               assert.equal(args.consumer, SUBSCRIBER);
-              assert.equal(args.amount, SUB_FEE);
+              assert.equal(args.amount, consts.SUB_FEE);
             });
 
             it('should fail to slash for unpaused state', async () => {
@@ -759,7 +722,7 @@ contract('DPoS and SGN contracts', async accounts => {
                   validatorAddr: [CANDIDATE],
                   delegatorAddrs: [CANDIDATE, DELEGATOR],
                   delegatorAmts: [5, 10],
-                  beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                  beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
                   beneficiaryAmts: [7, 8],
                   signers: [CANDIDATE]
                 });
@@ -785,7 +748,7 @@ contract('DPoS and SGN contracts', async accounts => {
                 validatorAddr: [CANDIDATE],
                 delegatorAddrs: [CANDIDATE, DELEGATOR],
                 delegatorAmts: [5, 10],
-                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
                 beneficiaryAmts: [7, 8],
                 signers: [CANDIDATE]
               });
@@ -820,7 +783,7 @@ contract('DPoS and SGN contracts', async accounts => {
                 validatorAddr: [CANDIDATE],
                 delegatorAddrs: [CANDIDATE, DELEGATOR],
                 delegatorAmts: [5, 10],
-                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
                 beneficiaryAmts: [7, 8],
                 signers: [CANDIDATE]
               });
@@ -843,7 +806,7 @@ contract('DPoS and SGN contracts', async accounts => {
                 validatorAddr: [CANDIDATE],
                 delegatorAddrs: [CANDIDATE, DELEGATOR],
                 delegatorAmts: [5, 10],
-                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
                 beneficiaryAmts: [7, 8],
                 signers: [CANDIDATE]
               });
@@ -865,7 +828,7 @@ contract('DPoS and SGN contracts', async accounts => {
                 validatorAddr: [CANDIDATE],
                 delegatorAddrs: [CANDIDATE, DELEGATOR],
                 delegatorAmts: [5, 10],
-                beneficiaryAddrs: [ZERO_ADDR, SUBSCRIBER],
+                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
                 beneficiaryAmts: [10, 10],
                 signers: [CANDIDATE]
               });
@@ -909,10 +872,10 @@ contract('DPoS and SGN contracts', async accounts => {
               await dposInstance.contributeToMiningPool(contribution);
 
               // submit subscription fees
-              await celerToken.approve(sgnInstance.address, SUB_FEE, {
+              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
-              await sgnInstance.subscribe(SUB_FEE, {
+              await sgnInstance.subscribe(consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
 
@@ -936,7 +899,7 @@ contract('DPoS and SGN contracts', async accounts => {
               assert.equal(tx.logs[0].args.serviceReward, serviceReward);
               assert.equal(
                 tx.logs[0].args.servicePool,
-                SUB_FEE - serviceReward
+                consts.SUB_FEE - serviceReward
               );
 
               // TODO: add checks for RedeemMiningReward event (hash is the only way to validate it)
@@ -966,17 +929,17 @@ contract('DPoS and SGN contracts', async accounts => {
 
             it('should fail to redeem reward more than amount in service pool', async () => {
               // submit subscription fees
-              await celerToken.approve(sgnInstance.address, SUB_FEE, {
+              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
-              await sgnInstance.subscribe(SUB_FEE, {
+              await sgnInstance.subscribe(consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
 
               const rewardRequest = await getRewardRequestBytes({
                 receiver: accounts[9],
                 cumulativeMiningReward: 0,
-                cumulativeServiceReward: SUB_FEE + 1,
+                cumulativeServiceReward: consts.SUB_FEE + 1,
                 signers: [CANDIDATE]
               });
 
@@ -992,7 +955,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
           describe('after a delegator intendWithdraw', async () => {
             beforeEach(async () => {
-              await dposInstance.intendWithdraw(CANDIDATE, DELEGATOR_WITHDRAW);
+              await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_WITHDRAW);
             });
 
             it('should confirmWithdraw 0 before withdrawTimeout', async () => {
@@ -1007,7 +970,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
             describe('after withdrawTimeout', async () => {
               beforeEach(async () => {
-                await Timetravel.advanceBlocks(SLASH_TIMEOUT);
+                await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
               });
 
               it('should confirmWithdraw successfully', async () => {
@@ -1017,7 +980,7 @@ contract('DPoS and SGN contracts', async accounts => {
                 assert.equal(event, 'ConfirmWithdraw');
                 assert.equal(args.delegator, DELEGATOR);
                 assert.equal(args.candidate, CANDIDATE);
-                assert.equal(args.amount, DELEGATOR_WITHDRAW);
+                assert.equal(args.amount, consts.DELEGATOR_WITHDRAW);
               });
 
               describe('after confirmWithdraw', async () => {
@@ -1052,9 +1015,9 @@ contract('DPoS and SGN contracts', async accounts => {
         // validators finish initialization
         const sidechainAddr = sha3(VALIDATORS[i]);
         await dposInstance.initializeCandidate(
-          MIN_SELF_STAKE,
-          COMMISSION_RATE,
-          RATE_LOCK_END_TIME,
+          consts.MIN_SELF_STAKE,
+          consts.COMMISSION_RATE,
+          consts.RATE_LOCK_END_TIME,
           { from: VALIDATORS[i] }
         );
         await sgnInstance.updateSidechainAddr(sidechainAddr, {
@@ -1074,7 +1037,7 @@ contract('DPoS and SGN contracts', async accounts => {
         });
       }
 
-      await Timetravel.advanceBlocks(DPOS_GO_LIVE_TIMEOUT);
+      await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
     });
 
     it('should call slash successfully with sufficient delegation', async () => {
@@ -1084,7 +1047,7 @@ contract('DPoS and SGN contracts', async accounts => {
         validatorAddr: [VALIDATORS[0]],
         delegatorAddrs: [VALIDATORS[0]],
         delegatorAmts: [10],
-        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAddrs: [consts.ZERO_ADDR],
         beneficiaryAmts: [10],
         signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
       });
@@ -1104,7 +1067,7 @@ contract('DPoS and SGN contracts', async accounts => {
         validatorAddr: [VALIDATORS[0]],
         delegatorAddrs: [VALIDATORS[0]],
         delegatorAmts: [10],
-        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAddrs: [consts.ZERO_ADDR],
         beneficiaryAmts: [10],
         signers: [VALIDATORS[1], VALIDATORS[1], VALIDATORS[1], VALIDATORS[1]]
       });
@@ -1129,7 +1092,7 @@ contract('DPoS and SGN contracts', async accounts => {
         validatorAddr: [VALIDATORS[0]],
         delegatorAddrs: [VALIDATORS[0]],
         delegatorAmts: [10],
-        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAddrs: [consts.ZERO_ADDR],
         beneficiaryAmts: [10],
         signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
       });
@@ -1147,7 +1110,7 @@ contract('DPoS and SGN contracts', async accounts => {
         validatorAddr: [VALIDATORS[0]],
         delegatorAddrs: [VALIDATORS[0]],
         delegatorAmts: [10],
-        beneficiaryAddrs: [ZERO_ADDR],
+        beneficiaryAddrs: [consts.ZERO_ADDR],
         beneficiaryAmts: [10],
         signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
       });
@@ -1161,11 +1124,11 @@ contract('DPoS and SGN contracts', async accounts => {
     });
 
     it('should createParamProposal successfully', async () => {
-      const newSlashTimeout = SLASH_TIMEOUT + 1;
+      const newSlashTimeout = consts.SLASH_TIMEOUT + 1;
 
-      await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+      await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
       const tx = await dposInstance.createParamProposal(
-        ENUM_SLASH_TIMEOUT,
+        consts.ENUM_SLASH_TIMEOUT,
         newSlashTimeout
       );
       const block = await web3.eth.getBlock('latest');
@@ -1174,9 +1137,9 @@ contract('DPoS and SGN contracts', async accounts => {
       assert.equal(event, 'CreateParamProposal');
       assert.equal(args.proposalId, 0);
       assert.equal(args.proposer, accounts[0]);
-      assert.equal(args.deposit, GOVERN_PROPOSAL_DEPOSIT);
-      assert.equal(args.voteDeadline, block.number + GOVERN_VOTE_TIMEOUT);
-      assert.equal(args.record, ENUM_SLASH_TIMEOUT);
+      assert.equal(args.deposit, consts.GOVERN_PROPOSAL_DEPOSIT);
+      assert.equal(args.voteDeadline, block.number + consts.GOVERN_VOTE_TIMEOUT);
+      assert.equal(args.record, consts.ENUM_SLASH_TIMEOUT);
       assert.equal(args.newValue, newSlashTimeout);
     });
 
@@ -1184,16 +1147,16 @@ contract('DPoS and SGN contracts', async accounts => {
       const proposalId = 0;
 
       beforeEach(async () => {
-        await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+        await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
         await dposInstance.createParamProposal(
-          ENUM_MIGRATION_TIME,
-          MIGRATOIN_START_TIME
+          consts.ENUM_MIGRATION_TIME,
+          consts.MIGRATOIN_START_TIME
         );
       });
 
       it('should fail to voteParam if not validator', async () => {
         try {
-          await dposInstance.voteParam(proposalId, ENUM_VOTE_TYPE_YES, {
+          await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
             from: NON_VALIDATOR
           });
         } catch (error) {
@@ -1210,7 +1173,7 @@ contract('DPoS and SGN contracts', async accounts => {
       it('should fail to voteParam for a proposal with an invalid status', async () => {
         const invalidProposalId = proposalId + 1;
         try {
-          await dposInstance.voteParam(invalidProposalId, ENUM_VOTE_TYPE_YES, {
+          await dposInstance.voteParam(invalidProposalId, consts.ENUM_VOTE_TYPE_YES, {
             from: VALIDATORS[0]
           });
         } catch (error) {
@@ -1224,7 +1187,7 @@ contract('DPoS and SGN contracts', async accounts => {
       it('should vote successfully as a validator', async () => {
         const tx = await dposInstance.voteParam(
           proposalId,
-          ENUM_VOTE_TYPE_YES,
+          consts.ENUM_VOTE_TYPE_YES,
           { from: VALIDATORS[0] }
         );
         const { event, args } = tx.logs[0];
@@ -1232,19 +1195,19 @@ contract('DPoS and SGN contracts', async accounts => {
         assert.equal(event, 'VoteParam');
         assert.equal(args.proposalId, proposalId);
         assert.equal(args.voter, VALIDATORS[0]);
-        assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+        assert.equal(args.voteType, consts.ENUM_VOTE_TYPE_YES);
       });
 
       describe('after a validtor votes successfully', async () => {
         beforeEach(async () => {
-          await dposInstance.voteParam(proposalId, ENUM_VOTE_TYPE_YES, {
+          await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
             from: VALIDATORS[0]
           });
         });
 
         it('should fail to vote for the same proposal twice', async () => {
           try {
-            await dposInstance.voteParam(proposalId, ENUM_VOTE_TYPE_YES, {
+            await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
               from: VALIDATORS[0]
             });
           } catch (error) {
@@ -1258,7 +1221,7 @@ contract('DPoS and SGN contracts', async accounts => {
         it('should vote successfully as another validator', async () => {
           const tx = await dposInstance.voteParam(
             proposalId,
-            ENUM_VOTE_TYPE_YES,
+            consts.ENUM_VOTE_TYPE_YES,
             { from: VALIDATORS[1] }
           );
           const { event, args } = tx.logs[0];
@@ -1266,7 +1229,7 @@ contract('DPoS and SGN contracts', async accounts => {
           assert.equal(event, 'VoteParam');
           assert.equal(args.proposalId, proposalId);
           assert.equal(args.voter, VALIDATORS[1]);
-          assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+          assert.equal(args.voteType, consts.ENUM_VOTE_TYPE_YES);
         });
 
         it('should fail to confirmParamProposal before the vote deadline', async () => {
@@ -1285,12 +1248,12 @@ contract('DPoS and SGN contracts', async accounts => {
 
         describe('after passing the vote deadline', async () => {
           beforeEach(async () => {
-            await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+            await Timetravel.advanceBlocks(consts.GOVERN_VOTE_TIMEOUT);
           });
 
           it('should fail to vote after the vote deadline', async () => {
             try {
-              await dposInstance.voteParam(proposalId, ENUM_VOTE_TYPE_YES, {
+              await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
                 from: VALIDATORS[2]
               });
             } catch (error) {
@@ -1308,8 +1271,8 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(event, 'ConfirmParamProposal');
             assert.equal(args.proposalId, proposalId);
             assert.equal(args.passed, false);
-            assert.equal(args.record, ENUM_MIGRATION_TIME);
-            assert.equal(args.newValue, MIGRATOIN_START_TIME);
+            assert.equal(args.record, consts.ENUM_MIGRATION_TIME);
+            assert.equal(args.newValue, consts.MIGRATOIN_START_TIME);
           });
         });
       });
@@ -1318,7 +1281,7 @@ contract('DPoS and SGN contracts', async accounts => {
         beforeEach(async () => {
           const majorNum = Math.ceil((VALIDATORS.length * 2) / 3);
           for (let i = 0; i < majorNum; i++) {
-            await dposInstance.voteParam(proposalId, ENUM_VOTE_TYPE_YES, {
+            await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
               from: VALIDATORS[i]
             });
           }
@@ -1326,22 +1289,22 @@ contract('DPoS and SGN contracts', async accounts => {
 
         describe('after passing the vote deadline', async () => {
           beforeEach(async () => {
-            await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+            await Timetravel.advanceBlocks(consts.GOVERN_VOTE_TIMEOUT);
           });
 
           it('should confirmParamProposal (accept proposal case) successfully', async () => {
             const tx = await dposInstance.confirmParamProposal(proposalId);
             const { event, args } = tx.logs[0];
             const queriedMigrationTime = await dposInstance.getUIntValue(
-              ENUM_MIGRATION_TIME
+              consts.ENUM_MIGRATION_TIME
             );
 
             assert.equal(event, 'ConfirmParamProposal');
             assert.equal(args.proposalId, proposalId);
             assert.equal(args.passed, true);
-            assert.equal(args.record, ENUM_MIGRATION_TIME);
-            assert.equal(args.newValue, MIGRATOIN_START_TIME);
-            assert.equal(queriedMigrationTime, MIGRATOIN_START_TIME);
+            assert.equal(args.record, consts.ENUM_MIGRATION_TIME);
+            assert.equal(args.newValue, consts.MIGRATOIN_START_TIME);
+            assert.equal(queriedMigrationTime, consts.MIGRATOIN_START_TIME);
           });
 
           it('should fail to slash in migrating state', async () => {
@@ -1352,7 +1315,7 @@ contract('DPoS and SGN contracts', async accounts => {
               validatorAddr: [VALIDATORS[0]],
               delegatorAddrs: [VALIDATORS[0]],
               delegatorAmts: [10],
-              beneficiaryAddrs: [ZERO_ADDR],
+              beneficiaryAddrs: [consts.ZERO_ADDR],
               beneficiaryAmts: [10],
               signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
             });
@@ -1372,10 +1335,10 @@ contract('DPoS and SGN contracts', async accounts => {
 
     // sidechain governance tests
     it('should createSidechainProposal successfully', async () => {
-      await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+      await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
       const newRegistrationStatus = true;
       const tx = await dposInstance.createSidechainProposal(
-        ONE_ADDR,
+        consts.ONE_ADDR,
         newRegistrationStatus
       );
       const block = await web3.eth.getBlock('latest');
@@ -1384,9 +1347,9 @@ contract('DPoS and SGN contracts', async accounts => {
       assert.equal(event, 'CreateSidechainProposal');
       assert.equal(args.proposalId, 0);
       assert.equal(args.proposer, accounts[0]);
-      assert.equal(args.deposit, GOVERN_PROPOSAL_DEPOSIT);
-      assert.equal(args.voteDeadline, block.number + GOVERN_VOTE_TIMEOUT);
-      assert.equal(args.sidechainAddr, ONE_ADDR);
+      assert.equal(args.deposit, consts.GOVERN_PROPOSAL_DEPOSIT);
+      assert.equal(args.voteDeadline, block.number + consts.GOVERN_VOTE_TIMEOUT);
+      assert.equal(args.sidechainAddr, consts.ONE_ADDR);
       assert.equal(args.registered, newRegistrationStatus);
     });
 
@@ -1395,16 +1358,16 @@ contract('DPoS and SGN contracts', async accounts => {
       const newRegistrationStatus = true;
 
       beforeEach(async () => {
-        await celerToken.approve(dposInstance.address, GOVERN_PROPOSAL_DEPOSIT);
+        await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
         await dposInstance.createSidechainProposal(
-          ONE_ADDR,
+          consts.ONE_ADDR,
           newRegistrationStatus
         );
       });
 
       it('should fail to voteSidechain if not validator', async () => {
         try {
-          await dposInstance.voteSidechain(proposalId, ENUM_VOTE_TYPE_YES, {
+          await dposInstance.voteSidechain(proposalId, consts.ENUM_VOTE_TYPE_YES, {
             from: NON_VALIDATOR
           });
         } catch (error) {
@@ -1423,7 +1386,7 @@ contract('DPoS and SGN contracts', async accounts => {
         try {
           await dposInstance.voteSidechain(
             invalidProposalId,
-            ENUM_VOTE_TYPE_YES,
+            consts.ENUM_VOTE_TYPE_YES,
             { from: VALIDATORS[0] }
           );
         } catch (error) {
@@ -1437,7 +1400,7 @@ contract('DPoS and SGN contracts', async accounts => {
       it('should vote successfully as a validator', async () => {
         const tx = await dposInstance.voteSidechain(
           proposalId,
-          ENUM_VOTE_TYPE_YES,
+          consts.ENUM_VOTE_TYPE_YES,
           { from: VALIDATORS[0] }
         );
         const { event, args } = tx.logs[0];
@@ -1445,19 +1408,19 @@ contract('DPoS and SGN contracts', async accounts => {
         assert.equal(event, 'VoteSidechain');
         assert.equal(args.proposalId, proposalId);
         assert.equal(args.voter, VALIDATORS[0]);
-        assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+        assert.equal(args.voteType, consts.ENUM_VOTE_TYPE_YES);
       });
 
       describe('after a validtor votes successfully', async () => {
         beforeEach(async () => {
-          await dposInstance.voteSidechain(proposalId, ENUM_VOTE_TYPE_YES, {
+          await dposInstance.voteSidechain(proposalId, consts.ENUM_VOTE_TYPE_YES, {
             from: VALIDATORS[0]
           });
         });
 
         it('should fail to vote for the same proposal twice', async () => {
           try {
-            await dposInstance.voteSidechain(proposalId, ENUM_VOTE_TYPE_YES, {
+            await dposInstance.voteSidechain(proposalId, consts.ENUM_VOTE_TYPE_YES, {
               from: VALIDATORS[0]
             });
           } catch (error) {
@@ -1471,7 +1434,7 @@ contract('DPoS and SGN contracts', async accounts => {
         it('should vote successfully as another validator', async () => {
           const tx = await dposInstance.voteSidechain(
             proposalId,
-            ENUM_VOTE_TYPE_YES,
+            consts.ENUM_VOTE_TYPE_YES,
             { from: VALIDATORS[1] }
           );
           const { event, args } = tx.logs[0];
@@ -1479,7 +1442,7 @@ contract('DPoS and SGN contracts', async accounts => {
           assert.equal(event, 'VoteSidechain');
           assert.equal(args.proposalId, proposalId);
           assert.equal(args.voter, VALIDATORS[1]);
-          assert.equal(args.voteType, ENUM_VOTE_TYPE_YES);
+          assert.equal(args.voteType, consts.ENUM_VOTE_TYPE_YES);
         });
 
         it('should fail to confirmSidechainProposal before the vote deadline', async () => {
@@ -1498,12 +1461,12 @@ contract('DPoS and SGN contracts', async accounts => {
 
         describe('after passing the vote deadline', async () => {
           beforeEach(async () => {
-            await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+            await Timetravel.advanceBlocks(consts.GOVERN_VOTE_TIMEOUT);
           });
 
           it('should fail to vote after the vote deadline', async () => {
             try {
-              await dposInstance.voteSidechain(proposalId, ENUM_VOTE_TYPE_YES, {
+              await dposInstance.voteSidechain(proposalId, consts.ENUM_VOTE_TYPE_YES, {
                 from: VALIDATORS[2]
               });
             } catch (error) {
@@ -1521,7 +1484,7 @@ contract('DPoS and SGN contracts', async accounts => {
             assert.equal(event, 'ConfirmSidechainProposal');
             assert.equal(args.proposalId, proposalId);
             assert.equal(args.passed, false);
-            assert.equal(args.sidechainAddr, ONE_ADDR);
+            assert.equal(args.sidechainAddr, consts.ONE_ADDR);
             assert.equal(args.registered, newRegistrationStatus);
           });
         });
@@ -1531,7 +1494,7 @@ contract('DPoS and SGN contracts', async accounts => {
         beforeEach(async () => {
           const majorNum = Math.ceil((VALIDATORS.length * 2) / 3);
           for (let i = 0; i < majorNum; i++) {
-            await dposInstance.voteSidechain(proposalId, ENUM_VOTE_TYPE_YES, {
+            await dposInstance.voteSidechain(proposalId, consts.ENUM_VOTE_TYPE_YES, {
               from: VALIDATORS[i]
             });
           }
@@ -1539,20 +1502,20 @@ contract('DPoS and SGN contracts', async accounts => {
 
         describe('after passing the vote deadline', async () => {
           beforeEach(async () => {
-            await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+            await Timetravel.advanceBlocks(consts.GOVERN_VOTE_TIMEOUT);
           });
 
           it('should confirmSidechainProposal (accept proposal case) successfully', async () => {
             const tx = await dposInstance.confirmSidechainProposal(proposalId);
             const { event, args } = tx.logs[0];
             const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(
-              ONE_ADDR
+              consts.ONE_ADDR
             );
 
             assert.equal(event, 'ConfirmSidechainProposal');
             assert.equal(args.proposalId, proposalId);
             assert.equal(args.passed, true);
-            assert.equal(args.sidechainAddr, ONE_ADDR);
+            assert.equal(args.sidechainAddr, consts.ONE_ADDR);
             assert.equal(args.registered, newRegistrationStatus);
             assert.equal(queriedRegistrationStatus, newRegistrationStatus);
           });
@@ -1569,10 +1532,10 @@ contract('DPoS and SGN contracts', async accounts => {
               // createSidechainProposal
               await celerToken.approve(
                 dposInstance.address,
-                GOVERN_PROPOSAL_DEPOSIT
+                consts.GOVERN_PROPOSAL_DEPOSIT
               );
               await dposInstance.createSidechainProposal(
-                ONE_ADDR,
+                consts.ONE_ADDR,
                 registrationStatus
               );
 
@@ -1581,13 +1544,13 @@ contract('DPoS and SGN contracts', async accounts => {
               for (let i = 0; i < majorNum; i++) {
                 await dposInstance.voteSidechain(
                   unregisterProposalId,
-                  ENUM_VOTE_TYPE_YES,
+                  consts.ENUM_VOTE_TYPE_YES,
                   { from: VALIDATORS[i] }
                 );
               }
 
               // pass vote deadline
-              await Timetravel.advanceBlocks(GOVERN_VOTE_TIMEOUT);
+              await Timetravel.advanceBlocks(consts.GOVERN_VOTE_TIMEOUT);
 
               // confirmSidechainProposal
               const tx = await dposInstance.confirmSidechainProposal(
@@ -1595,13 +1558,13 @@ contract('DPoS and SGN contracts', async accounts => {
               );
               const { event, args } = tx.logs[0];
               const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(
-                ONE_ADDR
+                consts.ONE_ADDR
               );
 
               assert.equal(event, 'ConfirmSidechainProposal');
               assert.equal(args.proposalId, unregisterProposalId);
               assert.equal(args.passed, true);
-              assert.equal(args.sidechainAddr, ONE_ADDR);
+              assert.equal(args.sidechainAddr, consts.ONE_ADDR);
               assert.equal(args.registered, registrationStatus);
               assert.equal(queriedRegistrationStatus, registrationStatus);
             });
@@ -1630,19 +1593,19 @@ contract('DPoS and SGN contracts', async accounts => {
       for (let i = 0; i < VALIDATORS.length; i++) {
         const sidechainAddr = sha3(VALIDATORS[i]);
         await dposInstance.initializeCandidate(
-          MIN_SELF_STAKE,
-          COMMISSION_RATE,
-          RATE_LOCK_END_TIME,
+          consts.MIN_SELF_STAKE,
+          consts.COMMISSION_RATE,
+          consts.RATE_LOCK_END_TIME,
           { from: VALIDATORS[i] }
         );
         await sgnInstance.updateSidechainAddr(sidechainAddr, {
           from: VALIDATORS[i]
         });
 
-        await celerToken.approve(dposInstance.address, MIN_STAKING_POOL, {
+        await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {
           from: VALIDATORS[i]
         });
-        await dposInstance.delegate(VALIDATORS[i], MIN_STAKING_POOL, {
+        await dposInstance.delegate(VALIDATORS[i], consts.MIN_STAKING_POOL, {
           from: VALIDATORS[i]
         });
 
@@ -1663,19 +1626,19 @@ contract('DPoS and SGN contracts', async accounts => {
     it('should fail to claimValidator with low stake', async () => {
       const sidechainAddr = sha3(CANDIDATE);
       await dposInstance.initializeCandidate(
-        MIN_SELF_STAKE,
-        COMMISSION_RATE,
-        RATE_LOCK_END_TIME,
+        consts.MIN_SELF_STAKE,
+        consts.COMMISSION_RATE,
+        consts.RATE_LOCK_END_TIME,
         { from: CANDIDATE }
       );
       await sgnInstance.updateSidechainAddr(sidechainAddr, {
         from: CANDIDATE
       });
 
-      await celerToken.approve(dposInstance.address, MIN_STAKING_POOL, {
+      await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {
         from: CANDIDATE
       });
-      await dposInstance.delegate(CANDIDATE, MIN_STAKING_POOL, {
+      await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {
         from: CANDIDATE
       });
 
@@ -1697,19 +1660,19 @@ contract('DPoS and SGN contracts', async accounts => {
     it('should replace a current validator by calling claimValidator with enough stake', async () => {
       const sidechainAddr = sha3(CANDIDATE);
       await dposInstance.initializeCandidate(
-        MIN_SELF_STAKE,
-        COMMISSION_RATE,
-        RATE_LOCK_END_TIME,
+        consts.MIN_SELF_STAKE,
+        consts.COMMISSION_RATE,
+        consts.RATE_LOCK_END_TIME,
         { from: CANDIDATE }
       );
       await sgnInstance.updateSidechainAddr(sidechainAddr, {
         from: CANDIDATE
       });
 
-      await celerToken.approve(dposInstance.address, DELEGATOR_STAKE, {
+      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {
         from: CANDIDATE
       });
-      await dposInstance.delegate(CANDIDATE, DELEGATOR_STAKE, {
+      await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {
         from: CANDIDATE
       });
 
@@ -1717,10 +1680,10 @@ contract('DPoS and SGN contracts', async accounts => {
 
       assert.equal(tx.logs[0].event, 'ValidatorChange');
       assert.equal(tx.logs[0].args.ethAddr, accounts[2]);
-      assert.equal(tx.logs[0].args.changeType, VALIDATOR_REMOVAL);
+      assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_REMOVAL);
       assert.equal(tx.logs[1].event, 'ValidatorChange');
       assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
-      assert.equal(tx.logs[1].args.changeType, VALIDATOR_ADD);
+      assert.equal(tx.logs[1].args.changeType, consts.VALIDATOR_ADD);
     });
   });
 });
