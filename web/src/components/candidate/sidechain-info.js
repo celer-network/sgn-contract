@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import { Statistic, Row, Col, message, Table } from 'antd';
 import axios from 'axios';
+import web3 from 'web3';
 
 import { formatCelrValue } from '../../utils/unit';
 
@@ -14,6 +15,12 @@ const columns = [
   {
     title: 'Delegated Stake',
     dataIndex: 'delegatedStake',
+    sorter: (a, b) => {
+      return web3.utils
+        .toBN(a.delegatedStake)
+        .cmp(web3.utils.toBN(b.delegatedStake));
+    },
+    sortOrder: 'descend',
     render: text => {
       return formatCelrValue(text);
     }

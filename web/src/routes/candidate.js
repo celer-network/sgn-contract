@@ -19,7 +19,6 @@ import {
 import DelegateForm from '../components/candidate/delegate-form';
 import WithdrawForm from '../components/candidate/withdraw-form';
 import CommissionForm from '../components/candidate/commission-form';
-import DelegatorTable from '../components/candidate/delegator-table';
 import SidechainInfo from '../components/candidate/sidechain-info';
 import SlashTable from '../components/candidate/slash-table';
 import { formatCelrValue } from '../utils/unit';
@@ -41,23 +40,23 @@ class Candidate extends React.Component {
 
     const candidateId = props.match.params.id;
     this.contracts.SGN.methods.sidechainAddrMap.cacheCall(candidateId);
-    this.contracts.DPoS.events.Delegate(
-      {
-        fromBlock: 0,
-        filter: { candidate: candidateId }
-      },
-      (err, event) => {
-        if (err) {
-          return;
-        }
+    // this.contracts.DPoS.events.Delegate(
+    //   {
+    //     fromBlock: 0,
+    //     filter: { candidate: candidateId }
+    //   },
+    //   (err, event) => {
+    //     if (err) {
+    //       return;
+    //     }
 
-        const { delegator, candidate } = event.returnValues;
-        this.contracts.DPoS.methods.getDelegatorInfo.cacheCall(
-          candidate,
-          delegator
-        );
-      }
-    );
+    //     const { delegator, candidate } = event.returnValues;
+    //     this.contracts.DPoS.methods.getDelegatorInfo.cacheCall(
+    //       candidate,
+    //       delegator
+    //     );
+    //   }
+    // );
 
     this.contracts.DPoS.events.Slash(
       {
@@ -170,7 +169,7 @@ class Candidate extends React.Component {
 
   renderCandidateDetail = () => {
     const { SGN } = this.props;
-    const { candidate, delegators, slashes } = this.state;
+    const { candidate, slashes } = this.state;
     const candidateId = candidate.args[0];
     const {
       minSelfStake,
@@ -227,9 +226,6 @@ class Candidate extends React.Component {
         </Col>
         <Col span={24}>
           <Tabs>
-            <Tabs.TabPane tab="Delegators" key="delegators">
-              <DelegatorTable delegators={delegators} />
-            </Tabs.TabPane>
             <Tabs.TabPane tab="Sidechain" key="sidechain">
               <SidechainInfo candidateId={candidateId} />
             </Tabs.TabPane>
