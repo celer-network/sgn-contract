@@ -12,18 +12,10 @@ const consts = require('./constants.js');
 contract('basic tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
-  const SUBSCRIBER = accounts[3];
-  const RECEIVER = accounts[4];
 
   let celerToken;
   let dposInstance;
   let sgnInstance;
-  let getPenaltyRequestBytes;
-
-  before(async () => {
-    const protoChainInstance = await protoChainFactory();
-    getPenaltyRequestBytes = protoChainInstance.getPenaltyRequestBytes;
-  });
 
   beforeEach(async () => {
     celerToken = await CELRToken.new();
@@ -405,134 +397,6 @@ contract('basic tests', async (accounts) => {
           });
 
           // TODO: add a test of "fail to confirmWithdraw because penalty slashes all undelegating stake"
-
-          describe('after DPoS goes live', async () => {
-            beforeEach(async () => {
-              await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
-            });
-
-            it('should fail to slash when paused', async () => {
-              await dposInstance.pause();
-
-              try {
-                const request = await getPenaltyRequestBytes({
-                  nonce: 1,
-                  expireTime: 1000000,
-                  validatorAddr: [CANDIDATE],
-                  delegatorAddrs: [CANDIDATE, DELEGATOR],
-                  delegatorAmts: [5, 10],
-                  beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
-                  beneficiaryAmts: [7, 8],
-                  signers: [CANDIDATE]
-                });
-                await dposInstance.slash(request);
-              } catch (e) {
-                assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-
-            it('should slash successfully', async () => {
-              const oldMiningPool = await dposInstance.miningPool();
-              const oldTokenAmt = await celerToken.balanceOf(SUBSCRIBER);
-
-              const request = await getPenaltyRequestBytes({
-                nonce: 1,
-                expireTime: 1000000,
-                validatorAddr: [CANDIDATE],
-                delegatorAddrs: [CANDIDATE, DELEGATOR],
-                delegatorAmts: [5, 10],
-                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
-                beneficiaryAmts: [7, 8],
-                signers: [CANDIDATE]
-              });
-              const tx = await dposInstance.slash(request);
-              const newMiningPool = await dposInstance.miningPool();
-              const newTokenAmt = await celerToken.balanceOf(SUBSCRIBER);
-
-              assert.equal(tx.logs[0].event, 'Slash');
-              assert.equal(tx.logs[0].args.validator, CANDIDATE);
-              assert.equal(tx.logs[0].args.delegator, CANDIDATE);
-              assert.equal(tx.logs[0].args.amount, 5);
-
-              assert.equal(tx.logs[2].event, 'Slash');
-              assert.equal(tx.logs[2].args.validator, CANDIDATE);
-              assert.equal(tx.logs[2].args.delegator, DELEGATOR);
-              assert.equal(tx.logs[2].args.amount, 10);
-
-              assert.equal(newMiningPool.toString(), oldMiningPool.addn(7).toString());
-              assert.equal(newTokenAmt.toString(), oldTokenAmt.addn(8).toString());
-            });
-
-            it('should fail to slash with same request twice', async () => {
-              const request = await getPenaltyRequestBytes({
-                nonce: 1,
-                expireTime: 1000000,
-                validatorAddr: [CANDIDATE],
-                delegatorAddrs: [CANDIDATE, DELEGATOR],
-                delegatorAmts: [5, 10],
-                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
-                beneficiaryAmts: [7, 8],
-                signers: [CANDIDATE]
-              });
-              await dposInstance.slash(request);
-
-              try {
-                await dposInstance.slash(request);
-              } catch (error) {
-                assert.isAbove(error.message.search('Used penalty nonce'), -1);
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-
-            it('should fail to slash with expired request', async () => {
-              const request = await getPenaltyRequestBytes({
-                nonce: 1,
-                expireTime: 1,
-                validatorAddr: [CANDIDATE],
-                delegatorAddrs: [CANDIDATE, DELEGATOR],
-                delegatorAmts: [5, 10],
-                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
-                beneficiaryAmts: [7, 8],
-                signers: [CANDIDATE]
-              });
-
-              try {
-                await dposInstance.slash(request);
-              } catch (error) {
-                assert.isAbove(error.message.search('Penalty expired'), -1);
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-
-            it("should fail to slash if amount sums don't match", async () => {
-              const request = await getPenaltyRequestBytes({
-                nonce: 1,
-                expireTime: 1000000,
-                validatorAddr: [CANDIDATE],
-                delegatorAddrs: [CANDIDATE, DELEGATOR],
-                delegatorAmts: [5, 10],
-                beneficiaryAddrs: [consts.ZERO_ADDR, SUBSCRIBER],
-                beneficiaryAmts: [10, 10],
-                signers: [CANDIDATE]
-              });
-
-              try {
-                await dposInstance.slash(request);
-              } catch (error) {
-                assert.isAbove(error.message.search('Amount not match'), -1);
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-          });
 
           describe('after a delegator intendWithdraw', async () => {
             beforeEach(async () => {

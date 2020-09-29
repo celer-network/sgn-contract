@@ -9,8 +9,6 @@ const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
-// use beforeEach method to set up an isolated test environment for each unite test,
-// and therefore make all tests independent from each other.
 contract('validator replacement tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const VALIDATORS = [

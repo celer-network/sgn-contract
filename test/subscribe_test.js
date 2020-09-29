@@ -13,7 +13,6 @@ contract('subscribe tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
   const SUBSCRIBER = accounts[3];
-  const RECEIVER = accounts[4];
 
   let celerToken;
   let dposInstance;
