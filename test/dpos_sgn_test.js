@@ -12,9 +12,10 @@ const consts = require('./constants.js')
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
 contract('basic tests', async accounts => {
-  const DELEGATOR = accounts[0];
   const CANDIDATE = accounts[1];
-  const SUBSCRIBER = accounts[2];
+  const DELEGATOR = accounts[2];
+  const SUBSCRIBER = accounts[3];
+  const RECEIVER = accounts[4]
 
   let celerToken;
   let dposInstance;
@@ -47,8 +48,7 @@ contract('basic tests', async accounts => {
 
     await dposInstance.registerSidechain(sgnInstance.address);
 
-    // give enough money to other accounts
-    for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
+    for (let i = 1; i < 5; i++) {
       await celerToken.transfer(accounts[i], '10000000000000000000');
     }
   });
@@ -379,9 +379,9 @@ contract('basic tests', async accounts => {
     it('should fail to delegate when paused', async () => {
       await dposInstance.pause();
 
-      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
+      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       try {
-        await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
+        await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       } catch (e) {
         assert.isAbove(
           e.message.search('VM Exception while processing transaction'),
@@ -394,9 +394,9 @@ contract('basic tests', async accounts => {
     });
 
     it('should delegate to candidate by a delegator successfully', async () => {
-      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
+      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
 
-      const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
+      const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       const { event, args } = tx.logs[1];
 
       assert.equal(event, 'Delegate');
@@ -408,8 +408,8 @@ contract('basic tests', async accounts => {
 
     it('should fail to claimValidator before delegating enough stake', async () => {
       const stakingPool = (parseInt(consts.MIN_STAKING_POOL) - 10000).toString();
-      await celerToken.approve(dposInstance.address, stakingPool);
-      await dposInstance.delegate(CANDIDATE, stakingPool);
+      await celerToken.approve(dposInstance.address, stakingPool, {from: DELEGATOR});
+      await dposInstance.delegate(CANDIDATE, stakingPool, {from: DELEGATOR});
 
       try {
         await dposInstance.claimValidator({
@@ -455,8 +455,8 @@ contract('basic tests', async accounts => {
 
     describe('after one delegator delegates enough stake to the candidate', async () => {
       beforeEach(async () => {
-        await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
-        await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
+        await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
+        await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       });
 
       it('should fail to claimValidator before self delegating minSelfStake', async () => {
@@ -475,7 +475,8 @@ contract('basic tests', async accounts => {
       it('should withdrawFromUnbondedCandidate by delegator successfully', async () => {
         const tx = await dposInstance.withdrawFromUnbondedCandidate(
           CANDIDATE,
-          consts.DELEGATOR_WITHDRAW
+          consts.DELEGATOR_WITHDRAW,
+          {from: DELEGATOR}
         );
         const { event, args } = tx.logs[1];
 
@@ -487,18 +488,12 @@ contract('basic tests', async accounts => {
 
       describe('after one candidate self delegates minSelfStake', async () => {
         beforeEach(async () => {
-          await celerToken.approve(dposInstance.address, consts.CANDIDATE_STAKE, {
-            from: CANDIDATE
-          });
-          await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {
-            from: CANDIDATE
-          });
+          await celerToken.approve(dposInstance.address, consts.CANDIDATE_STAKE, {from: CANDIDATE});
+          await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {from: CANDIDATE});
         });
 
         it('should claimValidator successfully', async () => {
-          const tx = await dposInstance.claimValidator({
-            from: CANDIDATE
-          });
+          const tx = await dposInstance.claimValidator({from: CANDIDATE});
           const { event, args } = tx.logs[0];
 
           assert.equal(event, 'ValidatorChange');
@@ -632,7 +627,8 @@ contract('basic tests', async accounts => {
           it('should remove the validator after delegator intendWithdraw to an amount under minStakingPool', async () => {
             const tx = await dposInstance.intendWithdraw(
               CANDIDATE,
-              consts.DELEGATOR_WITHDRAW
+              consts.DELEGATOR_WITHDRAW,
+              { from: DELEGATOR }
             );
             const block = await web3.eth.getBlock('latest');
 
@@ -847,7 +843,7 @@ contract('basic tests', async accounts => {
 
               try {
                 const rewardRequest = await getRewardRequestBytes({
-                  receiver: accounts[9],
+                  receiver: RECEIVER,
                   cumulativeMiningReward: 100,
                   cumulativeServiceReward: 0,
                   signers: [CANDIDATE]
@@ -878,7 +874,7 @@ contract('basic tests', async accounts => {
                 from: SUBSCRIBER
               });
 
-              const receiver = accounts[9];
+              const receiver = RECEIVER;
               const miningReward = 40;
               const serviceReward = 60;
               const rewardRequest = await getRewardRequestBytes({
@@ -911,7 +907,7 @@ contract('basic tests', async accounts => {
               await dposInstance.contributeToMiningPool(contribution);
 
               const rewardRequest = await getRewardRequestBytes({
-                receiver: accounts[9],
+                receiver: RECEIVER,
                 cumulativeMiningReward: contribution + 1,
                 cumulativeServiceReward: 0,
                 signers: [CANDIDATE]
@@ -928,15 +924,11 @@ contract('basic tests', async accounts => {
 
             it('should fail to redeem reward more than amount in service pool', async () => {
               // submit subscription fees
-              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
-                from: SUBSCRIBER
-              });
-              await sgnInstance.subscribe(consts.SUB_FEE, {
-                from: SUBSCRIBER
-              });
+              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
+              await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
 
               const rewardRequest = await getRewardRequestBytes({
-                receiver: accounts[9],
+                receiver: RECEIVER,
                 cumulativeMiningReward: 0,
                 cumulativeServiceReward: consts.SUB_FEE + 1,
                 signers: [CANDIDATE]
@@ -954,11 +946,15 @@ contract('basic tests', async accounts => {
 
           describe('after a delegator intendWithdraw', async () => {
             beforeEach(async () => {
-              await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_WITHDRAW);
+              await dposInstance.intendWithdraw(
+                CANDIDATE,
+                consts.DELEGATOR_WITHDRAW,
+                {from:DELEGATOR}
+              );
             });
 
             it('should confirmWithdraw 0 before withdrawTimeout', async () => {
-              const tx = await dposInstance.confirmWithdraw(CANDIDATE);
+              const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
               const { event, args } = tx.logs[0];
 
               assert.equal(event, 'ConfirmWithdraw');
@@ -973,7 +969,7 @@ contract('basic tests', async accounts => {
               });
 
               it('should confirmWithdraw successfully', async () => {
-                const tx = await dposInstance.confirmWithdraw(CANDIDATE);
+                const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
                 const { event, args } = tx.logs[0];
 
                 assert.equal(event, 'ConfirmWithdraw');
@@ -984,11 +980,11 @@ contract('basic tests', async accounts => {
 
               describe('after confirmWithdraw', async () => {
                 beforeEach(async () => {
-                  await dposInstance.confirmWithdraw(CANDIDATE);
+                  await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
                 });
 
                 it('should confirmWithdraw 0 after all withdraw intents are cleared', async () => {
-                  const tx = await dposInstance.confirmWithdraw(CANDIDATE);
+                  const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
                   const { event, args } = tx.logs[0];
 
                   assert.equal(event, 'ConfirmWithdraw');
