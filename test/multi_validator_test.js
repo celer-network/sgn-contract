@@ -7,11 +7,11 @@ const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
-const consts = require('./constants.js')
+const consts = require('./constants.js');
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
-contract('mutiple validators tests', async accounts => {
+contract('mutiple validators tests', async (accounts) => {
   const VALIDATORS = [accounts[1], accounts[2], accounts[3], accounts[4]];
   const NON_VALIDATOR = accounts[5];
   const SELF_STAKE = '6000000000000000000';
@@ -55,7 +55,7 @@ contract('mutiple validators tests', async accounts => {
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
-        { from: VALIDATORS[i] }
+        {from: VALIDATORS[i]}
       );
       await sgnInstance.updateSidechainAddr(sidechainAddr, {from: VALIDATORS[i]});
 
@@ -104,10 +104,7 @@ contract('mutiple validators tests', async accounts => {
     try {
       await dposInstance.slash(request);
     } catch (error) {
-      assert.isAbove(
-        error.message.search('Fail to check validator sigs'),
-        -1
-      );
+      assert.isAbove(error.message.search('Fail to check validator sigs'), -1);
       return;
     }
 
@@ -151,5 +148,4 @@ contract('mutiple validators tests', async accounts => {
     assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
     assert.equal(tx.logs[0].args.amount, 10);
   });
-
 });

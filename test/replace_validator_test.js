@@ -7,11 +7,11 @@ const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
-const consts = require('./constants.js')
+const consts = require('./constants.js');
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
-contract('validator replacement tests', async accounts => {
+contract('validator replacement tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const VALIDATORS = [
     accounts[2],
@@ -60,11 +60,13 @@ contract('validator replacement tests', async accounts => {
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
-        { from: VALIDATORS[i] }
+        {from: VALIDATORS[i]}
       );
       await sgnInstance.updateSidechainAddr(sidechainAddr, {from: VALIDATORS[i]});
 
-      await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {from: VALIDATORS[i]});
+      await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {
+        from: VALIDATORS[i]
+      });
       await dposInstance.delegate(VALIDATORS[i], consts.MIN_STAKING_POOL, {from: VALIDATORS[i]});
 
       // validators claimValidator
@@ -76,7 +78,7 @@ contract('validator replacement tests', async accounts => {
       consts.MIN_SELF_STAKE,
       consts.COMMISSION_RATE,
       consts.RATE_LOCK_END_TIME,
-      { from: CANDIDATE }
+      {from: CANDIDATE}
     );
     await sgnInstance.updateSidechainAddr(sidechainAddr, {from: CANDIDATE});
   });
@@ -96,10 +98,7 @@ contract('validator replacement tests', async accounts => {
     try {
       await dposInstance.claimValidator({from: CANDIDATE});
     } catch (error) {
-      assert.isAbove(
-        error.message.search('Stake is less than all validators'),
-        -1
-      );
+      assert.isAbove(error.message.search('Stake is less than all validators'), -1);
       return;
     }
 
@@ -110,7 +109,7 @@ contract('validator replacement tests', async accounts => {
     await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: CANDIDATE});
     await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: CANDIDATE});
 
-    const tx = await dposInstance.claimValidator({ from: CANDIDATE });
+    const tx = await dposInstance.claimValidator({from: CANDIDATE});
 
     assert.equal(tx.logs[0].event, 'ValidatorChange');
     assert.equal(tx.logs[0].args.ethAddr, accounts[2]);
@@ -119,5 +118,4 @@ contract('validator replacement tests', async accounts => {
     assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
     assert.equal(tx.logs[1].args.changeType, consts.VALIDATOR_ADD);
   });
-
 });

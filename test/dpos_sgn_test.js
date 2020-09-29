@@ -7,15 +7,15 @@ const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
-const consts = require('./constants.js')
+const consts = require('./constants.js');
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
-contract('basic tests', async accounts => {
+contract('basic tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
   const SUBSCRIBER = accounts[3];
-  const RECEIVER = accounts[4]
+  const RECEIVER = accounts[4];
 
   let celerToken;
   let dposInstance;
@@ -108,13 +108,10 @@ contract('basic tests', async accounts => {
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
     } catch (e) {
-      assert.isAbove(
-        e.message.search('VM Exception while processing transaction'),
-        -1
-      );
+      assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
       return;
     }
 
@@ -128,13 +125,11 @@ contract('basic tests', async accounts => {
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
     } catch (e) {
       assert.isAbove(
-        e.message.search(
-          'WhitelistedRole: caller does not have the Whitelisted role'
-        ),
+        e.message.search('WhitelistedRole: caller does not have the Whitelisted role'),
         -1
       );
       return;
@@ -148,7 +143,7 @@ contract('basic tests', async accounts => {
       consts.MIN_SELF_STAKE,
       consts.COMMISSION_RATE,
       consts.RATE_LOCK_END_TIME,
-      { from: CANDIDATE }
+      {from: CANDIDATE}
     );
     assert.equal(tx.logs[0].event, 'InitializeCandidate');
     assert.equal(tx.logs[0].args.candidate, CANDIDATE);
@@ -173,7 +168,7 @@ contract('basic tests', async accounts => {
       consts.MIN_SELF_STAKE,
       consts.COMMISSION_RATE,
       consts.RATE_LOCK_END_TIME,
-      { from: CANDIDATE }
+      {from: CANDIDATE}
     );
   });
 
@@ -185,7 +180,7 @@ contract('basic tests', async accounts => {
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
       await sgnInstance.updateSidechainAddr(sidechainAddr, {
         from: CANDIDATE
@@ -196,9 +191,9 @@ contract('basic tests', async accounts => {
       const tx = await dposInstance.nonIncreaseCommissionRate(
         consts.COMMISSION_RATE,
         consts.LARGER_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
-      const { event, args } = tx.logs[0];
+      const {event, args} = tx.logs[0];
 
       assert.equal(event, 'UpdateCommissionRate');
       assert.equal(args.candidate, CANDIDATE);
@@ -224,18 +219,16 @@ contract('basic tests', async accounts => {
       await dposInstance.nonIncreaseCommissionRate(
         consts.COMMISSION_RATE,
         consts.LARGER_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
 
       // get next block
       const block = await web3.eth.getBlock('latest');
 
       try {
-        await dposInstance.nonIncreaseCommissionRate(
-          consts.COMMISSION_RATE,
-          block.number + 10,
-          { from: CANDIDATE }
-        );
+        await dposInstance.nonIncreaseCommissionRate(consts.COMMISSION_RATE, block.number + 10, {
+          from: CANDIDATE
+        });
       } catch (error) {
         assert.isAbove(error.message.search('Invalid new lock end time'), -1);
         return;
@@ -248,7 +241,7 @@ contract('basic tests', async accounts => {
       let tx = await dposInstance.nonIncreaseCommissionRate(
         consts.LOWER_RATE,
         consts.LARGER_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
 
       assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
@@ -259,7 +252,7 @@ contract('basic tests', async accounts => {
       tx = await dposInstance.nonIncreaseCommissionRate(
         consts.LOWER_RATE - 10,
         consts.LARGER_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
 
       assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
@@ -272,9 +265,9 @@ contract('basic tests', async accounts => {
       const tx = await dposInstance.announceIncreaseCommissionRate(
         consts.HIGHER_RATE,
         consts.LARGER_LOCK_END_TIME,
-        { from: CANDIDATE }
+        {from: CANDIDATE}
       );
-      const { event, args } = tx.logs[0];
+      const {event, args} = tx.logs[0];
 
       assert.equal(event, 'CommissionRateAnnouncement');
       assert.equal(args.candidate, CANDIDATE);
@@ -287,7 +280,7 @@ contract('basic tests', async accounts => {
         await dposInstance.announceIncreaseCommissionRate(
           consts.HIGHER_RATE,
           consts.LARGER_LOCK_END_TIME,
-          { from: CANDIDATE }
+          {from: CANDIDATE}
         );
       });
 
@@ -308,7 +301,7 @@ contract('basic tests', async accounts => {
         await dposInstance.nonIncreaseCommissionRate(
           consts.COMMISSION_RATE,
           consts.LARGER_LOCK_END_TIME,
-          { from: CANDIDATE }
+          {from: CANDIDATE}
         );
 
         // need to announceIncreaseCommissionRate again because _updateCommissionRate
@@ -316,7 +309,7 @@ contract('basic tests', async accounts => {
         await dposInstance.announceIncreaseCommissionRate(
           consts.HIGHER_RATE,
           consts.LARGER_LOCK_END_TIME,
-          { from: CANDIDATE }
+          {from: CANDIDATE}
         );
 
         await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
@@ -338,7 +331,7 @@ contract('basic tests', async accounts => {
         const tx = await dposInstance.confirmIncreaseCommissionRate({
           from: CANDIDATE
         });
-        const { event, args } = tx.logs[0];
+        const {event, args} = tx.logs[0];
 
         assert.equal(event, 'UpdateCommissionRate');
         assert.equal(args.candidate, CANDIDATE);
@@ -353,7 +346,7 @@ contract('basic tests', async accounts => {
           consts.MIN_SELF_STAKE,
           consts.COMMISSION_RATE,
           consts.RATE_LOCK_END_TIME,
-          { from: CANDIDATE }
+          {from: CANDIDATE}
         );
       } catch (error) {
         assert.isAbove(error.message.search('Candidate is initialized'), -1);
@@ -368,7 +361,7 @@ contract('basic tests', async accounts => {
       const tx = await sgnInstance.updateSidechainAddr(newSidechainAddr, {
         from: CANDIDATE
       });
-      const { event, args } = tx.logs[0];
+      const {event, args} = tx.logs[0];
 
       assert.equal(event, 'UpdateSidechainAddr');
       assert.equal(args.candidate, CANDIDATE);
@@ -383,10 +376,7 @@ contract('basic tests', async accounts => {
       try {
         await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       } catch (e) {
-        assert.isAbove(
-          e.message.search('VM Exception while processing transaction'),
-          -1
-        );
+        assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
         return;
       }
 
@@ -397,7 +387,7 @@ contract('basic tests', async accounts => {
       await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
 
       const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
-      const { event, args } = tx.logs[1];
+      const {event, args} = tx.logs[1];
 
       assert.equal(event, 'Delegate');
       assert.equal(args.delegator, DELEGATOR);
@@ -430,10 +420,7 @@ contract('basic tests', async accounts => {
       try {
         await dposInstance.contributeToMiningPool(100);
       } catch (e) {
-        assert.isAbove(
-          e.message.search('VM Exception while processing transaction'),
-          -1
-        );
+        assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
         return;
       }
 
@@ -444,7 +431,7 @@ contract('basic tests', async accounts => {
       const contribution = 100;
       await celerToken.approve(dposInstance.address, contribution);
       const tx = await dposInstance.contributeToMiningPool(contribution);
-      const { event, args } = tx.logs[0];
+      const {event, args} = tx.logs[0];
 
       assert.equal(event, 'MiningPoolContribution');
       assert.equal(args.contributor, accounts[0]);
@@ -478,7 +465,7 @@ contract('basic tests', async accounts => {
           consts.DELEGATOR_WITHDRAW,
           {from: DELEGATOR}
         );
-        const { event, args } = tx.logs[1];
+        const {event, args} = tx.logs[1];
 
         assert.equal(event, 'WithdrawFromUnbondedCandidate');
         assert.equal(args.delegator, DELEGATOR);
@@ -494,7 +481,7 @@ contract('basic tests', async accounts => {
 
         it('should claimValidator successfully', async () => {
           const tx = await dposInstance.claimValidator({from: CANDIDATE});
-          const { event, args } = tx.logs[0];
+          const {event, args} = tx.logs[0];
 
           assert.equal(event, 'ValidatorChange');
           assert.equal(args.ethAddr, CANDIDATE);
@@ -502,37 +489,32 @@ contract('basic tests', async accounts => {
         });
 
         it('should increase min self stake and claimValidator successfully', async () => {
-          let tx = await dposInstance.updateMinSelfStake(
-            consts.HIGHER_MIN_SELF_STAKE,
-            { from: CANDIDATE }
-          );
+          let tx = await dposInstance.updateMinSelfStake(consts.HIGHER_MIN_SELF_STAKE, {
+            from: CANDIDATE
+          });
           assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
           assert.equal(tx.logs[0].args.candidate, CANDIDATE);
           assert.equal(tx.logs[0].args.minSelfStake, consts.HIGHER_MIN_SELF_STAKE);
 
-          tx = await dposInstance.claimValidator({ from: CANDIDATE });
+          tx = await dposInstance.claimValidator({from: CANDIDATE});
           assert.equal(tx.logs[0].event, 'ValidatorChange');
           assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
           assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_ADD);
         });
 
         it('should decrease min self stake successfully but fail to claimValidator before notice period', async () => {
-          const tx = await dposInstance.updateMinSelfStake(
-            consts.LOWER_MIN_SELF_STAKE,
-            { from: CANDIDATE }
-          );
-          const { event, args } = tx.logs[0];
+          const tx = await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {
+            from: CANDIDATE
+          });
+          const {event, args} = tx.logs[0];
           assert.equal(event, 'UpdateMinSelfStake');
           assert.equal(args.candidate, CANDIDATE);
           assert.equal(args.minSelfStake, consts.LOWER_MIN_SELF_STAKE);
 
           try {
-            await dposInstance.claimValidator({ from: CANDIDATE });
+            await dposInstance.claimValidator({from: CANDIDATE});
           } catch (error) {
-            assert.isAbove(
-              error.message.search('Not earliest bond time yet'),
-              -1
-            );
+            assert.isAbove(error.message.search('Not earliest bond time yet'), -1);
             return;
           }
 
@@ -546,7 +528,7 @@ contract('basic tests', async accounts => {
 
           await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
 
-          const tx = await dposInstance.claimValidator({ from: CANDIDATE });
+          const tx = await dposInstance.claimValidator({from: CANDIDATE});
           assert.equal(tx.logs[0].event, 'ValidatorChange');
           assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
           assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_ADD);
@@ -577,9 +559,7 @@ contract('basic tests', async accounts => {
               await dposInstance.withdrawFromUnbondedCandidate(CANDIDATE, 1);
             } catch (error) {
               assert.isAbove(
-                error.message.search(
-                  'Amount is smaller than minimum requirement'
-                ),
+                error.message.search('Amount is smaller than minimum requirement'),
                 -1
               );
               return;
@@ -592,9 +572,7 @@ contract('basic tests', async accounts => {
               await dposInstance.intendWithdraw(CANDIDATE, 1);
             } catch (error) {
               assert.isAbove(
-                error.message.search(
-                  'Amount is smaller than minimum requirement'
-                ),
+                error.message.search('Amount is smaller than minimum requirement'),
                 -1
               );
               return;
@@ -606,7 +584,7 @@ contract('basic tests', async accounts => {
             const tx = await dposInstance.intendWithdraw(
               CANDIDATE,
               consts.CANDIDATE_WITHDRAW_UNDER_MIN,
-              { from: CANDIDATE }
+              {from: CANDIDATE}
             );
             const block = await web3.eth.getBlock('latest');
 
@@ -617,19 +595,14 @@ contract('basic tests', async accounts => {
             assert.equal(tx.logs[2].event, 'IntendWithdraw');
             assert.equal(tx.logs[2].args.delegator, CANDIDATE);
             assert.equal(tx.logs[2].args.candidate, CANDIDATE);
-            assert.equal(
-              tx.logs[2].args.withdrawAmount,
-              consts.CANDIDATE_WITHDRAW_UNDER_MIN
-            );
+            assert.equal(tx.logs[2].args.withdrawAmount, consts.CANDIDATE_WITHDRAW_UNDER_MIN);
             assert.equal(tx.logs[2].args.proposedTime.toNumber(), block.number);
           });
 
           it('should remove the validator after delegator intendWithdraw to an amount under minStakingPool', async () => {
-            const tx = await dposInstance.intendWithdraw(
-              CANDIDATE,
-              consts.DELEGATOR_WITHDRAW,
-              { from: DELEGATOR }
-            );
+            const tx = await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_WITHDRAW, {
+              from: DELEGATOR
+            });
             const block = await web3.eth.getBlock('latest');
 
             assert.equal(tx.logs[1].event, 'ValidatorChange');
@@ -644,10 +617,9 @@ contract('basic tests', async accounts => {
           });
 
           it('should increase min self stake successfully', async () => {
-            const tx = await dposInstance.updateMinSelfStake(
-              consts.HIGHER_MIN_SELF_STAKE,
-              { from: CANDIDATE }
-            );
+            const tx = await dposInstance.updateMinSelfStake(consts.HIGHER_MIN_SELF_STAKE, {
+              from: CANDIDATE
+            });
             assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
             assert.equal(tx.logs[0].args.candidate, CANDIDATE);
             assert.equal(tx.logs[0].args.minSelfStake, consts.HIGHER_MIN_SELF_STAKE);
@@ -682,10 +654,7 @@ contract('basic tests', async accounts => {
                   from: SUBSCRIBER
                 });
               } catch (e) {
-                assert.isAbove(
-                  e.message.search('VM Exception while processing transaction'),
-                  -1
-                );
+                assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
                 return;
               }
 
@@ -700,7 +669,7 @@ contract('basic tests', async accounts => {
               const tx = await sgnInstance.subscribe(consts.SUB_FEE, {
                 from: SUBSCRIBER
               });
-              const { event, args } = tx.logs[0];
+              const {event, args} = tx.logs[0];
 
               assert.equal(event, 'AddSubscriptionBalance');
               assert.equal(args.consumer, SUBSCRIBER);
@@ -723,10 +692,7 @@ contract('basic tests', async accounts => {
                 });
                 await dposInstance.slash(request);
               } catch (e) {
-                assert.isAbove(
-                  e.message.search('VM Exception while processing transaction'),
-                  -1
-                );
+                assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
                 return;
               }
 
@@ -761,14 +727,8 @@ contract('basic tests', async accounts => {
               assert.equal(tx.logs[2].args.delegator, DELEGATOR);
               assert.equal(tx.logs[2].args.amount, 10);
 
-              assert.equal(
-                newMiningPool.toString(),
-                oldMiningPool.addn(7).toString()
-              );
-              assert.equal(
-                newTokenAmt.toString(),
-                oldTokenAmt.addn(8).toString()
-              );
+              assert.equal(newMiningPool.toString(), oldMiningPool.addn(7).toString());
+              assert.equal(newTokenAmt.toString(), oldTokenAmt.addn(8).toString());
             });
 
             it('should fail to slash with same request twice', async () => {
@@ -850,10 +810,7 @@ contract('basic tests', async accounts => {
                 });
                 await sgnInstance.redeemReward(rewardRequest);
               } catch (e) {
-                assert.isAbove(
-                  e.message.search('VM Exception while processing transaction'),
-                  -1
-                );
+                assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
                 return;
               }
 
@@ -887,15 +844,9 @@ contract('basic tests', async accounts => {
 
               assert.equal(tx.logs[0].event, 'RedeemReward');
               assert.equal(tx.logs[0].args.receiver, receiver);
-              assert.equal(
-                tx.logs[0].args.cumulativeMiningReward,
-                miningReward
-              );
+              assert.equal(tx.logs[0].args.cumulativeMiningReward, miningReward);
               assert.equal(tx.logs[0].args.serviceReward, serviceReward);
-              assert.equal(
-                tx.logs[0].args.servicePool,
-                consts.SUB_FEE - serviceReward
-              );
+              assert.equal(tx.logs[0].args.servicePool, consts.SUB_FEE - serviceReward);
 
               // TODO: add checks for RedeemMiningReward event (hash is the only way to validate it)
             });
@@ -946,16 +897,14 @@ contract('basic tests', async accounts => {
 
           describe('after a delegator intendWithdraw', async () => {
             beforeEach(async () => {
-              await dposInstance.intendWithdraw(
-                CANDIDATE,
-                consts.DELEGATOR_WITHDRAW,
-                {from:DELEGATOR}
-              );
+              await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_WITHDRAW, {
+                from: DELEGATOR
+              });
             });
 
             it('should confirmWithdraw 0 before withdrawTimeout', async () => {
-              const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
-              const { event, args } = tx.logs[0];
+              const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              const {event, args} = tx.logs[0];
 
               assert.equal(event, 'ConfirmWithdraw');
               assert.equal(args.delegator, DELEGATOR);
@@ -969,8 +918,8 @@ contract('basic tests', async accounts => {
               });
 
               it('should confirmWithdraw successfully', async () => {
-                const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
-                const { event, args } = tx.logs[0];
+                const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+                const {event, args} = tx.logs[0];
 
                 assert.equal(event, 'ConfirmWithdraw');
                 assert.equal(args.delegator, DELEGATOR);
@@ -980,12 +929,12 @@ contract('basic tests', async accounts => {
 
               describe('after confirmWithdraw', async () => {
                 beforeEach(async () => {
-                  await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
+                  await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
                 });
 
                 it('should confirmWithdraw 0 after all withdraw intents are cleared', async () => {
-                  const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from:DELEGATOR});
-                  const { event, args } = tx.logs[0];
+                  const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+                  const {event, args} = tx.logs[0];
 
                   assert.equal(event, 'ConfirmWithdraw');
                   assert.equal(args.delegator, DELEGATOR);
@@ -999,5 +948,4 @@ contract('basic tests', async accounts => {
       });
     });
   });
-
 });

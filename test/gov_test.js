@@ -7,11 +7,11 @@ const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
-const consts = require('./constants.js')
+const consts = require('./constants.js');
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
-contract('governance tests', async accounts => {
+contract('governance tests', async (accounts) => {
   const VALIDATORS = [accounts[1], accounts[2], accounts[3], accounts[4]];
   const NON_VALIDATOR = accounts[5];
   const SELF_STAKE = '6000000000000000000';
@@ -55,7 +55,7 @@ contract('governance tests', async accounts => {
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
-        { from: VALIDATORS[i] }
+        {from: VALIDATORS[i]}
       );
       await sgnInstance.updateSidechainAddr(sidechainAddr, {from: VALIDATORS[i]});
 
@@ -73,12 +73,9 @@ contract('governance tests', async accounts => {
     const newSlashTimeout = consts.SLASH_TIMEOUT + 1;
 
     await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
-    const tx = await dposInstance.createParamProposal(
-      consts.ENUM_SLASH_TIMEOUT,
-      newSlashTimeout
-    );
+    const tx = await dposInstance.createParamProposal(consts.ENUM_SLASH_TIMEOUT, newSlashTimeout);
     const block = await web3.eth.getBlock('latest');
-    const { event, args } = tx.logs[0];
+    const {event, args} = tx.logs[0];
 
     assert.equal(event, 'CreateParamProposal');
     assert.equal(args.proposalId, 0);
@@ -104,10 +101,7 @@ contract('governance tests', async accounts => {
       try {
         await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {from: NON_VALIDATOR});
       } catch (error) {
-        assert.isAbove(
-          error.message.search('msg sender is not a validator'),
-          -1
-        );
+        assert.isAbove(error.message.search('msg sender is not a validator'), -1);
         return;
       }
 
@@ -129,12 +123,10 @@ contract('governance tests', async accounts => {
     });
 
     it('should vote successfully as a validator', async () => {
-      const tx = await dposInstance.voteParam(
-        proposalId,
-        consts.ENUM_VOTE_TYPE_YES,
-        { from: VALIDATORS[0] }
-      );
-      const { event, args } = tx.logs[0];
+      const tx = await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
+        from: VALIDATORS[0]
+      });
+      const {event, args} = tx.logs[0];
 
       assert.equal(event, 'VoteParam');
       assert.equal(args.proposalId, proposalId);
@@ -163,12 +155,10 @@ contract('governance tests', async accounts => {
       });
 
       it('should vote successfully as another validator', async () => {
-        const tx = await dposInstance.voteParam(
-          proposalId,
-          consts.ENUM_VOTE_TYPE_YES,
-          { from: VALIDATORS[1] }
-        );
-        const { event, args } = tx.logs[0];
+        const tx = await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
+          from: VALIDATORS[1]
+        });
+        const {event, args} = tx.logs[0];
 
         assert.equal(event, 'VoteParam');
         assert.equal(args.proposalId, proposalId);
@@ -180,10 +170,7 @@ contract('governance tests', async accounts => {
         try {
           await dposInstance.confirmParamProposal(proposalId);
         } catch (error) {
-          assert.isAbove(
-            error.message.search('Vote deadline not reached'),
-            -1
-          );
+          assert.isAbove(error.message.search('Vote deadline not reached'), -1);
           return;
         }
 
@@ -210,7 +197,7 @@ contract('governance tests', async accounts => {
 
         it('should confirmParamProposal (reject proposal case) successfully', async () => {
           const tx = await dposInstance.confirmParamProposal(proposalId);
-          const { event, args } = tx.logs[0];
+          const {event, args} = tx.logs[0];
 
           assert.equal(event, 'ConfirmParamProposal');
           assert.equal(args.proposalId, proposalId);
@@ -238,10 +225,8 @@ contract('governance tests', async accounts => {
 
         it('should confirmParamProposal (accept proposal case) successfully', async () => {
           const tx = await dposInstance.confirmParamProposal(proposalId);
-          const { event, args } = tx.logs[0];
-          const queriedMigrationTime = await dposInstance.getUIntValue(
-            consts.ENUM_MIGRATION_TIME
-          );
+          const {event, args} = tx.logs[0];
+          const queriedMigrationTime = await dposInstance.getUIntValue(consts.ENUM_MIGRATION_TIME);
 
           assert.equal(event, 'ConfirmParamProposal');
           assert.equal(args.proposalId, proposalId);
@@ -281,12 +266,9 @@ contract('governance tests', async accounts => {
   it('should createSidechainProposal successfully', async () => {
     await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
     const newRegistrationStatus = true;
-    const tx = await dposInstance.createSidechainProposal(
-      consts.ONE_ADDR,
-      newRegistrationStatus
-    );
+    const tx = await dposInstance.createSidechainProposal(consts.ONE_ADDR, newRegistrationStatus);
     const block = await web3.eth.getBlock('latest');
-    const { event, args } = tx.logs[0];
+    const {event, args} = tx.logs[0];
 
     assert.equal(event, 'CreateSidechainProposal');
     assert.equal(args.proposalId, 0);
@@ -303,10 +285,7 @@ contract('governance tests', async accounts => {
 
     beforeEach(async () => {
       await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
-      await dposInstance.createSidechainProposal(
-        consts.ONE_ADDR,
-        newRegistrationStatus
-      );
+      await dposInstance.createSidechainProposal(consts.ONE_ADDR, newRegistrationStatus);
     });
 
     it('should fail to voteSidechain if not validator', async () => {
@@ -315,10 +294,7 @@ contract('governance tests', async accounts => {
           from: NON_VALIDATOR
         });
       } catch (error) {
-        assert.isAbove(
-          error.message.search('msg sender is not a validator'),
-          -1
-        );
+        assert.isAbove(error.message.search('msg sender is not a validator'), -1);
         return;
       }
 
@@ -328,11 +304,9 @@ contract('governance tests', async accounts => {
     it('should fail to voteSidechain for a proposal with an invalid status', async () => {
       const invalidProposalId = proposalId + 1;
       try {
-        await dposInstance.voteSidechain(
-          invalidProposalId,
-          consts.ENUM_VOTE_TYPE_YES,
-          { from: VALIDATORS[0] }
-        );
+        await dposInstance.voteSidechain(invalidProposalId, consts.ENUM_VOTE_TYPE_YES, {
+          from: VALIDATORS[0]
+        });
       } catch (error) {
         assert.isAbove(error.message.search('Invalid proposal status'), -1);
         return;
@@ -342,12 +316,10 @@ contract('governance tests', async accounts => {
     });
 
     it('should vote successfully as a validator', async () => {
-      const tx = await dposInstance.voteSidechain(
-        proposalId,
-        consts.ENUM_VOTE_TYPE_YES,
-        { from: VALIDATORS[0] }
-      );
-      const { event, args } = tx.logs[0];
+      const tx = await dposInstance.voteSidechain(proposalId, consts.ENUM_VOTE_TYPE_YES, {
+        from: VALIDATORS[0]
+      });
+      const {event, args} = tx.logs[0];
 
       assert.equal(event, 'VoteSidechain');
       assert.equal(args.proposalId, proposalId);
@@ -376,12 +348,10 @@ contract('governance tests', async accounts => {
       });
 
       it('should vote successfully as another validator', async () => {
-        const tx = await dposInstance.voteSidechain(
-          proposalId,
-          consts.ENUM_VOTE_TYPE_YES,
-          { from: VALIDATORS[1] }
-        );
-        const { event, args } = tx.logs[0];
+        const tx = await dposInstance.voteSidechain(proposalId, consts.ENUM_VOTE_TYPE_YES, {
+          from: VALIDATORS[1]
+        });
+        const {event, args} = tx.logs[0];
 
         assert.equal(event, 'VoteSidechain');
         assert.equal(args.proposalId, proposalId);
@@ -393,10 +363,7 @@ contract('governance tests', async accounts => {
         try {
           await dposInstance.confirmSidechainProposal(proposalId);
         } catch (error) {
-          assert.isAbove(
-            error.message.search('Vote deadline not reached'),
-            -1
-          );
+          assert.isAbove(error.message.search('Vote deadline not reached'), -1);
           return;
         }
 
@@ -423,7 +390,7 @@ contract('governance tests', async accounts => {
 
         it('should confirmSidechainProposal (reject proposal case) successfully', async () => {
           const tx = await dposInstance.confirmSidechainProposal(proposalId);
-          const { event, args } = tx.logs[0];
+          const {event, args} = tx.logs[0];
 
           assert.equal(event, 'ConfirmSidechainProposal');
           assert.equal(args.proposalId, proposalId);
@@ -451,7 +418,7 @@ contract('governance tests', async accounts => {
 
         it('should confirmSidechainProposal (accept proposal case) successfully', async () => {
           const tx = await dposInstance.confirmSidechainProposal(proposalId);
-          const { event, args } = tx.logs[0];
+          const {event, args} = tx.logs[0];
           const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(
             consts.ONE_ADDR
           );
@@ -474,33 +441,23 @@ contract('governance tests', async accounts => {
             const unregisterProposalId = proposalId + 1;
 
             // createSidechainProposal
-            await celerToken.approve(
-              dposInstance.address,
-              consts.GOVERN_PROPOSAL_DEPOSIT
-            );
-            await dposInstance.createSidechainProposal(
-              consts.ONE_ADDR,
-              registrationStatus
-            );
+            await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
+            await dposInstance.createSidechainProposal(consts.ONE_ADDR, registrationStatus);
 
             // after over 2/3 voting power votes for Yes
             const majorNum = Math.ceil((VALIDATORS.length * 2) / 3);
             for (let i = 0; i < majorNum; i++) {
-              await dposInstance.voteSidechain(
-                unregisterProposalId,
-                consts.ENUM_VOTE_TYPE_YES,
-                { from: VALIDATORS[i] }
-              );
+              await dposInstance.voteSidechain(unregisterProposalId, consts.ENUM_VOTE_TYPE_YES, {
+                from: VALIDATORS[i]
+              });
             }
 
             // pass vote deadline
             await Timetravel.advanceBlocks(consts.GOVERN_VOTE_TIMEOUT);
 
             // confirmSidechainProposal
-            const tx = await dposInstance.confirmSidechainProposal(
-              unregisterProposalId
-            );
-            const { event, args } = tx.logs[0];
+            const tx = await dposInstance.confirmSidechainProposal(unregisterProposalId);
+            const {event, args} = tx.logs[0];
             const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(
               consts.ONE_ADDR
             );

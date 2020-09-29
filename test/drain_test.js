@@ -1,8 +1,8 @@
 const DPoS = artifacts.require('DPoS');
 const CELRToken = artifacts.require('CELRToken');
-const consts = require('./constants.js')
+const consts = require('./constants.js');
 
-contract('drain token test', async accounts => {
+contract('drain token test', async (accounts) => {
   let celerToken;
   let dposInstance;
 
@@ -28,10 +28,7 @@ contract('drain token test', async accounts => {
     try {
       await dposInstance.drainToken(10);
     } catch (e) {
-      assert.isAbove(
-        e.message.search('VM Exception while processing transaction'),
-        -1
-      );
+      assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
       return;
     }
 
@@ -43,5 +40,4 @@ contract('drain token test', async accounts => {
     await dposInstance.pause();
     await dposInstance.drainToken(1);
   });
-
 });
