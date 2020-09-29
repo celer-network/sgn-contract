@@ -145,7 +145,7 @@ contract('reward tests', async (accounts) => {
     assert.equal(tx.logs[0].args.newRate, lowerRate);
     assert.equal(tx.logs[0].args.newLockEndTime, LARGER_LOCK_END_TIME);
 
-    let lowerRate = consts.COMMISSION_RATE - 20;
+    lowerRate = consts.COMMISSION_RATE - 20;
     tx = await dposInstance.nonIncreaseCommissionRate(lowerRate, LARGER_LOCK_END_TIME, {
       from: CANDIDATE
     });
