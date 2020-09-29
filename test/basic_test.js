@@ -9,8 +9,6 @@ const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
-// use beforeEach method to set up an isolated test environment for each unite test,
-// and therefore make all tests independent from each other.
 contract('basic tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
@@ -20,12 +18,10 @@ contract('basic tests', async (accounts) => {
   let celerToken;
   let dposInstance;
   let sgnInstance;
-  let getRewardRequestBytes;
   let getPenaltyRequestBytes;
 
   before(async () => {
     const protoChainInstance = await protoChainFactory();
-    getRewardRequestBytes = protoChainInstance.getRewardRequestBytes;
     getPenaltyRequestBytes = protoChainInstance.getPenaltyRequestBytes;
   });
 
@@ -118,7 +114,7 @@ contract('basic tests', async (accounts) => {
     assert.fail('should have thrown before');
   });
 
-  it('should fail to initialize a candidate when whitelist is on and missing from whitelist', async () => {
+  it('should fail to initialize a non-whitelisted candidate when whitelist is enabled', async () => {
     await dposInstance.updateEnableWhitelist(true);
     try {
       await dposInstance.initializeCandidate(
@@ -161,7 +157,7 @@ contract('basic tests', async (accounts) => {
     assert.equal(tx.logs[0].args.newSidechainAddr, sha3(sidechainAddr));
   });
 
-  it('should initialize a candidate successfully when whitelist is on and in whitelist', async () => {
+  it('should initialize a whitelisted candidate successfully when whitelist is enabled', async () => {
     await dposInstance.updateEnableWhitelist(true);
     await dposInstance.addWhitelisted(CANDIDATE);
     await dposInstance.initializeCandidate(
@@ -182,162 +178,7 @@ contract('basic tests', async (accounts) => {
         consts.RATE_LOCK_END_TIME,
         {from: CANDIDATE}
       );
-      await sgnInstance.updateSidechainAddr(sidechainAddr, {
-        from: CANDIDATE
-      });
-    });
-
-    it('should increase the rate lock end time successfully', async () => {
-      const tx = await dposInstance.nonIncreaseCommissionRate(
-        consts.COMMISSION_RATE,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
-      const {event, args} = tx.logs[0];
-
-      assert.equal(event, 'UpdateCommissionRate');
-      assert.equal(args.candidate, CANDIDATE);
-      assert.equal(args.newRate, consts.COMMISSION_RATE);
-      assert.equal(args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
-    });
-
-    it('should fail to update the rate lock end time to an outdated block number', async () => {
-      try {
-        await dposInstance.nonIncreaseCommissionRate(consts.COMMISSION_RATE, 1, {
-          from: CANDIDATE
-        });
-      } catch (error) {
-        assert.isAbove(error.message.search('Outdated new lock end time'), -1);
-        return;
-      }
-
-      assert.fail('should have thrown before');
-    });
-
-    it('should fail to decrease the rate lock end time', async () => {
-      // increase the lock end time first
-      await dposInstance.nonIncreaseCommissionRate(
-        consts.COMMISSION_RATE,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
-
-      // get next block
-      const block = await web3.eth.getBlock('latest');
-
-      try {
-        await dposInstance.nonIncreaseCommissionRate(consts.COMMISSION_RATE, block.number + 10, {
-          from: CANDIDATE
-        });
-      } catch (error) {
-        assert.isAbove(error.message.search('Invalid new lock end time'), -1);
-        return;
-      }
-
-      assert.fail('should have thrown before');
-    });
-
-    it('should decrease the commission rate anytime', async () => {
-      let tx = await dposInstance.nonIncreaseCommissionRate(
-        consts.LOWER_RATE,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
-
-      assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
-      assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-      assert.equal(tx.logs[0].args.newRate, consts.LOWER_RATE);
-      assert.equal(tx.logs[0].args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
-
-      tx = await dposInstance.nonIncreaseCommissionRate(
-        consts.LOWER_RATE - 10,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
-
-      assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
-      assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-      assert.equal(tx.logs[0].args.newRate, consts.LOWER_RATE - 10);
-      assert.equal(tx.logs[0].args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
-    });
-
-    it('should announce increase commission rate successfully', async () => {
-      const tx = await dposInstance.announceIncreaseCommissionRate(
-        consts.HIGHER_RATE,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
-      const {event, args} = tx.logs[0];
-
-      assert.equal(event, 'CommissionRateAnnouncement');
-      assert.equal(args.candidate, CANDIDATE);
-      assert.equal(args.announcedRate, consts.HIGHER_RATE);
-      assert.equal(args.announcedLockEndTime, consts.LARGER_LOCK_END_TIME);
-    });
-
-    describe('after announceIncreaseCommissionRate', async () => {
-      beforeEach(async () => {
-        await dposInstance.announceIncreaseCommissionRate(
-          consts.HIGHER_RATE,
-          consts.LARGER_LOCK_END_TIME,
-          {from: CANDIDATE}
-        );
-      });
-
-      it('should fail to confirmIncreaseCommissionRate before new rate can take effect', async () => {
-        try {
-          await dposInstance.confirmIncreaseCommissionRate({
-            from: CANDIDATE
-          });
-        } catch (error) {
-          assert.isAbove(error.message.search('Still in notice period'), -1);
-          return;
-        }
-
-        assert.fail('should have thrown before');
-      });
-
-      it('should fail to confirmIncreaseCommissionRate after new rate can take effect but before lock end time', async () => {
-        await dposInstance.nonIncreaseCommissionRate(
-          consts.COMMISSION_RATE,
-          consts.LARGER_LOCK_END_TIME,
-          {from: CANDIDATE}
-        );
-
-        // need to announceIncreaseCommissionRate again because _updateCommissionRate
-        // will remove the previous announcement of increasing commission rate
-        await dposInstance.announceIncreaseCommissionRate(
-          consts.HIGHER_RATE,
-          consts.LARGER_LOCK_END_TIME,
-          {from: CANDIDATE}
-        );
-
-        await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
-
-        try {
-          await dposInstance.confirmIncreaseCommissionRate({
-            from: CANDIDATE
-          });
-        } catch (error) {
-          assert.isAbove(error.message.search('Commission rate is locked'), -1);
-          return;
-        }
-
-        assert.fail('should have thrown before');
-      });
-
-      it('should confirmIncreaseCommissionRate successfully after new rate takes effect ', async () => {
-        await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
-        const tx = await dposInstance.confirmIncreaseCommissionRate({
-          from: CANDIDATE
-        });
-        const {event, args} = tx.logs[0];
-
-        assert.equal(event, 'UpdateCommissionRate');
-        assert.equal(args.candidate, CANDIDATE);
-        assert.equal(args.newRate, consts.HIGHER_RATE);
-        assert.equal(args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
-      });
+      await sgnInstance.updateSidechainAddr(sidechainAddr, {from: CANDIDATE});
     });
 
     it('should fail to initialize the same candidate twice', async () => {
@@ -411,33 +252,6 @@ contract('basic tests', async (accounts) => {
       }
 
       assert.fail('should have thrown before');
-    });
-
-    it('should fail to contributeToMiningPool when paused', async () => {
-      await dposInstance.pause();
-      await celerToken.approve(dposInstance.address, 100);
-
-      try {
-        await dposInstance.contributeToMiningPool(100);
-      } catch (e) {
-        assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
-        return;
-      }
-
-      assert.fail('should have thrown before');
-    });
-
-    it('should contribute to mining pool successfully', async () => {
-      const contribution = 100;
-      await celerToken.approve(dposInstance.address, contribution);
-      const tx = await dposInstance.contributeToMiningPool(contribution);
-      const {event, args} = tx.logs[0];
-
-      assert.equal(event, 'MiningPoolContribution');
-      assert.equal(args.contributor, accounts[0]);
-      assert.equal(args.contribution, contribution);
-      // previous miningPoolSize is 0
-      assert.equal(args.miningPoolSize, contribution);
     });
 
     describe('after one delegator delegates enough stake to the candidate', async () => {
@@ -522,9 +336,7 @@ contract('basic tests', async (accounts) => {
         });
 
         it('should decrease min self stake and claimValidator after notice period successfully', async () => {
-          await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {
-            from: CANDIDATE
-          });
+          await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {from: CANDIDATE});
 
           await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
 
@@ -536,9 +348,7 @@ contract('basic tests', async (accounts) => {
 
         describe('after one candidate claimValidator', async () => {
           beforeEach(async () => {
-            await dposInstance.claimValidator({
-              from: CANDIDATE
-            });
+            await dposInstance.claimValidator({from: CANDIDATE});
           });
 
           it('should fail withdrawFromUnbondedCandidate', async () => {
@@ -792,102 +602,6 @@ contract('basic tests', async (accounts) => {
                 await dposInstance.slash(request);
               } catch (error) {
                 assert.isAbove(error.message.search('Amount not match'), -1);
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-
-            it('should fail to redeem reward when paused', async () => {
-              await sgnInstance.pause();
-
-              try {
-                const rewardRequest = await getRewardRequestBytes({
-                  receiver: RECEIVER,
-                  cumulativeMiningReward: 100,
-                  cumulativeServiceReward: 0,
-                  signers: [CANDIDATE]
-                });
-                await sgnInstance.redeemReward(rewardRequest);
-              } catch (e) {
-                assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-
-            it('should redeem reward successfully', async () => {
-              // contribute to mining pool
-              const contribution = 100;
-              await celerToken.approve(dposInstance.address, contribution);
-              await dposInstance.contributeToMiningPool(contribution);
-
-              // submit subscription fees
-              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
-                from: SUBSCRIBER
-              });
-              await sgnInstance.subscribe(consts.SUB_FEE, {
-                from: SUBSCRIBER
-              });
-
-              const receiver = RECEIVER;
-              const miningReward = 40;
-              const serviceReward = 60;
-              const rewardRequest = await getRewardRequestBytes({
-                receiver: receiver,
-                cumulativeMiningReward: miningReward,
-                cumulativeServiceReward: serviceReward,
-                signers: [CANDIDATE]
-              });
-              const tx = await sgnInstance.redeemReward(rewardRequest);
-
-              assert.equal(tx.logs[0].event, 'RedeemReward');
-              assert.equal(tx.logs[0].args.receiver, receiver);
-              assert.equal(tx.logs[0].args.cumulativeMiningReward, miningReward);
-              assert.equal(tx.logs[0].args.serviceReward, serviceReward);
-              assert.equal(tx.logs[0].args.servicePool, consts.SUB_FEE - serviceReward);
-
-              // TODO: add checks for RedeemMiningReward event (hash is the only way to validate it)
-            });
-
-            it('should fail to redeem reward more than amount in mining pool', async () => {
-              // contribute to mining pool
-              const contribution = 100;
-              await celerToken.approve(dposInstance.address, contribution);
-              await dposInstance.contributeToMiningPool(contribution);
-
-              const rewardRequest = await getRewardRequestBytes({
-                receiver: RECEIVER,
-                cumulativeMiningReward: contribution + 1,
-                cumulativeServiceReward: 0,
-                signers: [CANDIDATE]
-              });
-
-              try {
-                await sgnInstance.redeemReward(rewardRequest);
-              } catch (error) {
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-
-            it('should fail to redeem reward more than amount in service pool', async () => {
-              // submit subscription fees
-              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-              await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
-
-              const rewardRequest = await getRewardRequestBytes({
-                receiver: RECEIVER,
-                cumulativeMiningReward: 0,
-                cumulativeServiceReward: consts.SUB_FEE + 1,
-                signers: [CANDIDATE]
-              });
-
-              try {
-                await sgnInstance.redeemReward(rewardRequest);
-              } catch (error) {
                 return;
               }
 
