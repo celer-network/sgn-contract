@@ -2,7 +2,7 @@ const DPoS = artifacts.require('DPoS');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js')
 
-contract('DPoS edge case', async accounts => {
+contract('drain token test', async accounts => {
   let celerToken;
   let dposInstance;
 

@@ -11,7 +11,7 @@ const consts = require('./constants.js')
 
 // use beforeEach method to set up an isolated test environment for each unite test,
 // and therefore make all tests independent from each other.
-contract('DPoS and SGN contracts', async accounts => {
+contract('governance tests', async accounts => {
   const VALIDATORS = [accounts[1], accounts[2], accounts[3], accounts[4]];
   const NON_VALIDATOR = accounts[5];
   const SELF_STAKE = '6000000000000000000';
