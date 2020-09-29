@@ -70,6 +70,15 @@ contract('DPoS and SGN contracts', async accounts => {
       // validators claimValidator
       await dposInstance.claimValidator({from: VALIDATORS[i]});
     }
+
+    const sidechainAddr = sha3(CANDIDATE);
+    await dposInstance.initializeCandidate(
+      consts.MIN_SELF_STAKE,
+      consts.COMMISSION_RATE,
+      consts.RATE_LOCK_END_TIME,
+      { from: CANDIDATE }
+    );
+    await sgnInstance.updateSidechainAddr(sidechainAddr, {from: CANDIDATE});
   });
 
   it('should getMinQuorumStakingPool successfully', async () => {
@@ -81,28 +90,11 @@ contract('DPoS and SGN contracts', async accounts => {
   });
 
   it('should fail to claimValidator with low stake', async () => {
-    const sidechainAddr = sha3(CANDIDATE);
-    await dposInstance.initializeCandidate(
-      consts.MIN_SELF_STAKE,
-      consts.COMMISSION_RATE,
-      consts.RATE_LOCK_END_TIME,
-      { from: CANDIDATE }
-    );
-    await sgnInstance.updateSidechainAddr(sidechainAddr, {
-      from: CANDIDATE
-    });
-
-    await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {
-      from: CANDIDATE
-    });
-    await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {
-      from: CANDIDATE
-    });
+    await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {from: CANDIDATE});
+    await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {from: CANDIDATE});
 
     try {
-      await dposInstance.claimValidator({
-        from: CANDIDATE
-      });
+      await dposInstance.claimValidator({from: CANDIDATE});
     } catch (error) {
       assert.isAbove(
         error.message.search('Stake is less than all validators'),
@@ -115,23 +107,8 @@ contract('DPoS and SGN contracts', async accounts => {
   });
 
   it('should replace a current validator by calling claimValidator with enough stake', async () => {
-    const sidechainAddr = sha3(CANDIDATE);
-    await dposInstance.initializeCandidate(
-      consts.MIN_SELF_STAKE,
-      consts.COMMISSION_RATE,
-      consts.RATE_LOCK_END_TIME,
-      { from: CANDIDATE }
-    );
-    await sgnInstance.updateSidechainAddr(sidechainAddr, {
-      from: CANDIDATE
-    });
-
-    await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {
-      from: CANDIDATE
-    });
-    await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {
-      from: CANDIDATE
-    });
+    await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: CANDIDATE});
+    await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: CANDIDATE});
 
     const tx = await dposInstance.claimValidator({ from: CANDIDATE });
 
