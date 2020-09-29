@@ -17,7 +17,6 @@ contract('governance tests', async (accounts) => {
 
   let celerToken;
   let dposInstance;
-  let sgnInstance;
   let getPenaltyRequestBytes;
 
   before(async () => {
@@ -40,27 +39,21 @@ contract('governance tests', async (accounts) => {
       consts.DPOS_GO_LIVE_TIMEOUT
     );
 
-    sgnInstance = await SGN.new(celerToken.address, dposInstance.address);
-    await dposInstance.registerSidechain(sgnInstance.address);
-
     for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
       await celerToken.transfer(accounts[i], '10000000000000000000');
     }
 
     for (let i = 0; i < VALIDATORS.length; i++) {
       // validators finish initialization
-      const sidechainAddr = sha3(VALIDATORS[i]);
       await dposInstance.initializeCandidate(
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
         {from: VALIDATORS[i]}
       );
-      await sgnInstance.updateSidechainAddr(sidechainAddr, {from: VALIDATORS[i]});
 
       await celerToken.approve(dposInstance.address, SELF_STAKE, {from: VALIDATORS[i]});
       await dposInstance.delegate(VALIDATORS[i], SELF_STAKE, {from: VALIDATORS[i]});
-
       // validators claimValidator
       await dposInstance.claimValidator({from: VALIDATORS[i]});
     }

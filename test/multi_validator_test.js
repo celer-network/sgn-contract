@@ -27,7 +27,6 @@ contract('validator replacement tests', async (accounts) => {
 
   let celerToken;
   let dposInstance;
-  let sgnInstance;
 
   beforeEach(async () => {
     celerToken = await CELRToken.new();
@@ -53,14 +52,12 @@ contract('validator replacement tests', async (accounts) => {
 
     for (let i = 0; i < VALIDATORS.length; i++) {
       // validators finish initialization
-      const sidechainAddr = sha3(VALIDATORS[i]);
       await dposInstance.initializeCandidate(
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
         {from: VALIDATORS[i]}
       );
-      await sgnInstance.updateSidechainAddr(sidechainAddr, {from: VALIDATORS[i]});
 
       await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {
         from: VALIDATORS[i]
@@ -71,14 +68,12 @@ contract('validator replacement tests', async (accounts) => {
       await dposInstance.claimValidator({from: VALIDATORS[i]});
     }
 
-    const sidechainAddr = sha3(CANDIDATE);
     await dposInstance.initializeCandidate(
       consts.MIN_SELF_STAKE,
       consts.COMMISSION_RATE,
       consts.RATE_LOCK_END_TIME,
       {from: CANDIDATE}
     );
-    await sgnInstance.updateSidechainAddr(sidechainAddr, {from: CANDIDATE});
   });
 
   it('should getMinQuorumStakingPool successfully', async () => {
