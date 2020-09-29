@@ -62,33 +62,6 @@ contract('basic tests', async (accounts) => {
     assert.fail('should have thrown before');
   });
 
-  it('should fail to subscribe before sidechain goes live', async () => {
-    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-
-    try {
-      await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
-    } catch (error) {
-      assert.isAbove(error.message.search('DPoS is not valid'), -1);
-      return;
-    }
-
-    assert.fail('should have thrown before');
-  });
-
-  it('should fail to subscribe before there are enough validators', async () => {
-    await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
-    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-
-    try {
-      await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
-    } catch (error) {
-      assert.isAbove(error.message.search('DPoS is not valid'), -1);
-      return;
-    }
-
-    assert.fail('should have thrown before');
-  });
-
   it('should fail to initialize a candidate when paused', async () => {
     await dposInstance.pause();
     try {
@@ -436,30 +409,6 @@ contract('basic tests', async (accounts) => {
           describe('after DPoS goes live', async () => {
             beforeEach(async () => {
               await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
-            });
-
-            it('should fail to subscribe when paused', async () => {
-              await sgnInstance.pause();
-              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-              try {
-                await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
-              } catch (e) {
-                assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
-                return;
-              }
-
-              assert.fail('should have thrown before');
-            });
-
-            // TODO: use a describe for the following when condition
-            it('should subscribe successfully when there are enough validators', async () => {
-              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-              const tx = await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
-              const {event, args} = tx.logs[0];
-
-              assert.equal(event, 'AddSubscriptionBalance');
-              assert.equal(args.consumer, SUBSCRIBER);
-              assert.equal(args.amount, consts.SUB_FEE);
             });
 
             it('should fail to slash when paused', async () => {

@@ -136,9 +136,7 @@ contract('governance tests', async (accounts) => {
 
     describe('after a validtor votes successfully', async () => {
       beforeEach(async () => {
-        await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
-          from: VALIDATORS[0]
-        });
+        await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {from: VALIDATORS[0]});
       });
 
       it('should fail to vote for the same proposal twice', async () => {

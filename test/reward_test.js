@@ -232,12 +232,16 @@ contract('reward tests', async (accounts) => {
     });
   });
 
-  describe('after candidate is bonded', async () => {
+  describe('after candidate is bonded and DPoS goes live', async () => {
     beforeEach(async () => {
       await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {from: CANDIDATE});
       await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {from: CANDIDATE});
       await dposInstance.claimValidator({from: CANDIDATE});
       await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
+
+      // submit subscription fees
+      await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
+      await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
     });
 
     it('should fail to redeem reward when paused', async () => {
@@ -264,14 +268,6 @@ contract('reward tests', async (accounts) => {
       const contribution = 100;
       await celerToken.approve(dposInstance.address, contribution);
       await dposInstance.contributeToMiningPool(contribution);
-
-      // submit subscription fees
-      await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
-        from: SUBSCRIBER
-      });
-      await sgnInstance.subscribe(consts.SUB_FEE, {
-        from: SUBSCRIBER
-      });
 
       const receiver = RECEIVER;
       const miningReward = 40;
@@ -316,10 +312,6 @@ contract('reward tests', async (accounts) => {
     });
 
     it('should fail to redeem reward more than amount in service pool', async () => {
-      // submit subscription fees
-      await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-      await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
-
       const rewardRequest = await getRewardRequestBytes({
         receiver: RECEIVER,
         cumulativeMiningReward: 0,
