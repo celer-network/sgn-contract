@@ -44,7 +44,6 @@ contract('DPoS and SGN contracts', async accounts => {
     sgnInstance = await SGN.new(celerToken.address, dposInstance.address);
     await dposInstance.registerSidechain(sgnInstance.address);
 
-    // give enough money to other accounts
     for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
       await celerToken.transfer(accounts[i], '10000000000000000000');
     }
@@ -103,9 +102,7 @@ contract('DPoS and SGN contracts', async accounts => {
 
     it('should fail to voteParam if not validator', async () => {
       try {
-        await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {
-          from: NON_VALIDATOR
-        });
+        await dposInstance.voteParam(proposalId, consts.ENUM_VOTE_TYPE_YES, {from: NON_VALIDATOR});
       } catch (error) {
         assert.isAbove(
           error.message.search('msg sender is not a validator'),
