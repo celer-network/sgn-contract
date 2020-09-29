@@ -63,14 +63,10 @@ contract('basic tests', async (accounts) => {
   });
 
   it('should fail to subscribe before sidechain goes live', async () => {
-    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
-      from: SUBSCRIBER
-    });
+    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
 
     try {
-      await sgnInstance.subscribe(consts.SUB_FEE, {
-        from: SUBSCRIBER
-      });
+      await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
     } catch (error) {
       assert.isAbove(error.message.search('DPoS is not valid'), -1);
       return;
@@ -81,14 +77,10 @@ contract('basic tests', async (accounts) => {
 
   it('should fail to subscribe before there are enough validators', async () => {
     await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
-    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
-      from: SUBSCRIBER
-    });
+    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
 
     try {
-      await sgnInstance.subscribe(consts.SUB_FEE, {
-        from: SUBSCRIBER
-      });
+      await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
     } catch (error) {
       assert.isAbove(error.message.search('DPoS is not valid'), -1);
       return;
@@ -148,9 +140,7 @@ contract('basic tests', async (accounts) => {
     assert.equal(tx.logs[0].args.rateLockEndTime, consts.RATE_LOCK_END_TIME);
 
     const sidechainAddr = sha3(CANDIDATE);
-    tx = await sgnInstance.updateSidechainAddr(sidechainAddr, {
-      from: CANDIDATE
-    });
+    tx = await sgnInstance.updateSidechainAddr(sidechainAddr, {from: CANDIDATE});
     assert.equal(tx.logs[0].event, 'UpdateSidechainAddr');
     assert.equal(tx.logs[0].args.candidate, CANDIDATE);
     assert.equal(tx.logs[0].args.oldSidechainAddr, consts.HASHED_NULL);
@@ -199,9 +189,7 @@ contract('basic tests', async (accounts) => {
 
     it('should update sidechain address by candidate successfully', async () => {
       const newSidechainAddr = sha3(CANDIDATE + 'new');
-      const tx = await sgnInstance.updateSidechainAddr(newSidechainAddr, {
-        from: CANDIDATE
-      });
+      const tx = await sgnInstance.updateSidechainAddr(newSidechainAddr, {from: CANDIDATE});
       const {event, args} = tx.logs[0];
 
       assert.equal(event, 'UpdateSidechainAddr');
@@ -243,9 +231,7 @@ contract('basic tests', async (accounts) => {
       await dposInstance.delegate(CANDIDATE, stakingPool, {from: DELEGATOR});
 
       try {
-        await dposInstance.claimValidator({
-          from: CANDIDATE
-        });
+        await dposInstance.claimValidator({from: CANDIDATE});
       } catch (error) {
         assert.isAbove(error.message.search('Insufficient staking pool'), -1);
         return;
@@ -262,9 +248,7 @@ contract('basic tests', async (accounts) => {
 
       it('should fail to claimValidator before self delegating minSelfStake', async () => {
         try {
-          await dposInstance.claimValidator({
-            from: CANDIDATE
-          });
+          await dposInstance.claimValidator({from: CANDIDATE});
         } catch (error) {
           assert.isAbove(error.message.search('Not enough self stake'), -1);
           return;
@@ -456,13 +440,9 @@ contract('basic tests', async (accounts) => {
 
             it('should fail to subscribe when paused', async () => {
               await sgnInstance.pause();
-              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
-                from: SUBSCRIBER
-              });
+              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
               try {
-                await sgnInstance.subscribe(consts.SUB_FEE, {
-                  from: SUBSCRIBER
-                });
+                await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
               } catch (e) {
                 assert.isAbove(e.message.search('VM Exception while processing transaction'), -1);
                 return;
@@ -473,12 +453,8 @@ contract('basic tests', async (accounts) => {
 
             // TODO: use a describe for the following when condition
             it('should subscribe successfully when there are enough validators', async () => {
-              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
-                from: SUBSCRIBER
-              });
-              const tx = await sgnInstance.subscribe(consts.SUB_FEE, {
-                from: SUBSCRIBER
-              });
+              await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
+              const tx = await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
               const {event, args} = tx.logs[0];
 
               assert.equal(event, 'AddSubscriptionBalance');

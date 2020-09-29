@@ -335,7 +335,5 @@ contract('reward tests', async (accounts) => {
 
       assert.fail('should have thrown before');
     });
-
   });
-
 });
