@@ -9,7 +9,7 @@ const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
-contract('validator replacement tests', async (accounts) => {
+contract('multiple validators tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const VALIDATORS = [
     accounts[2],
