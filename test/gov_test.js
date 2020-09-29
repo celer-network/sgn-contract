@@ -15,6 +15,7 @@ contract('governance tests', async (accounts) => {
   const VALIDATORS = [accounts[1], accounts[2], accounts[3], accounts[4]];
   const NON_VALIDATOR = accounts[5];
   const SELF_STAKE = '6000000000000000000';
+  const NEW_SIDECHAIN_ADDR = '0x700000009000000a000002000000B00000003EAF';
 
   let celerToken;
   let dposInstance;
@@ -264,7 +265,10 @@ contract('governance tests', async (accounts) => {
   it('should createSidechainProposal successfully', async () => {
     await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
     const newRegistrationStatus = true;
-    const tx = await dposInstance.createSidechainProposal(consts.ONE_ADDR, newRegistrationStatus);
+    const tx = await dposInstance.createSidechainProposal(
+      NEW_SIDECHAIN_ADDR,
+      newRegistrationStatus
+    );
     const block = await web3.eth.getBlock('latest');
     const {event, args} = tx.logs[0];
 
@@ -273,7 +277,7 @@ contract('governance tests', async (accounts) => {
     assert.equal(args.proposer, accounts[0]);
     assert.equal(args.deposit, consts.GOVERN_PROPOSAL_DEPOSIT);
     assert.equal(args.voteDeadline, block.number + consts.GOVERN_VOTE_TIMEOUT);
-    assert.equal(args.sidechainAddr, consts.ONE_ADDR);
+    assert.equal(args.sidechainAddr, NEW_SIDECHAIN_ADDR);
     assert.equal(args.registered, newRegistrationStatus);
   });
 
@@ -283,7 +287,7 @@ contract('governance tests', async (accounts) => {
 
     beforeEach(async () => {
       await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
-      await dposInstance.createSidechainProposal(consts.ONE_ADDR, newRegistrationStatus);
+      await dposInstance.createSidechainProposal(NEW_SIDECHAIN_ADDR, newRegistrationStatus);
     });
 
     it('should fail to voteSidechain if not validator', async () => {
@@ -393,7 +397,7 @@ contract('governance tests', async (accounts) => {
           assert.equal(event, 'ConfirmSidechainProposal');
           assert.equal(args.proposalId, proposalId);
           assert.equal(args.passed, false);
-          assert.equal(args.sidechainAddr, consts.ONE_ADDR);
+          assert.equal(args.sidechainAddr, NEW_SIDECHAIN_ADDR);
           assert.equal(args.registered, newRegistrationStatus);
         });
       });
@@ -418,13 +422,13 @@ contract('governance tests', async (accounts) => {
           const tx = await dposInstance.confirmSidechainProposal(proposalId);
           const {event, args} = tx.logs[0];
           const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(
-            consts.ONE_ADDR
+            NEW_SIDECHAIN_ADDR
           );
 
           assert.equal(event, 'ConfirmSidechainProposal');
           assert.equal(args.proposalId, proposalId);
           assert.equal(args.passed, true);
-          assert.equal(args.sidechainAddr, consts.ONE_ADDR);
+          assert.equal(args.sidechainAddr, NEW_SIDECHAIN_ADDR);
           assert.equal(args.registered, newRegistrationStatus);
           assert.equal(queriedRegistrationStatus, newRegistrationStatus);
         });
@@ -440,7 +444,7 @@ contract('governance tests', async (accounts) => {
 
             // createSidechainProposal
             await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
-            await dposInstance.createSidechainProposal(consts.ONE_ADDR, registrationStatus);
+            await dposInstance.createSidechainProposal(NEW_SIDECHAIN_ADDR, registrationStatus);
 
             // after over 2/3 voting power votes for Yes
             const majorNum = Math.ceil((VALIDATORS.length * 2) / 3);
@@ -457,13 +461,13 @@ contract('governance tests', async (accounts) => {
             const tx = await dposInstance.confirmSidechainProposal(unregisterProposalId);
             const {event, args} = tx.logs[0];
             const queriedRegistrationStatus = await dposInstance.isSidechainRegistered(
-              consts.ONE_ADDR
+              NEW_SIDECHAIN_ADDR
             );
 
             assert.equal(event, 'ConfirmSidechainProposal');
             assert.equal(args.proposalId, unregisterProposalId);
             assert.equal(args.passed, true);
-            assert.equal(args.sidechainAddr, consts.ONE_ADDR);
+            assert.equal(args.sidechainAddr, NEW_SIDECHAIN_ADDR);
             assert.equal(args.registered, registrationStatus);
             assert.equal(queriedRegistrationStatus, registrationStatus);
           });

@@ -113,9 +113,9 @@ contract('validator replacement tests', async (accounts) => {
 
     assert.equal(tx.logs[0].event, 'ValidatorChange');
     assert.equal(tx.logs[0].args.ethAddr, accounts[2]);
-    assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_REMOVAL);
+    assert.equal(tx.logs[0].args.changeType, consts.TYPE_VALIDATOR_REMOVAL);
     assert.equal(tx.logs[1].event, 'ValidatorChange');
     assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
-    assert.equal(tx.logs[1].args.changeType, consts.VALIDATOR_ADD);
+    assert.equal(tx.logs[1].args.changeType, consts.TYPE_VALIDATOR_ADD);
   });
 });

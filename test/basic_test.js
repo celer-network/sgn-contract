@@ -256,7 +256,7 @@ contract('basic tests', async (accounts) => {
 
           assert.equal(event, 'ValidatorChange');
           assert.equal(args.ethAddr, CANDIDATE);
-          assert.equal(args.changeType, consts.VALIDATOR_ADD);
+          assert.equal(args.changeType, consts.TYPE_VALIDATOR_ADD);
         });
 
         it('should increase min self stake and claimValidator successfully', async () => {
@@ -270,7 +270,7 @@ contract('basic tests', async (accounts) => {
           tx = await dposInstance.claimValidator({from: CANDIDATE});
           assert.equal(tx.logs[0].event, 'ValidatorChange');
           assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
-          assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_ADD);
+          assert.equal(tx.logs[0].args.changeType, consts.TYPE_VALIDATOR_ADD);
         });
 
         it('should decrease min self stake successfully but fail to claimValidator before notice period', async () => {
@@ -300,7 +300,7 @@ contract('basic tests', async (accounts) => {
           const tx = await dposInstance.claimValidator({from: CANDIDATE});
           assert.equal(tx.logs[0].event, 'ValidatorChange');
           assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
-          assert.equal(tx.logs[0].args.changeType, consts.VALIDATOR_ADD);
+          assert.equal(tx.logs[0].args.changeType, consts.TYPE_VALIDATOR_ADD);
         });
 
         describe('after one candidate claimValidator', async () => {
@@ -357,7 +357,7 @@ contract('basic tests', async (accounts) => {
 
             assert.equal(tx.logs[1].event, 'ValidatorChange');
             assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
-            assert.equal(tx.logs[1].args.changeType, consts.VALIDATOR_REMOVAL);
+            assert.equal(tx.logs[1].args.changeType, consts.TYPE_VALIDATOR_REMOVAL);
 
             assert.equal(tx.logs[2].event, 'IntendWithdraw');
             assert.equal(tx.logs[2].args.delegator, CANDIDATE);
@@ -374,7 +374,7 @@ contract('basic tests', async (accounts) => {
 
             assert.equal(tx.logs[1].event, 'ValidatorChange');
             assert.equal(tx.logs[1].args.ethAddr, CANDIDATE);
-            assert.equal(tx.logs[1].args.changeType, consts.VALIDATOR_REMOVAL);
+            assert.equal(tx.logs[1].args.changeType, consts.TYPE_VALIDATOR_REMOVAL);
 
             assert.equal(tx.logs[2].event, 'IntendWithdraw');
             assert.equal(tx.logs[2].args.delegator, DELEGATOR);

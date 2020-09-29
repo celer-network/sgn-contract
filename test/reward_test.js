@@ -14,6 +14,7 @@ contract('reward tests', async (accounts) => {
   const DELEGATOR = accounts[2];
   const SUBSCRIBER = accounts[3];
   const RECEIVER = accounts[4];
+  const LARGER_LOCK_END_TIME = 100000;
 
   let celerToken;
   let dposInstance;
@@ -88,7 +89,7 @@ contract('reward tests', async (accounts) => {
   it('should increase the commission rate lock end time successfully', async () => {
     const tx = await dposInstance.nonIncreaseCommissionRate(
       consts.COMMISSION_RATE,
-      consts.LARGER_LOCK_END_TIME,
+      LARGER_LOCK_END_TIME,
       {from: CANDIDATE}
     );
     const {event, args} = tx.logs[0];
@@ -96,7 +97,7 @@ contract('reward tests', async (accounts) => {
     assert.equal(event, 'UpdateCommissionRate');
     assert.equal(args.candidate, CANDIDATE);
     assert.equal(args.newRate, consts.COMMISSION_RATE);
-    assert.equal(args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
+    assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
   });
 
   it('should fail to update the commission rate lock end time to an outdated block number', async () => {
@@ -114,11 +115,9 @@ contract('reward tests', async (accounts) => {
 
   it('should fail to decrease the commission rate lock end time', async () => {
     // increase the lock end time first
-    await dposInstance.nonIncreaseCommissionRate(
-      consts.COMMISSION_RATE,
-      consts.LARGER_LOCK_END_TIME,
-      {from: CANDIDATE}
-    );
+    await dposInstance.nonIncreaseCommissionRate(consts.COMMISSION_RATE, LARGER_LOCK_END_TIME, {
+      from: CANDIDATE
+    });
 
     // get next block
     const block = await web3.eth.getBlock('latest');
@@ -136,50 +135,47 @@ contract('reward tests', async (accounts) => {
   });
 
   it('should decrease the commission rate at anytime', async () => {
-    let tx = await dposInstance.nonIncreaseCommissionRate(
-      consts.LOWER_RATE,
-      consts.LARGER_LOCK_END_TIME,
-      {from: CANDIDATE}
-    );
+    let lowerRate = consts.COMMISSION_RATE - 10;
+    let tx = await dposInstance.nonIncreaseCommissionRate(lowerRate, LARGER_LOCK_END_TIME, {
+      from: CANDIDATE
+    });
 
     assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
     assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-    assert.equal(tx.logs[0].args.newRate, consts.LOWER_RATE);
-    assert.equal(tx.logs[0].args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
+    assert.equal(tx.logs[0].args.newRate, lowerRate);
+    assert.equal(tx.logs[0].args.newLockEndTime, LARGER_LOCK_END_TIME);
 
-    tx = await dposInstance.nonIncreaseCommissionRate(
-      consts.LOWER_RATE - 10,
-      consts.LARGER_LOCK_END_TIME,
-      {from: CANDIDATE}
-    );
+    let lowerRate = consts.COMMISSION_RATE - 20;
+    tx = await dposInstance.nonIncreaseCommissionRate(lowerRate, LARGER_LOCK_END_TIME, {
+      from: CANDIDATE
+    });
 
     assert.equal(tx.logs[0].event, 'UpdateCommissionRate');
     assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-    assert.equal(tx.logs[0].args.newRate, consts.LOWER_RATE - 10);
-    assert.equal(tx.logs[0].args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
+    assert.equal(tx.logs[0].args.newRate, lowerRate);
+    assert.equal(tx.logs[0].args.newLockEndTime, LARGER_LOCK_END_TIME);
   });
 
   it('should announce increase commission rate successfully', async () => {
-    const tx = await dposInstance.announceIncreaseCommissionRate(
-      consts.HIGHER_RATE,
-      consts.LARGER_LOCK_END_TIME,
-      {from: CANDIDATE}
-    );
+    let higherRate = consts.COMMISSION_RATE + 10;
+    const tx = await dposInstance.announceIncreaseCommissionRate(higherRate, LARGER_LOCK_END_TIME, {
+      from: CANDIDATE
+    });
     const {event, args} = tx.logs[0];
 
     assert.equal(event, 'CommissionRateAnnouncement');
     assert.equal(args.candidate, CANDIDATE);
-    assert.equal(args.announcedRate, consts.HIGHER_RATE);
-    assert.equal(args.announcedLockEndTime, consts.LARGER_LOCK_END_TIME);
+    assert.equal(args.announcedRate, higherRate);
+    assert.equal(args.announcedLockEndTime, LARGER_LOCK_END_TIME);
   });
 
   describe('after announceIncreaseCommissionRate', async () => {
+    let higherRate = consts.COMMISSION_RATE + 10;
+
     beforeEach(async () => {
-      await dposInstance.announceIncreaseCommissionRate(
-        consts.HIGHER_RATE,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
+      await dposInstance.announceIncreaseCommissionRate(higherRate, LARGER_LOCK_END_TIME, {
+        from: CANDIDATE
+      });
     });
 
     it('should fail to confirmIncreaseCommissionRate before new rate can take effect', async () => {
@@ -194,19 +190,15 @@ contract('reward tests', async (accounts) => {
     });
 
     it('should fail to confirmIncreaseCommissionRate after new rate can take effect but before lock end time', async () => {
-      await dposInstance.nonIncreaseCommissionRate(
-        consts.COMMISSION_RATE,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
+      await dposInstance.nonIncreaseCommissionRate(consts.COMMISSION_RATE, LARGER_LOCK_END_TIME, {
+        from: CANDIDATE
+      });
 
       // need to announceIncreaseCommissionRate again because _updateCommissionRate
       // will remove the previous announcement of increasing commission rate
-      await dposInstance.announceIncreaseCommissionRate(
-        consts.HIGHER_RATE,
-        consts.LARGER_LOCK_END_TIME,
-        {from: CANDIDATE}
-      );
+      await dposInstance.announceIncreaseCommissionRate(higherRate, LARGER_LOCK_END_TIME, {
+        from: CANDIDATE
+      });
 
       await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
 
@@ -227,8 +219,8 @@ contract('reward tests', async (accounts) => {
 
       assert.equal(event, 'UpdateCommissionRate');
       assert.equal(args.candidate, CANDIDATE);
-      assert.equal(args.newRate, consts.HIGHER_RATE);
-      assert.equal(args.newLockEndTime, consts.LARGER_LOCK_END_TIME);
+      assert.equal(args.newRate, higherRate);
+      assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
     });
   });
 
