@@ -3,9 +3,6 @@ const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js')
 
 contract('DPoS edge case', async accounts => {
-  const DELEGATOR = accounts[0];
-  const CANDIDATE = accounts[1];
-
   let celerToken;
   let dposInstance;
 
@@ -23,14 +20,9 @@ contract('DPoS edge case', async accounts => {
       consts.ADVANCE_NOTICE_PERIOD,
       consts.DPOS_GO_LIVE_TIMEOUT
     );
-
-    // give enough money to other accounts
-    for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
-      await celerToken.transfer(accounts[i], '4000000000000000000');
-    }
   });
 
-  it('should fail to drain token for unpaused state', async () => {
+  it('should fail to drain token when not paused', async () => {
     await celerToken.transfer(dposInstance.address, 10);
 
     try {
@@ -46,9 +38,10 @@ contract('DPoS edge case', async accounts => {
     assert.fail('should have thrown before');
   });
 
-  it('should drainToken successfully after pauce contract', async () => {
+  it('should drainToken successfully when paused', async () => {
     await celerToken.transfer(dposInstance.address, 10);
     await dposInstance.pause();
     await dposInstance.drainToken(1);
   });
+
 });

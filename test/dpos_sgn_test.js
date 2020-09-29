@@ -102,7 +102,7 @@ contract('DPoS and SGN contracts', async accounts => {
     assert.fail('should have thrown before');
   });
 
-  it('should fail to initialize a candidate for unpaused state', async () => {
+  it('should fail to initialize a candidate when paused', async () => {
     await dposInstance.pause();
     try {
       await dposInstance.initializeCandidate(
@@ -377,7 +377,7 @@ contract('DPoS and SGN contracts', async accounts => {
       assert.equal(args.newSidechainAddr, sha3(newSidechainAddr));
     });
 
-    it('should fail to delegate for paused contract', async () => {
+    it('should fail to delegate when paused', async () => {
       await dposInstance.pause();
 
       await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
@@ -424,7 +424,7 @@ contract('DPoS and SGN contracts', async accounts => {
       assert.fail('should have thrown before');
     });
 
-    it('should fail to contributeToMiningPool for unpaused state', async () => {
+    it('should fail to contributeToMiningPool when paused', async () => {
       await dposInstance.pause();
       await celerToken.approve(dposInstance.address, 100);
 
@@ -677,7 +677,7 @@ contract('DPoS and SGN contracts', async accounts => {
               await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
             });
 
-            it('should fail to subscribe for unpaused state', async () => {
+            it('should fail to subscribe when paused', async () => {
               await sgnInstance.pause();
               await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {
                 from: SUBSCRIBER
@@ -712,7 +712,7 @@ contract('DPoS and SGN contracts', async accounts => {
               assert.equal(args.amount, consts.SUB_FEE);
             });
 
-            it('should fail to slash for unpaused state', async () => {
+            it('should fail to slash when paused', async () => {
               await dposInstance.pause();
 
               try {
@@ -843,7 +843,7 @@ contract('DPoS and SGN contracts', async accounts => {
               assert.fail('should have thrown before');
             });
 
-            it('should fail to redeem reward for unpaused state', async () => {
+            it('should fail to redeem reward when paused', async () => {
               await sgnInstance.pause();
 
               try {
