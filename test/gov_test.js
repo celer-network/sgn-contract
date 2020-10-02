@@ -80,12 +80,13 @@ contract('governance tests', async (accounts) => {
 
   describe('after someone createParamProposal successfully', async () => {
     const proposalId = 0;
+    const migrationStartTime = 10
 
     beforeEach(async () => {
       await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
       await dposInstance.createParamProposal(
         consts.ENUM_MIGRATION_TIME,
-        consts.MIGRATOIN_START_TIME
+        migrationStartTime
       );
     });
 
@@ -193,7 +194,7 @@ contract('governance tests', async (accounts) => {
           assert.equal(args.proposalId, proposalId);
           assert.equal(args.passed, false);
           assert.equal(args.record, consts.ENUM_MIGRATION_TIME);
-          assert.equal(args.newValue, consts.MIGRATOIN_START_TIME);
+          assert.equal(args.newValue, migrationStartTime);
         });
       });
     });
@@ -222,8 +223,8 @@ contract('governance tests', async (accounts) => {
           assert.equal(args.proposalId, proposalId);
           assert.equal(args.passed, true);
           assert.equal(args.record, consts.ENUM_MIGRATION_TIME);
-          assert.equal(args.newValue, consts.MIGRATOIN_START_TIME);
-          assert.equal(queriedMigrationTime, consts.MIGRATOIN_START_TIME);
+          assert.equal(args.newValue, migrationStartTime);
+          assert.equal(queriedMigrationTime, migrationStartTime);
         });
 
         it('should fail to slash in migrating state', async () => {
