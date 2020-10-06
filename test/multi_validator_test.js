@@ -115,6 +115,29 @@ contract('multiple validators tests', async (accounts) => {
       await dposInstance.claimValidator({from: CANDIDATE});
     });
 
+    it('should confirmUnbondedCandidate after unbondTime', async () => {
+      const res = await dposInstance.getCandidateInfo(VALIDATORS[0])
+      assert.equal(res.status.toNumber(), consts.STATUS_UNBONDING)
+
+      let pass = false;
+      try {
+        await dposInstance.confirmUnbondedCandidate(VALIDATORS[0])
+      } catch (e) {
+        assert.isAbove(e.message.search('revert'), -1);
+        pass = true;
+      }
+      if (!pass) {
+        assert.fail('should have thrown before');
+      }
+
+      await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
+      const tx = await dposInstance.confirmUnbondedCandidate(VALIDATORS[0])
+
+      const {event, args} = tx.logs[0];
+      assert.equal(event, 'CandidateUnbonded');
+      assert.equal(args.candidate, VALIDATORS[0]);
+    });
+
     it('should replace validator that has min stakes with the unbonding validtor', async () => {
       await dposInstance.intendWithdraw(VALIDATORS[3], consts.ONE_CELR, {from: DELEGATOR});
 
@@ -126,5 +149,6 @@ contract('multiple validators tests', async (accounts) => {
       assert.equal(tx.logs[1].args.ethAddr, VALIDATORS[0]);
       assert.equal(tx.logs[1].args.changeType, consts.TYPE_VALIDATOR_ADD);
     });
+
   });
 });
