@@ -9,6 +9,7 @@ const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
+// basic tests with a single valdiator candidate and a single delegator
 contract('basic tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
@@ -33,17 +34,15 @@ contract('basic tests', async (accounts) => {
     );
 
     sgnInstance = await SGN.new(celerToken.address, dposInstance.address);
-
     await dposInstance.registerSidechain(sgnInstance.address);
 
-    for (let i = 1; i < 5; i++) {
-      await celerToken.transfer(accounts[i], '10000000000000000000');
+    for (let i = 1; i < 3; i++) {
+      await celerToken.transfer(accounts[i], consts.TEN_CELR);
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
   });
 
   it('should fail to delegate to an uninitialized candidate', async () => {
-    await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
-
     try {
       await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
     } catch (error) {
@@ -156,7 +155,6 @@ contract('basic tests', async (accounts) => {
       const newSidechainAddr = sha3(CANDIDATE + 'new');
       const tx = await sgnInstance.updateSidechainAddr(newSidechainAddr, {from: CANDIDATE});
       const {event, args} = tx.logs[0];
-
       assert.equal(event, 'UpdateSidechainAddr');
       assert.equal(args.candidate, CANDIDATE);
       assert.equal(args.oldSidechainAddr, sha3(sidechainAddr));
@@ -165,8 +163,6 @@ contract('basic tests', async (accounts) => {
 
     it('should fail to delegate when paused', async () => {
       await dposInstance.pause();
-
-      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       try {
         await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       } catch (e) {
@@ -178,8 +174,6 @@ contract('basic tests', async (accounts) => {
     });
 
     it('should delegate to candidate by a delegator successfully', async () => {
-      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
-
       const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       const {event, args} = tx.logs[1];
 
@@ -192,7 +186,6 @@ contract('basic tests', async (accounts) => {
 
     it('should fail to claimValidator before delegating enough stake', async () => {
       const stakingPool = (parseInt(consts.MIN_STAKING_POOL) - 10000).toString();
-      await celerToken.approve(dposInstance.address, stakingPool, {from: DELEGATOR});
       await dposInstance.delegate(CANDIDATE, stakingPool, {from: DELEGATOR});
 
       try {
@@ -207,7 +200,6 @@ contract('basic tests', async (accounts) => {
 
     describe('after one delegator delegates enough stake to the candidate', async () => {
       beforeEach(async () => {
-        await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
         await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       });
 
@@ -225,39 +217,35 @@ contract('basic tests', async (accounts) => {
       it('should withdrawFromUnbondedCandidate by delegator successfully', async () => {
         const tx = await dposInstance.withdrawFromUnbondedCandidate(
           CANDIDATE,
-          consts.DELEGATOR_WITHDRAW,
+          consts.DELEGATOR_STAKE,
           {from: DELEGATOR}
         );
         const {event, args} = tx.logs[1];
-
         assert.equal(event, 'WithdrawFromUnbondedCandidate');
         assert.equal(args.delegator, DELEGATOR);
         assert.equal(args.candidate, CANDIDATE);
-        assert.equal(args.amount, consts.DELEGATOR_WITHDRAW);
+        assert.equal(args.amount, consts.DELEGATOR_STAKE);
       });
 
       describe('after one candidate self delegates minSelfStake', async () => {
         beforeEach(async () => {
-          await celerToken.approve(dposInstance.address, consts.CANDIDATE_STAKE, {from: CANDIDATE});
           await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {from: CANDIDATE});
         });
 
         it('should claimValidator successfully', async () => {
           const tx = await dposInstance.claimValidator({from: CANDIDATE});
           const {event, args} = tx.logs[0];
-
           assert.equal(event, 'ValidatorChange');
           assert.equal(args.ethAddr, CANDIDATE);
           assert.equal(args.changeType, consts.TYPE_VALIDATOR_ADD);
         });
 
         it('should increase min self stake and claimValidator successfully', async () => {
-          let tx = await dposInstance.updateMinSelfStake(consts.HIGHER_MIN_SELF_STAKE, {
-            from: CANDIDATE
-          });
+          const higherMinSelfStake = (parseInt(consts.MIN_SELF_STAKE) + 1000000).toString();
+          let tx = await dposInstance.updateMinSelfStake(higherMinSelfStake, {from: CANDIDATE});
           assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
           assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-          assert.equal(tx.logs[0].args.minSelfStake, consts.HIGHER_MIN_SELF_STAKE);
+          assert.equal(tx.logs[0].args.minSelfStake, higherMinSelfStake);
 
           tx = await dposInstance.claimValidator({from: CANDIDATE});
           assert.equal(tx.logs[0].event, 'ValidatorChange');
@@ -265,31 +253,27 @@ contract('basic tests', async (accounts) => {
           assert.equal(tx.logs[0].args.changeType, consts.TYPE_VALIDATOR_ADD);
         });
 
-        it('should decrease min self stake successfully but fail to claimValidator before notice period', async () => {
-          const tx = await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {
-            from: CANDIDATE
-          });
-          const {event, args} = tx.logs[0];
-          assert.equal(event, 'UpdateMinSelfStake');
-          assert.equal(args.candidate, CANDIDATE);
-          assert.equal(args.minSelfStake, consts.LOWER_MIN_SELF_STAKE);
+        it('should decrease min self stake and only able to claimValidator after notice period', async () => {
+          const lowerMinSelfStake = (parseInt(consts.MIN_SELF_STAKE) - 1000000).toString();
+          let tx = await dposInstance.updateMinSelfStake(lowerMinSelfStake, {from: CANDIDATE});
+          assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
+          assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+          assert.equal(tx.logs[0].args.minSelfStake, lowerMinSelfStake);
 
+          let pass = false;
           try {
             await dposInstance.claimValidator({from: CANDIDATE});
           } catch (error) {
             assert.isAbove(error.message.search('Not earliest bond time yet'), -1);
-            return;
+            pass = true;
+          }
+          if (!pass) {
+            assert.fail('should have thrown before');
           }
 
-          assert.fail('should have thrown before');
-        });
-
-        it('should decrease min self stake and claimValidator after notice period successfully', async () => {
-          await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {from: CANDIDATE});
-
+          // wait for advance notice period
           await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
-
-          const tx = await dposInstance.claimValidator({from: CANDIDATE});
+          tx = await dposInstance.claimValidator({from: CANDIDATE});
           assert.equal(tx.logs[0].event, 'ValidatorChange');
           assert.equal(tx.logs[0].args.ethAddr, CANDIDATE);
           assert.equal(tx.logs[0].args.changeType, consts.TYPE_VALIDATOR_ADD);
@@ -304,7 +288,7 @@ contract('basic tests', async (accounts) => {
             try {
               await dposInstance.withdrawFromUnbondedCandidate(
                 CANDIDATE,
-                consts.DELEGATOR_WITHDRAW
+                consts.DELEGATOR_STAKE
               );
             } catch (error) {
               assert.isAbove(error.message.search('invalid status'), -1);
@@ -340,11 +324,14 @@ contract('basic tests', async (accounts) => {
           });
 
           it('should remove the validator after validator intendWithdraw to an amount under minSelfStake', async () => {
-            const tx = await dposInstance.intendWithdraw(
-              CANDIDATE,
-              consts.CANDIDATE_WITHDRAW_UNDER_MIN,
-              {from: CANDIDATE}
-            );
+            const withdrawalAmt = (
+              parseInt(consts.CANDIDATE_STAKE) -
+              parseInt(consts.MIN_SELF_STAKE) +
+              100
+            ).toString();
+            const tx = await dposInstance.intendWithdraw(CANDIDATE, withdrawalAmt, {
+              from: CANDIDATE
+            });
             const block = await web3.eth.getBlock('latest');
 
             assert.equal(tx.logs[1].event, 'ValidatorChange');
@@ -354,12 +341,12 @@ contract('basic tests', async (accounts) => {
             assert.equal(tx.logs[2].event, 'IntendWithdraw');
             assert.equal(tx.logs[2].args.delegator, CANDIDATE);
             assert.equal(tx.logs[2].args.candidate, CANDIDATE);
-            assert.equal(tx.logs[2].args.withdrawAmount, consts.CANDIDATE_WITHDRAW_UNDER_MIN);
+            assert.equal(tx.logs[2].args.withdrawAmount, withdrawalAmt);
             assert.equal(tx.logs[2].args.proposedTime.toNumber(), block.number);
           });
 
           it('should remove the validator after delegator intendWithdraw to an amount under minStakingPool', async () => {
-            const tx = await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_WITHDRAW, {
+            const tx = await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_STAKE, {
               from: DELEGATOR
             });
             const block = await web3.eth.getBlock('latest');
@@ -371,24 +358,22 @@ contract('basic tests', async (accounts) => {
             assert.equal(tx.logs[2].event, 'IntendWithdraw');
             assert.equal(tx.logs[2].args.delegator, DELEGATOR);
             assert.equal(tx.logs[2].args.candidate, CANDIDATE);
-            assert.equal(tx.logs[2].args.withdrawAmount, consts.DELEGATOR_WITHDRAW);
+            assert.equal(tx.logs[2].args.withdrawAmount, consts.DELEGATOR_STAKE);
             assert.equal(tx.logs[2].args.proposedTime.toNumber(), block.number);
           });
 
           it('should increase min self stake successfully', async () => {
-            const tx = await dposInstance.updateMinSelfStake(consts.HIGHER_MIN_SELF_STAKE, {
-              from: CANDIDATE
-            });
+            const higherMinSelfStake = (parseInt(consts.MIN_SELF_STAKE) + 1000000).toString();
+            const tx = await dposInstance.updateMinSelfStake(higherMinSelfStake, {from: CANDIDATE});
             assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
             assert.equal(tx.logs[0].args.candidate, CANDIDATE);
-            assert.equal(tx.logs[0].args.minSelfStake, consts.HIGHER_MIN_SELF_STAKE);
+            assert.equal(tx.logs[0].args.minSelfStake, higherMinSelfStake);
           });
 
           it('should fail to decrease min self stake', async () => {
+            const lowerMinSelfStake = (parseInt(consts.MIN_SELF_STAKE) - 1000000).toString();
             try {
-              await dposInstance.updateMinSelfStake(consts.LOWER_MIN_SELF_STAKE, {
-                from: CANDIDATE
-              });
+              await dposInstance.updateMinSelfStake(lowerMinSelfStake, {from: CANDIDATE});
             } catch (error) {
               assert.isAbove(error.message.search('Candidate is bonded'), -1);
               return;
@@ -400,7 +385,7 @@ contract('basic tests', async (accounts) => {
 
           describe('after a delegator intendWithdraw', async () => {
             beforeEach(async () => {
-              await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_WITHDRAW, {
+              await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_STAKE, {
                 from: DELEGATOR
               });
             });
@@ -408,7 +393,6 @@ contract('basic tests', async (accounts) => {
             it('should confirmWithdraw 0 before withdrawTimeout', async () => {
               const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
               const {event, args} = tx.logs[0];
-
               assert.equal(event, 'ConfirmWithdraw');
               assert.equal(args.delegator, DELEGATOR);
               assert.equal(args.candidate, CANDIDATE);
@@ -423,11 +407,10 @@ contract('basic tests', async (accounts) => {
               it('should confirmWithdraw successfully', async () => {
                 const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
                 const {event, args} = tx.logs[0];
-
                 assert.equal(event, 'ConfirmWithdraw');
                 assert.equal(args.delegator, DELEGATOR);
                 assert.equal(args.candidate, CANDIDATE);
-                assert.equal(args.amount, consts.DELEGATOR_WITHDRAW);
+                assert.equal(args.amount, consts.DELEGATOR_STAKE);
               });
 
               describe('after confirmWithdraw', async () => {
@@ -438,7 +421,6 @@ contract('basic tests', async (accounts) => {
                 it('should confirmWithdraw 0 after all withdraw intents are cleared', async () => {
                   const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
                   const {event, args} = tx.logs[0];
-
                   assert.equal(event, 'ConfirmWithdraw');
                   assert.equal(args.delegator, DELEGATOR);
                   assert.equal(args.candidate, CANDIDATE);

@@ -409,7 +409,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         address msgSender = msg.sender;
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(candidate.initialized, 'Candidate is not initialized');
-        // TODO: decide whether Unbonding status is valid to claimValidator or not
         require(
             candidate.status == DPoSCommon.CandidateStatus.Unbonded ||
                 candidate.status == DPoSCommon.CandidateStatus.Unbonding
