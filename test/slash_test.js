@@ -39,7 +39,7 @@ contract('single-validator slash tests', async (accounts) => {
     );
 
     for (let i = 1; i < 5; i++) {
-      await celerToken.transfer(accounts[i], '10000000000000000000');
+      await celerToken.transfer(accounts[i], consts.TEN_CELR);
     }
 
     await dposInstance.initializeCandidate(
@@ -214,7 +214,7 @@ contract('muti-validator slash tests', async (accounts) => {
     );
 
     for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
-      await celerToken.transfer(accounts[i], '10000000000000000000');
+      await celerToken.transfer(accounts[i], consts.TEN_CELR);
     }
 
     for (let i = 0; i < VALIDATORS.length; i++) {

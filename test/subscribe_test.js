@@ -44,7 +44,7 @@ contract('subscribe tests', async (accounts) => {
     await dposInstance.registerSidechain(sgnInstance.address);
 
     for (let i = 1; i < 5; i++) {
-      await celerToken.transfer(accounts[i], '10000000000000000000');
+      await celerToken.transfer(accounts[i], consts.TEN_CELR);
     }
 
     await dposInstance.initializeCandidate(
