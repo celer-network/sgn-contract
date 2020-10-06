@@ -38,12 +38,11 @@ contract('basic tests', async (accounts) => {
 
     for (let i = 1; i < 3; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
   });
 
   it('should fail to delegate to an uninitialized candidate', async () => {
-    await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE);
-
     try {
       await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE);
     } catch (error) {
@@ -164,8 +163,6 @@ contract('basic tests', async (accounts) => {
 
     it('should fail to delegate when paused', async () => {
       await dposInstance.pause();
-
-      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       try {
         await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       } catch (e) {
@@ -177,8 +174,6 @@ contract('basic tests', async (accounts) => {
     });
 
     it('should delegate to candidate by a delegator successfully', async () => {
-      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
-
       const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       const {event, args} = tx.logs[1];
 
@@ -191,7 +186,6 @@ contract('basic tests', async (accounts) => {
 
     it('should fail to claimValidator before delegating enough stake', async () => {
       const stakingPool = (parseInt(consts.MIN_STAKING_POOL) - 10000).toString();
-      await celerToken.approve(dposInstance.address, stakingPool, {from: DELEGATOR});
       await dposInstance.delegate(CANDIDATE, stakingPool, {from: DELEGATOR});
 
       try {
@@ -206,7 +200,6 @@ contract('basic tests', async (accounts) => {
 
     describe('after one delegator delegates enough stake to the candidate', async () => {
       beforeEach(async () => {
-        await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
         await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       });
 
@@ -236,7 +229,6 @@ contract('basic tests', async (accounts) => {
 
       describe('after one candidate self delegates minSelfStake', async () => {
         beforeEach(async () => {
-          await celerToken.approve(dposInstance.address, consts.CANDIDATE_STAKE, {from: CANDIDATE});
           await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {from: CANDIDATE});
         });
 

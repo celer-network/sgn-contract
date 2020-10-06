@@ -38,8 +38,9 @@ contract('single-validator slash tests', async (accounts) => {
       consts.DPOS_GO_LIVE_TIMEOUT
     );
 
-    for (let i = 1; i < 5; i++) {
+    for (let i = 1; i < 4; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
 
     await dposInstance.initializeCandidate(
@@ -52,9 +53,7 @@ contract('single-validator slash tests', async (accounts) => {
 
   describe('after candidate is bonded and DPoS goes live', async () => {
     beforeEach(async () => {
-      await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {from: CANDIDATE});
       await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {from: CANDIDATE});
-      await celerToken.approve(dposInstance.address, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       await dposInstance.claimValidator({from: CANDIDATE});
       await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
@@ -213,8 +212,9 @@ contract('muti-validator slash tests', async (accounts) => {
       consts.DPOS_GO_LIVE_TIMEOUT
     );
 
-    for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
+    for (let i = 1; i < 6; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
 
     for (let i = 0; i < VALIDATORS.length; i++) {
@@ -225,7 +225,6 @@ contract('muti-validator slash tests', async (accounts) => {
         consts.RATE_LOCK_END_TIME,
         {from: VALIDATORS[i]}
       );
-      await celerToken.approve(dposInstance.address, SELF_STAKE, {from: VALIDATORS[i]});
       await dposInstance.delegate(VALIDATORS[i], SELF_STAKE, {from: VALIDATORS[i]});
 
       // validators claimValidator

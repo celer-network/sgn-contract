@@ -39,9 +39,11 @@ contract('governance tests', async (accounts) => {
       consts.DPOS_GO_LIVE_TIMEOUT
     );
 
-    for (let i = 1; i < consts.GANACHE_ACCOUNT_NUM; i++) {
+    for (let i = 1; i < 6; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
+    await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[0]});
 
     for (let i = 0; i < VALIDATORS.length; i++) {
       // validators finish initialization
@@ -52,7 +54,6 @@ contract('governance tests', async (accounts) => {
         {from: VALIDATORS[i]}
       );
 
-      await celerToken.approve(dposInstance.address, SELF_STAKE, {from: VALIDATORS[i]});
       await dposInstance.delegate(VALIDATORS[i], SELF_STAKE, {from: VALIDATORS[i]});
       // validators claimValidator
       await dposInstance.claimValidator({from: VALIDATORS[i]});
@@ -64,7 +65,6 @@ contract('governance tests', async (accounts) => {
   it('should createParamProposal successfully', async () => {
     const newSlashTimeout = consts.SLASH_TIMEOUT + 1;
 
-    await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
     const tx = await dposInstance.createParamProposal(consts.ENUM_SLASH_TIMEOUT, newSlashTimeout);
     const block = await web3.eth.getBlock('latest');
     const {event, args} = tx.logs[0];
@@ -83,11 +83,7 @@ contract('governance tests', async (accounts) => {
     const migrationStartTime = 10
 
     beforeEach(async () => {
-      await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
-      await dposInstance.createParamProposal(
-        consts.ENUM_MIGRATION_TIME,
-        migrationStartTime
-      );
+      await dposInstance.createParamProposal(consts.ENUM_MIGRATION_TIME, migrationStartTime);
     });
 
     it('should fail to voteParam if not validator', async () => {
@@ -255,12 +251,8 @@ contract('governance tests', async (accounts) => {
 
   // sidechain governance tests
   it('should createSidechainProposal successfully', async () => {
-    await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
     const newRegistrationStatus = true;
-    const tx = await dposInstance.createSidechainProposal(
-      NEW_SIDECHAIN_ADDR,
-      newRegistrationStatus
-    );
+    const tx = await dposInstance.createSidechainProposal(NEW_SIDECHAIN_ADDR, newRegistrationStatus);
     const block = await web3.eth.getBlock('latest');
     const {event, args} = tx.logs[0];
 
@@ -278,7 +270,6 @@ contract('governance tests', async (accounts) => {
     const newRegistrationStatus = true;
 
     beforeEach(async () => {
-      await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
       await dposInstance.createSidechainProposal(NEW_SIDECHAIN_ADDR, newRegistrationStatus);
     });
 
@@ -435,7 +426,6 @@ contract('governance tests', async (accounts) => {
             const unregisterProposalId = proposalId + 1;
 
             // createSidechainProposal
-            await celerToken.approve(dposInstance.address, consts.GOVERN_PROPOSAL_DEPOSIT);
             await dposInstance.createSidechainProposal(NEW_SIDECHAIN_ADDR, registrationStatus);
 
             // after over 2/3 voting power votes for Yes

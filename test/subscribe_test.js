@@ -45,6 +45,8 @@ contract('subscribe tests', async (accounts) => {
 
     for (let i = 1; i < 5; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
+      await celerToken.approve(sgnInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
 
     await dposInstance.initializeCandidate(
@@ -58,8 +60,6 @@ contract('subscribe tests', async (accounts) => {
   });
 
   it('should fail to subscribe before sidechain goes live', async () => {
-    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-
     try {
       await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
     } catch (error) {
@@ -72,7 +72,6 @@ contract('subscribe tests', async (accounts) => {
 
   it('should fail to subscribe before there are enough validators', async () => {
     await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
-    await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
 
     try {
       await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
@@ -86,7 +85,6 @@ contract('subscribe tests', async (accounts) => {
 
   describe('after candidate is bonded and DPoS goes live', async () => {
     beforeEach(async () => {
-      await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {from: CANDIDATE});
       await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {from: CANDIDATE});
       await dposInstance.claimValidator({from: CANDIDATE});
       await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
@@ -94,7 +92,6 @@ contract('subscribe tests', async (accounts) => {
 
     it('should fail to subscribe when paused', async () => {
       await sgnInstance.pause();
-      await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
       try {
         await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
       } catch (e) {
@@ -106,7 +103,6 @@ contract('subscribe tests', async (accounts) => {
     });
 
     it('should subscribe successfully when there are enough validators', async () => {
-      await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
       const tx = await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
       const {event, args} = tx.logs[0];
 

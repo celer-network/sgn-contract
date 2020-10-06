@@ -43,13 +43,13 @@ contract('multiple validators tests', async (accounts) => {
     sgnInstance = await SGN.new(celerToken.address, dposInstance.address);
     await dposInstance.registerSidechain(sgnInstance.address);
 
-    for (let i = 1; i < 10; i++) {
+    for (let i = 1; i < 9; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
       await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
-    const balance = '100000000000000000000' // 100 CELR
-    await celerToken.transfer(DELEGATOR, balance);
-    await celerToken.approve(dposInstance.address, balance, {from: DELEGATOR});
+    const delegatorbalance = '100000000000000000000' // 100 CELR
+    await celerToken.transfer(DELEGATOR, delegatorbalance);
+    await celerToken.approve(dposInstance.address, delegatorbalance, {from: DELEGATOR});
 
     for (let i = 0; i < VALIDATORS.length; i++) {
       // validators finish initialization
