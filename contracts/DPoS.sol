@@ -517,17 +517,16 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         Delegator storage delegator = candidateProfiles[_candidateAddr]
             .delegatorProfiles[msgSender];
 
-        uint256 bn = block.number;
-        uint256 i;
+        uint256 slashTimeout = getUIntValue(uint256(ParamNames.SlashTimeout));
         bool isUnbonded = candidateProfiles[_candidateAddr].status ==
             DPoSCommon.CandidateStatus.Unbonded;
         // for all undelegated withdraw intents
+        uint256 i;
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];
-            uint256 slashTimeout = getUIntValue(uint256(ParamNames.SlashTimeout));
-            if (isUnbonded || wi.proposedTime.add(slashTimeout) <= bn) {
-                // withdraw intent is undelegated when the validator becomes unbonded or the slashTimeout
-                // for the withdraw intent is up.
+            if (isUnbonded || wi.proposedTime.add(slashTimeout) <= block.number) {
+                // withdraw intent is undelegated when the validator becomes unbonded or
+                // the slashTimeout for the withdraw intent is up.
                 delete delegator.withdrawIntents[i];
                 continue;
             }
