@@ -60,7 +60,7 @@ contract('multiple validators tests', async (accounts) => {
         {from: VALIDATORS[i]}
       );
 
-      await dposInstance.delegate(VALIDATORS[i], consts.MIN_SELF_STAKE, {from: VALIDATORS[i]});
+      await dposInstance.delegate(VALIDATORS[i], consts.CANDIDATE_STAKE, {from: VALIDATORS[i]});
       await dposInstance.delegate(VALIDATORS[i], consts.DELEGATOR_STAKE, {from: DELEGATOR});
 
       // validators claimValidator
@@ -80,7 +80,7 @@ contract('multiple validators tests', async (accounts) => {
     const quorumStakingPool = await dposInstance.getMinQuorumStakingPool();
 
     assert.equal(number.toNumber(), VALIDATORS.length);
-    assert.equal(quorumStakingPool.toString(), '32666666666666666667');
+    assert.equal(quorumStakingPool.toString(), '42000000000000000001');
   });
 
   it('should fail to claimValidator with low stake', async () => {
