@@ -17,6 +17,12 @@ contract('basic tests', async (accounts) => {
   let celerToken;
   let dposInstance;
   let sgnInstance;
+  let getPenaltyRequestBytes;
+
+  before(async () => {
+    const protoChainInstance = await protoChainFactory();
+    getPenaltyRequestBytes = protoChainInstance.getPenaltyRequestBytes;
+  });
 
   beforeEach(async () => {
     celerToken = await CELRToken.new();
@@ -227,6 +233,33 @@ contract('basic tests', async (accounts) => {
         assert.equal(args.amount, consts.DELEGATOR_STAKE);
       });
 
+      it('should fail to withdrawFromUnbondedCandidate more than it delegated', async () => {
+        try {
+          await dposInstance.withdrawFromUnbondedCandidate(
+            CANDIDATE,
+            (consts.DELEGATOR_STAKE + 1000).toString(),
+            {from: DELEGATOR}
+          );
+        } catch (error) {
+          assert.isAbove(error.message.search('revert'), -1);
+          return;
+        }
+        assert.fail('should have thrown before');
+      });
+
+      it('should fail to withdrawFromUnbondedCandidate a smaller amount than 1 ether', async () => {
+        try {
+          await dposInstance.withdrawFromUnbondedCandidate(CANDIDATE, 1, {from: DELEGATOR});
+        } catch (error) {
+          assert.isAbove(
+            error.message.search('Amount is smaller than minimum requirement'),
+            -1
+          );
+          return;
+        }
+        assert.fail('should have thrown before');
+      });
+
       describe('after one candidate self delegates minSelfStake', async () => {
         beforeEach(async () => {
           await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {from: CANDIDATE});
@@ -297,19 +330,6 @@ contract('basic tests', async (accounts) => {
             assert.fail('should have thrown before');
           });
 
-          it('should fail to withdrawFromUnbondedCandidate a smaller amount than 1 ether', async () => {
-            try {
-              await dposInstance.withdrawFromUnbondedCandidate(CANDIDATE, 1);
-            } catch (error) {
-              assert.isAbove(
-                error.message.search('Amount is smaller than minimum requirement'),
-                -1
-              );
-              return;
-            }
-            assert.fail('should have thrown before');
-          });
-
           it('should fail to intendWithdraw a smaller amount than 1 ether', async () => {
             try {
               await dposInstance.intendWithdraw(CANDIDATE, 1);
@@ -323,11 +343,25 @@ contract('basic tests', async (accounts) => {
             assert.fail('should have thrown before');
           });
 
+          it('should fail to intendWithdraw more than it delegated', async () => {
+            try {
+              await dposInstance.withdrawFromUnbondedCandidate(
+                CANDIDATE,
+                (consts.DELEGATOR_STAKE + 1000).toString(),
+                {from: DELEGATOR}
+              );
+            } catch (error) {
+              assert.isAbove(error.message.search('revert'), -1);
+              return;
+            }
+            assert.fail('should have thrown before');
+          });
+
           it('should remove the validator after validator intendWithdraw to an amount under minSelfStake', async () => {
             const withdrawalAmt = (
               parseInt(consts.CANDIDATE_STAKE) -
               parseInt(consts.MIN_SELF_STAKE) +
-              100
+              1000
             ).toString();
             const tx = await dposInstance.intendWithdraw(CANDIDATE, withdrawalAmt, {
               from: CANDIDATE
@@ -381,52 +415,136 @@ contract('basic tests', async (accounts) => {
             assert.fail('should have thrown before');
           });
 
-          // TODO: add a test of "fail to confirmWithdraw because penalty slashes all undelegating stake"
-
           describe('after a delegator intendWithdraw', async () => {
             beforeEach(async () => {
-              await dposInstance.intendWithdraw(CANDIDATE, consts.DELEGATOR_STAKE, {
-                from: DELEGATOR
-              });
+              await dposInstance.intendWithdraw(CANDIDATE, consts.TWO_CELR, {from: DELEGATOR});
             });
 
-            it('should confirmWithdraw 0 before withdrawTimeout', async () => {
-              const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
-              const {event, args} = tx.logs[0];
-              assert.equal(event, 'ConfirmWithdraw');
-              assert.equal(args.delegator, DELEGATOR);
-              assert.equal(args.candidate, CANDIDATE);
-              assert.equal(args.amount, 0);
+            it('should fail to intendWithdraw with a total more than it delegated', async () => {
+              try {
+                await dposInstance.withdrawFromUnbondedCandidate(
+                  CANDIDATE,
+                  consts.DELEGATOR_STAKE,
+                  {from: DELEGATOR}
+                );
+              } catch (error) {
+                assert.isAbove(error.message.search('revert'), -1);
+                return;
+              }
+              assert.fail('should have thrown before');
             });
 
-            describe('after withdrawTimeout', async () => {
-              beforeEach(async () => {
-                await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
-              });
+            it('should pass before and after withdrawTimeout', async () => {
+              // before withdrawTimeout
+              let tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, 0);
 
-              it('should confirmWithdraw successfully', async () => {
-                const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
-                const {event, args} = tx.logs[0];
-                assert.equal(event, 'ConfirmWithdraw');
-                assert.equal(args.delegator, DELEGATOR);
-                assert.equal(args.candidate, CANDIDATE);
-                assert.equal(args.amount, consts.DELEGATOR_STAKE);
-              });
+              // after withdrawTimeout
+              await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
 
-              describe('after confirmWithdraw', async () => {
-                beforeEach(async () => {
-                  await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
-                });
+              // first confirmWithdraw
+              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, consts.TWO_CELR);
 
-                it('should confirmWithdraw 0 after all withdraw intents are cleared', async () => {
-                  const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
-                  const {event, args} = tx.logs[0];
-                  assert.equal(event, 'ConfirmWithdraw');
-                  assert.equal(args.delegator, DELEGATOR);
-                  assert.equal(args.candidate, CANDIDATE);
-                  assert.equal(args.amount, 0);
-                });
+              // second confirmWithdraw
+              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, 0);
+            });
+
+            it('should pass with multiple withdrawal intents', async () => {
+              await dposInstance.intendWithdraw(CANDIDATE, consts.ONE_CELR, {from: DELEGATOR});
+
+              let res = await dposInstance.getDelegatorInfo(CANDIDATE, DELEGATOR);
+              assert.equal(res.delegatedStake.toString(), consts.THREE_CELR);
+              assert.equal(res.undelegatingStake.toString(), consts.THREE_CELR);
+              assert.equal(res.intentAmounts[0].toString(), consts.TWO_CELR);
+              assert.equal(res.intentAmounts[1].toString(), consts.ONE_CELR);
+
+              await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
+              dposInstance.intendWithdraw(CANDIDATE, consts.ONE_CELR, {from: DELEGATOR});
+
+              let tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, consts.THREE_CELR);
+
+              res = await dposInstance.getDelegatorInfo(CANDIDATE, DELEGATOR);
+              assert.equal(res.delegatedStake.toString(), consts.TWO_CELR);
+              assert.equal(res.undelegatingStake.toString(), consts.ONE_CELR);
+              assert.equal(res.intentAmounts.toString(), consts.ONE_CELR);
+
+              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, 0);
+
+              await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
+              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, consts.ONE_CELR);
+
+              res = await dposInstance.getDelegatorInfo(CANDIDATE, DELEGATOR);
+              assert.equal(res.delegatedStake.toString(), consts.TWO_CELR);
+              assert.equal(res.undelegatingStake.toNumber(), 0);
+            });
+
+            it('should only confirm withdrawal partial amount due to slash', async () => {
+              slashAmt = parseInt(consts.DELEGATOR_STAKE) - parseInt(consts.ONE_CELR)
+              await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
+              const request = await getPenaltyRequestBytes({
+                nonce: 1,
+                expireTime: 1000000,
+                validatorAddr: [CANDIDATE],
+                delegatorAddrs: [DELEGATOR],
+                delegatorAmts: [slashAmt],
+                beneficiaryAddrs: [consts.ZERO_ADDR],
+                beneficiaryAmts: [slashAmt],
+                signers: [CANDIDATE]
               });
+              await dposInstance.slash(request);
+
+              await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
+              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, consts.ONE_CELR);
+            });
+
+            it('should confirm withdrawal zero amt due to all stakes being slashed', async () => {
+              slashAmt = parseInt(consts.DELEGATOR_STAKE)
+              await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
+              const request = await getPenaltyRequestBytes({
+                nonce: 1,
+                expireTime: 1000000,
+                validatorAddr: [CANDIDATE],
+                delegatorAddrs: [DELEGATOR],
+                delegatorAmts: [slashAmt],
+                beneficiaryAddrs: [consts.ZERO_ADDR],
+                beneficiaryAmts: [slashAmt],
+                signers: [CANDIDATE]
+              });
+              await dposInstance.slash(request);
+
+              await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
+              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
+              assert.equal(tx.logs[0].args.delegator, DELEGATOR);
+              assert.equal(tx.logs[0].args.candidate, CANDIDATE);
+              assert.equal(tx.logs[0].args.amount, 0);
             });
           });
         });

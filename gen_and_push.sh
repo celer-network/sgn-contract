@@ -48,6 +48,7 @@ abigen_files() {
 
 # send a PR to gobinding repo
 sync_go_binding() {
+  echo "sync go binding ..."
   PR_COMMIT_ID=$(git rev-parse --short HEAD)
   echo sgn-contract PR Head Commit: $PR_COMMIT_ID
   REPO=https://${GH_TOKEN}@github.com/celer-network/sgn.git
@@ -55,12 +56,16 @@ sync_go_binding() {
   pushd sgn
   git checkout develop # based on develop branch of sgn repo
   git fetch
+  echo "checkout branch $BRANCH"
   git checkout $BRANCH || git checkout -b $BRANCH
+  git status
+  echo "abigen files ..."
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
   if [[ $(git status --porcelain) ]]; then
-    echo "Sync-ing go binding"
+    echo "syncing go binding on branch $BRANCH"
     git add .
+    git status
     git commit -m "Sync go binding based on sgn-contract PR $PRID" -m "sgn-contract commit: $PR_COMMIT_ID"
     git push origin $BRANCH
   fi
@@ -68,7 +73,7 @@ sync_go_binding() {
   rm -rf sgn
 }
 
-echo "sync go binding ..."
+echo "update go binding ..."
 setup_git
 get_pr
 node_modules/.bin/truffle compile

@@ -284,7 +284,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyRegisteredSidechains
     {
         uint256 newReward = _cumulativeReward.sub(redeemedMiningReward[_receiver]);
-        require(miningPool > newReward, 'Mining pool is smaller than new reward');
+        require(miningPool >= newReward, 'Mining pool is smaller than new reward');
 
         redeemedMiningReward[_receiver] = _cumulativeReward;
         miningPool = miningPool.sub(newReward);
@@ -432,7 +432,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
                 minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
             }
         }
-        require(candidate.stakingPool > minStakingPool, 'Stake is less than all validators');
+        require(candidate.stakingPool > minStakingPool, 'Not larger than smallest pool');
 
         address removedValidator = validatorSet[minStakingPoolIndex];
         if (removedValidator != address(0)) {
@@ -517,17 +517,16 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         Delegator storage delegator = candidateProfiles[_candidateAddr]
             .delegatorProfiles[msgSender];
 
-        uint256 bn = block.number;
-        uint256 i;
+        uint256 slashTimeout = getUIntValue(uint256(ParamNames.SlashTimeout));
         bool isUnbonded = candidateProfiles[_candidateAddr].status ==
             DPoSCommon.CandidateStatus.Unbonded;
         // for all undelegated withdraw intents
+        uint256 i;
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
             WithdrawIntent storage wi = delegator.withdrawIntents[i];
-            uint256 slashTimeout = getUIntValue(uint256(ParamNames.SlashTimeout));
-            if (isUnbonded || wi.proposedTime.add(slashTimeout) <= bn) {
-                // withdraw intent is undelegated when the validator becomes unbonded or the slashTimeout
-                // for the withdraw intent is up.
+            if (isUnbonded || wi.proposedTime.add(slashTimeout) <= block.number) {
+                // withdraw intent is undelegated when the validator becomes unbonded or
+                // the slashTimeout for the withdraw intent is up.
                 delete delegator.withdrawIntents[i];
                 continue;
             }
