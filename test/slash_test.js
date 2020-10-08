@@ -256,7 +256,7 @@ contract('muti-validator slash tests', async (accounts) => {
     await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
   });
 
-  it('should call slash successfully with sufficient delegation', async () => {
+  it('should call slash successfully with sufficient signatures', async () => {
     const request = await getPenaltyRequestBytes({
       nonce: 1,
       expireTime: 1000000,
@@ -276,7 +276,7 @@ contract('muti-validator slash tests', async (accounts) => {
     assert.equal(tx.logs[0].args.amount, 10);
   });
 
-  it('should fail to call slash with duplicate signatures and insufficient delegation', async () => {
+  it('should fail to call slash with insufficient signatures', async () => {
     const request = await getPenaltyRequestBytes({
       nonce: 1,
       expireTime: 1000000,
@@ -285,7 +285,29 @@ contract('muti-validator slash tests', async (accounts) => {
       delegatorAmts: [10],
       beneficiaryAddrs: [consts.ZERO_ADDR],
       beneficiaryAmts: [10],
-      signers: [VALIDATORS[1], VALIDATORS[1], VALIDATORS[1], VALIDATORS[1]]
+      signers: [VALIDATORS[1], VALIDATORS[2]]
+    });
+
+    try {
+      await dposInstance.slash(request);
+    } catch (error) {
+      assert.isAbove(error.message.search('Fail to check validator sigs'), -1);
+      return;
+    }
+
+    assert.fail('should have thrown before');
+  });
+
+  it('should fail to call slash with duplicate signatures', async () => {
+    const request = await getPenaltyRequestBytes({
+      nonce: 1,
+      expireTime: 1000000,
+      validatorAddr: [VALIDATORS[0]],
+      delegatorAddrs: [VALIDATORS[0]],
+      delegatorAmts: [10],
+      beneficiaryAddrs: [consts.ZERO_ADDR],
+      beneficiaryAmts: [10],
+      signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3], VALIDATORS[1]]
     });
 
     try {
