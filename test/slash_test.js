@@ -53,7 +53,7 @@ contract('single-validator slash tests', async (accounts) => {
 
   describe('after candidate is bonded and DPoS goes live', async () => {
     beforeEach(async () => {
-      await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {from: CANDIDATE});
+      await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {from: CANDIDATE});
       await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       await dposInstance.claimValidator({from: CANDIDATE});
       await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
@@ -178,6 +178,28 @@ contract('single-validator slash tests', async (accounts) => {
         return;
       }
 
+      assert.fail('should have thrown before');
+    });
+
+    it("should fail to slash more than one's stake", async () => {
+      slashAmt = parseInt(consts.DELEGATOR_STAKE) + parseInt(consts.ONE_CELR)
+      const request = await getPenaltyRequestBytes({
+        nonce: 10,
+        expireTime: 1000000,
+        validatorAddr: [CANDIDATE],
+        delegatorAddrs: [DELEGATOR],
+        delegatorAmts: [slashAmt],
+        beneficiaryAddrs: [consts.ZERO_ADDR],
+        beneficiaryAmts: [slashAmt],
+        signers: [CANDIDATE]
+      });
+
+      try {
+        await dposInstance.slash(request);
+      } catch (error) {
+        assert.isAbove(error.message.search('revert'), -1);
+        return;
+      }
       assert.fail('should have thrown before');
     });
   });
