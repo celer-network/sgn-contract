@@ -57,7 +57,7 @@ sync_go_binding() {
   git checkout develop # based on develop branch of sgn repo
   git fetch
   echo "checkout branch $BRANCH"
-  git checkout -b $BRANCH || git checkout $BRANCH
+  git checkout $BRANCH || git checkout -b $BRANCH
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
   if [[ $(git status --porcelain) ]]; then
