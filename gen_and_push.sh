@@ -48,7 +48,7 @@ abigen_files() {
 
 # send a PR to gobinding repo
 sync_go_binding() {
-  echo "sync go binding"
+  echo "sync go binding ..."
   PR_COMMIT_ID=$(git rev-parse --short HEAD)
   echo sgn-contract PR Head Commit: $PR_COMMIT_ID
   REPO=https://${GH_TOKEN}@github.com/celer-network/sgn.git
@@ -62,6 +62,7 @@ sync_go_binding() {
   git pull
   git status
   git log
+  echo "abigen files ..."
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
   if [[ $(git status --porcelain) ]]; then
