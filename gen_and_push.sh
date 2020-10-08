@@ -58,6 +58,7 @@ sync_go_binding() {
   git fetch
   echo "checkout branch $BRANCH"
   git checkout $BRANCH || git checkout -b $BRANCH
+  git branch --set-upstream-to=origin/$BRANCH $BRANCH
   git pull
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
