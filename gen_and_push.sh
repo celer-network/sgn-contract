@@ -56,11 +56,12 @@ sync_go_binding() {
   pushd sgn
   git checkout develop # based on develop branch of sgn repo
   git fetch
+  echo "checkout branch $BRANCH"
   git checkout $BRANCH || git checkout -b $BRANCH
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
   if [[ $(git status --porcelain) ]]; then
-    echo "Sync-ing go binding on branch $BRANCH"
+    echo "syncing go binding on branch $BRANCH"
     git add .
     git status
     git commit -m "Sync go binding based on sgn-contract PR $PRID" -m "sgn-contract commit: $PR_COMMIT_ID"
