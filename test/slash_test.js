@@ -53,7 +53,7 @@ contract('single-validator slash tests', async (accounts) => {
 
   describe('after candidate is bonded and DPoS goes live', async () => {
     beforeEach(async () => {
-      await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {from: CANDIDATE});
+      await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {from: CANDIDATE});
       await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
       await dposInstance.claimValidator({from: CANDIDATE});
       await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
@@ -180,6 +180,28 @@ contract('single-validator slash tests', async (accounts) => {
 
       assert.fail('should have thrown before');
     });
+
+    it("should fail to slash more than one's stake", async () => {
+      slashAmt = parseInt(consts.DELEGATOR_STAKE) + parseInt(consts.ONE_CELR)
+      const request = await getPenaltyRequestBytes({
+        nonce: 10,
+        expireTime: 1000000,
+        validatorAddr: [CANDIDATE],
+        delegatorAddrs: [DELEGATOR],
+        delegatorAmts: [slashAmt],
+        beneficiaryAddrs: [consts.ZERO_ADDR],
+        beneficiaryAmts: [slashAmt],
+        signers: [CANDIDATE]
+      });
+
+      try {
+        await dposInstance.slash(request);
+      } catch (error) {
+        assert.isAbove(error.message.search('revert'), -1);
+        return;
+      }
+      assert.fail('should have thrown before');
+    });
   });
 });
 
@@ -234,7 +256,7 @@ contract('muti-validator slash tests', async (accounts) => {
     await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
   });
 
-  it('should call slash successfully with sufficient delegation', async () => {
+  it('should call slash successfully with sufficient signatures', async () => {
     const request = await getPenaltyRequestBytes({
       nonce: 1,
       expireTime: 1000000,
@@ -254,7 +276,7 @@ contract('muti-validator slash tests', async (accounts) => {
     assert.equal(tx.logs[0].args.amount, 10);
   });
 
-  it('should fail to call slash with duplicate signatures and insufficient delegation', async () => {
+  it('should fail to call slash with insufficient signatures', async () => {
     const request = await getPenaltyRequestBytes({
       nonce: 1,
       expireTime: 1000000,
@@ -263,7 +285,29 @@ contract('muti-validator slash tests', async (accounts) => {
       delegatorAmts: [10],
       beneficiaryAddrs: [consts.ZERO_ADDR],
       beneficiaryAmts: [10],
-      signers: [VALIDATORS[1], VALIDATORS[1], VALIDATORS[1], VALIDATORS[1]]
+      signers: [VALIDATORS[1], VALIDATORS[2]]
+    });
+
+    try {
+      await dposInstance.slash(request);
+    } catch (error) {
+      assert.isAbove(error.message.search('Fail to check validator sigs'), -1);
+      return;
+    }
+
+    assert.fail('should have thrown before');
+  });
+
+  it('should fail to call slash with duplicate signatures', async () => {
+    const request = await getPenaltyRequestBytes({
+      nonce: 1,
+      expireTime: 1000000,
+      validatorAddr: [VALIDATORS[0]],
+      delegatorAddrs: [VALIDATORS[0]],
+      delegatorAmts: [10],
+      beneficiaryAddrs: [consts.ZERO_ADDR],
+      beneficiaryAmts: [10],
+      signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3], VALIDATORS[1]]
     });
 
     try {
@@ -312,5 +356,50 @@ contract('muti-validator slash tests', async (accounts) => {
     assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
     assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
     assert.equal(tx.logs[0].args.amount, 10);
+  });
+
+  it('should slash successfully for unbonding candiadte and undelegating stake', async () => {
+    let request = await getPenaltyRequestBytes({
+      nonce: 1,
+      expireTime: 1000000,
+      validatorAddr: [VALIDATORS[0]],
+      delegatorAddrs: [VALIDATORS[0]],
+      delegatorAmts: [parseInt(consts.THREE_CELR)],
+      beneficiaryAddrs: [consts.ZERO_ADDR],
+      beneficiaryAmts: [parseInt(consts.THREE_CELR)],
+      signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
+    });
+    let tx = await dposInstance.slash(request);
+
+    assert.equal(tx.logs[0].event, 'Slash');
+    assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
+    assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
+    assert.equal(tx.logs[0].args.amount, parseInt(consts.THREE_CELR));
+
+    assert.equal(tx.logs[2].event, 'ValidatorChange');
+    assert.equal(tx.logs[2].args.ethAddr, VALIDATORS[0]);
+    assert.equal(tx.logs[2].args.changeType, consts.TYPE_VALIDATOR_REMOVAL);
+
+    await dposInstance.intendWithdraw(VALIDATORS[0], consts.TWO_CELR, {from: VALIDATORS[0]});
+    request = await getPenaltyRequestBytes({
+      nonce: 3,
+      expireTime: 1000000,
+      validatorAddr: [VALIDATORS[0]],
+      delegatorAddrs: [VALIDATORS[0]],
+      delegatorAmts: [parseInt(consts.TWO_CELR)],
+      beneficiaryAddrs: [consts.ZERO_ADDR],
+      beneficiaryAmts: [parseInt(consts.TWO_CELR)],
+      signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3]]
+    });
+    tx = await dposInstance.slash(request);
+    assert.equal(tx.logs[1].event, 'UpdateDelegatedStake');
+    assert.equal(tx.logs[1].args.candidate, VALIDATORS[0]);
+    assert.equal(tx.logs[1].args.delegator, VALIDATORS[0]);
+    assert.equal(tx.logs[1].args.delegatorStake, 0);
+
+    const delegator = await dposInstance.getDelegatorInfo(VALIDATORS[0], VALIDATORS[0]);
+    assert.equal(delegator.delegatedStake.toString(), 0);
+    assert.equal(delegator.undelegatingStake.toString(), consts.ONE_CELR);
+    assert.equal(delegator.intentAmounts.toString(), consts.TWO_CELR);
   });
 });
