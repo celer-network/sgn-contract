@@ -60,6 +60,8 @@ sync_go_binding() {
   git checkout $BRANCH || git checkout -b $BRANCH
   git branch --set-upstream-to=origin/$BRANCH $BRANCH
   git pull
+  git status
+  git log
   abigen_files DPoS mainchain dpos
   abigen_files SGN mainchain sgn
   if [[ $(git status --porcelain) ]]; then
