@@ -276,6 +276,26 @@ contract('muti-validator slash tests', async (accounts) => {
     assert.equal(tx.logs[0].args.amount, 10);
   });
 
+  it('should call slash successfully with sufficient signatures and non-validator signature', async () => {
+    const request = await getPenaltyRequestBytes({
+      nonce: 1,
+      expireTime: 1000000,
+      validatorAddr: [VALIDATORS[0]],
+      delegatorAddrs: [VALIDATORS[0]],
+      delegatorAmts: [10],
+      beneficiaryAddrs: [consts.ZERO_ADDR],
+      beneficiaryAmts: [10],
+      signers: [VALIDATORS[1], VALIDATORS[2], VALIDATORS[3], NON_VALIDATOR]
+    });
+
+    const tx = await dposInstance.slash(request);
+
+    assert.equal(tx.logs[0].event, 'Slash');
+    assert.equal(tx.logs[0].args.validator, VALIDATORS[0]);
+    assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
+    assert.equal(tx.logs[0].args.amount, 10);
+  });
+
   it('should fail to call slash with insufficient signatures', async () => {
     const request = await getPenaltyRequestBytes({
       nonce: 1,
