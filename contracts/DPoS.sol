@@ -284,7 +284,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         onlyRegisteredSidechains
     {
         uint256 newReward = _cumulativeReward.sub(redeemedMiningReward[_receiver]);
-        require(miningPool > newReward, 'Mining pool is smaller than new reward');
+        require(miningPool >= newReward, 'Mining pool is smaller than new reward');
 
         redeemedMiningReward[_receiver] = _cumulativeReward;
         miningPool = miningPool.sub(newReward);
@@ -432,7 +432,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
                 minStakingPool = candidateProfiles[validatorSet[i]].stakingPool;
             }
         }
-        require(candidate.stakingPool > minStakingPool, 'Stake is less than all validators');
+        require(candidate.stakingPool > minStakingPool, 'Not larger than smallest pool');
 
         address removedValidator = validatorSet[minStakingPoolIndex];
         if (removedValidator != address(0)) {

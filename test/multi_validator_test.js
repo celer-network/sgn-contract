@@ -89,7 +89,7 @@ contract('multiple validators tests', async (accounts) => {
     try {
       await dposInstance.claimValidator({from: CANDIDATE});
     } catch (error) {
-      assert.isAbove(error.message.search('Stake is less than all validators'), -1);
+      assert.isAbove(error.message.search('Not larger than smallest pool'), -1);
       return;
     }
 
