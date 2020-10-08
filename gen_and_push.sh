@@ -58,6 +58,7 @@ sync_go_binding() {
   git fetch
   echo "checkout branch $BRANCH ..."
   git checkout $BRANCH || git checkout -b $BRANCH
+  echo "check git status ..."
   git status
   echo "abigen files ..."
   abigen_files DPoS mainchain dpos
