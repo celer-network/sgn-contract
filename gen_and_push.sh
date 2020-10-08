@@ -56,8 +56,8 @@ sync_go_binding() {
   pushd sgn
   git checkout develop # based on develop branch of sgn repo
   git fetch
-  echo "checkout branch $BRANCH"
-  git checkout -b $BRANCH || git checkout $BRANCH
+  echo "checkout branch $BRANCH ..."
+  git checkout $BRANCH || git checkout -b $BRANCH
   git branch --set-upstream-to=origin/$BRANCH $BRANCH
   git pull
   git status
