@@ -183,7 +183,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
-     * @notice Onwer drains one type of tokens when the contract is paused
+     * @notice Owner drains one type of tokens when the contract is paused
      * @dev This is for emergency situations.
      * @param _amount drained token amount
      */
