@@ -213,14 +213,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
         // check Yes votes only now
-        uint256 yesVotes = 0;
+        uint256 yesVoteStakes = 0;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (getParamProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
-                yesVotes = yesVotes.add(candidateProfiles[validatorSet[i]].stakingPool);
+                yesVoteStakes = yesVoteStakes.add(candidateProfiles[validatorSet[i]].stakingPool);
             }
         }
 
-        bool passed = yesVotes >= getMinQuorumStakingPool();
+        bool passed = yesVoteStakes >= getMinQuorumStakingPool();
         if (!passed) {
             miningPool = miningPool.add(paramProposals[_proposalId].deposit);
         }
@@ -244,14 +244,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
         // check Yes votes only now
-        uint256 yesVotes = 0;
+        uint256 yesVoteStakes = 0;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (getSidechainProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
-                yesVotes = yesVotes.add(candidateProfiles[validatorSet[i]].stakingPool);
+                yesVoteStakes = yesVoteStakes.add(candidateProfiles[validatorSet[i]].stakingPool);
             }
         }
 
-        bool passed = yesVotes >= getMinQuorumStakingPool();
+        bool passed = yesVoteStakes >= getMinQuorumStakingPool();
         internalConfirmSidechainProposal(_proposalId, passed);
     }
 
