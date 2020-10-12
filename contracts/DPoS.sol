@@ -92,7 +92,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @notice Throws if msg.sender is not a registered sidechain
      */
     modifier onlyRegisteredSidechains() {
-        require(isSidechainRegistered(msg.sender));
+        require(isSidechainRegistered(msg.sender), 'Sidechain not registered');
         _;
     }
 
@@ -308,7 +308,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     ) external whenNotPaused onlyWhitelist {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         require(!candidate.initialized, 'Candidate is initialized');
-        require(_commissionRate <= COMMISSION_RATE_BASE);
+        require(_commissionRate <= COMMISSION_RATE_BASE, 'Invalid commission rate');
 
         candidate.initialized = true;
         candidate.minSelfStake = _minSelfStake;
@@ -413,7 +413,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
         require(
             candidate.status == DPoSCommon.CandidateStatus.Unbonded ||
-                candidate.status == DPoSCommon.CandidateStatus.Unbonding
+                candidate.status == DPoSCommon.CandidateStatus.Unbonding,
+            'Invalid candidate status'
         );
         require(block.number > candidate.earliestBondTime, 'Not earliest bond time yet');
         uint256 minStakeInPool = getUIntValue(uint256(ParamNames.MinStakeInPool));
@@ -449,8 +450,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      */
     function confirmUnbondedCandidate(address _candidateAddr) external {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
-        require(candidate.status == DPoSCommon.CandidateStatus.Unbonding);
-        require(block.number >= candidate.unbondTime);
+        require(
+            candidate.status == DPoSCommon.CandidateStatus.Unbonding,
+            'Candidate not unbonding'
+        );
+        require(block.number >= candidate.unbondTime, 'Unbonding time not reached');
 
         candidate.status = DPoSCommon.CandidateStatus.Unbonded;
         delete candidate.unbondTime;
@@ -868,7 +872,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _setIndex the index to put the validator
      */
     function _addValidator(address _validatorAddr, uint256 _setIndex) private {
-        require(validatorSet[_setIndex] == address(0));
+        require(validatorSet[_setIndex] == address(0), 'Validator slot occupied');
 
         validatorSet[_setIndex] = _validatorAddr;
         candidateProfiles[_validatorAddr].status = DPoSCommon.CandidateStatus.Bonded;
