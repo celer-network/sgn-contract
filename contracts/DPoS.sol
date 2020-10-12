@@ -63,6 +63,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     mapping(address => uint256) public redeemedMiningReward;
 
     /********** Constants **********/
+    uint256 constant DECIMALS_MULTIPLIER = 10**18;
     uint256 public constant COMMISSION_RATE_BASE = 10000; // 1 commissionRate means 0.01%
     IERC20 public celerToken; // todo: use Immutable after migrating to Solidity v0.6.5 or higher
     uint256 public dposGoLiveTime; // used when bootstrapping initial validators
@@ -392,7 +393,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         external
         whenNotPaused
         onlyNonZeroAddr(_candidateAddr)
-        minAmount(_amount, 1 ether) // minimal amount per delegate operation is 1 CELR
+        minAmount(_amount, 1 * DECIMALS_MULTIPLIER) // minimal amount per delegate operation is 1 CELR
     {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(candidate.initialized, 'Candidate is not initialized');
@@ -470,7 +471,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function withdrawFromUnbondedCandidate(address _candidateAddr, uint256 _amount)
         external
         onlyNonZeroAddr(_candidateAddr)
-        minAmount(_amount, 1 ether)
+        minAmount(_amount, 1 * DECIMALS_MULTIPLIER)
     {
         ValidatorCandidate storage candidate = candidateProfiles[_candidateAddr];
         require(
@@ -494,7 +495,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function intendWithdraw(address _candidateAddr, uint256 _amount)
         external
         onlyNonZeroAddr(_candidateAddr)
-        minAmount(_amount, 1 ether)
+        minAmount(_amount, 1 * DECIMALS_MULTIPLIER)
     {
         address msgSender = msg.sender;
 
