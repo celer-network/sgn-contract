@@ -421,7 +421,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
                 candidate.status == DPoSCommon.CandidateStatus.Unbonding,
             'Invalid candidate status'
         );
-        require(block.number > candidate.earliestBondTime, 'Not earliest bond time yet');
+        require(block.number >= candidate.earliestBondTime, 'Not earliest bond time yet');
         uint256 minStakeInPool = getUIntValue(uint256(ParamNames.MinStakeInPool));
         require(candidate.stakingPool >= minStakeInPool, 'Insufficient staking pool');
         require(
