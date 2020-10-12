@@ -136,7 +136,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _maxValidatorNum the maximum number of validators
      * @param _minStakeInPool the global minimum requirement of staking pool for each validator
      * @param _advanceNoticePeriod the wait time after the announcement and prior to the effective date of an update
-     * @param _dposGoLiveTimeout the timeout for DPoS to go live after contract creatation
+     * @param _dposGoLiveTimeout the timeout for DPoS to go live after contract creation
      */
     constructor(
         address _celerTokenAddress,
