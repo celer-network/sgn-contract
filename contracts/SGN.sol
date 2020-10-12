@@ -110,7 +110,7 @@ contract SGN is ISGN, Ownable, Pausable {
             redeemedServiceReward[reward.receiver]
         );
 
-        require(servicePool > newServiceReward, 'Service pool is smaller than new service reward');
+        require(servicePool >= newServiceReward, 'Service pool is smaller than new service reward');
         redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;
         servicePool = servicePool.sub(newServiceReward);
 
