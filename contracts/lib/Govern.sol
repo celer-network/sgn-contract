@@ -214,8 +214,8 @@ contract Govern is IGovern, Ownable {
         ParamProposal storage p = paramProposals[_proposalId];
         p.status = ProposalStatus.Closed;
         if (_passed) {
-            governToken.safeTransfer(p.proposer, p.deposit);
             UIntStorage[p.record] = p.newValue;
+            governToken.safeTransfer(p.proposer, p.deposit);
         }
 
         emit ConfirmParamProposal(_proposalId, _passed, p.record, p.newValue);
@@ -292,8 +292,8 @@ contract Govern is IGovern, Ownable {
         SidechainProposal storage p = sidechainProposals[_proposalId];
         p.status = ProposalStatus.Closed;
         if (_passed) {
-            governToken.safeTransfer(p.proposer, p.deposit);
             registeredSidechains[p.sidechainAddr] = p.registered;
+            governToken.safeTransfer(p.proposer, p.deposit);
         }
 
         emit ConfirmSidechainProposal(_proposalId, _passed, p.sidechainAddr, p.registered);
