@@ -46,32 +46,6 @@ contract Govern is IGovern, Ownable {
     mapping(uint256 => SidechainProposal) public sidechainProposals;
     uint256 public nextSidechainProposalId;
 
-    modifier isVoting(uint256 _proposalId) {
-        require(
-            paramProposals[_proposalId].status == ProposalStatus.Voting,
-            'Invalid proposal status'
-        );
-        _;
-    }
-
-    modifier deadlineNotReached(uint256 _proposalId) {
-        require(block.number < paramProposals[_proposalId].voteDeadline, 'Vote deadline reached');
-        _;
-    }
-
-    modifier deadlinePassed(uint256 _proposalId) {
-        require(
-            block.number >= paramProposals[_proposalId].voteDeadline,
-            'Vote deadline not reached'
-        );
-        _;
-    }
-
-    modifier notVoted(uint256 _proposalId, address _voter) {
-        require(paramProposals[_proposalId].votes[_voter] == VoteType.Unvoted, 'Voter has voted');
-        _;
-    }
-
     /**
      * @notice Govern constructor
      * @dev set governToken and initialize all parameters
@@ -194,9 +168,14 @@ contract Govern is IGovern, Ownable {
         uint256 _proposalId,
         address _voter,
         VoteType _vote
-    ) internal isVoting(_proposalId) deadlineNotReached(_proposalId) notVoted(_proposalId, _voter) {
+    ) internal {
         ParamProposal storage p = paramProposals[_proposalId];
+        require(p.status == ProposalStatus.Voting, 'Invalid proposal status');
+        require(block.number < p.voteDeadline, 'Vote deadline reached');
+        require(p.votes[_voter] == VoteType.Unvoted, 'Voter has voted');
+
         p.votes[_voter] = _vote;
+
         emit VoteParam(_proposalId, _voter, _vote);
     }
 
@@ -206,16 +185,15 @@ contract Govern is IGovern, Ownable {
      * @param _proposalId the proposal id
      * @param _passed proposal passed or not
      */
-    function internalConfirmParamProposal(uint256 _proposalId, bool _passed)
-        internal
-        isVoting(_proposalId)
-        deadlinePassed(_proposalId)
-    {
+    function internalConfirmParamProposal(uint256 _proposalId, bool _passed) internal {
         ParamProposal storage p = paramProposals[_proposalId];
+        require(p.status == ProposalStatus.Voting, 'Invalid proposal status');
+        require(block.number >= p.voteDeadline, 'Vote deadline not reached');
+
         p.status = ProposalStatus.Closed;
         if (_passed) {
-            UIntStorage[p.record] = p.newValue;
             governToken.safeTransfer(p.proposer, p.deposit);
+            UIntStorage[p.record] = p.newValue;
         }
 
         emit ConfirmParamProposal(_proposalId, _passed, p.record, p.newValue);
@@ -272,9 +250,14 @@ contract Govern is IGovern, Ownable {
         uint256 _proposalId,
         address _voter,
         VoteType _vote
-    ) internal isVoting(_proposalId) deadlineNotReached(_proposalId) notVoted(_proposalId, _voter) {
+    ) internal {
         SidechainProposal storage p = sidechainProposals[_proposalId];
+        require(p.status == ProposalStatus.Voting, 'Invalid proposal status');
+        require(block.number < p.voteDeadline, 'Vote deadline reached');
+        require(p.votes[_voter] == VoteType.Unvoted, 'Voter has voted');
+
         p.votes[_voter] = _vote;
+
         emit VoteSidechain(_proposalId, _voter, _vote);
     }
 
@@ -284,16 +267,15 @@ contract Govern is IGovern, Ownable {
      * @param _proposalId the proposal id
      * @param _passed proposal passed or not
      */
-    function internalConfirmSidechainProposal(uint256 _proposalId, bool _passed)
-        internal
-        isVoting(_proposalId)
-        deadlinePassed(_proposalId)
-    {
+    function internalConfirmSidechainProposal(uint256 _proposalId, bool _passed) internal {
         SidechainProposal storage p = sidechainProposals[_proposalId];
+        require(p.status == ProposalStatus.Voting, 'Invalid proposal status');
+        require(block.number >= p.voteDeadline, 'Vote deadline not reached');
+
         p.status = ProposalStatus.Closed;
         if (_passed) {
-            registeredSidechains[p.sidechainAddr] = p.registered;
             governToken.safeTransfer(p.proposer, p.deposit);
+            registeredSidechains[p.sidechainAddr] = p.registered;
         }
 
         emit ConfirmSidechainProposal(_proposalId, _passed, p.sidechainAddr, p.registered);
