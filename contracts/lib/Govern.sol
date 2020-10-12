@@ -54,6 +54,24 @@ contract Govern is IGovern, Ownable {
         _;
     }
 
+    modifier deadlineNotReached(uint256 _proposalId) {
+        require(block.number < paramProposals[_proposalId].voteDeadline, 'Vote deadline reached');
+        _;
+    }
+
+    modifier deadlinePassed(uint256 _proposalId) {
+        require(
+            block.number >= paramProposals[_proposalId].voteDeadline,
+            'Vote deadline not reached'
+        );
+        _;
+    }
+
+    modifier notVoted(uint256 _proposalId, address _voter) {
+        require(paramProposals[_proposalId].votes[_voter] == VoteType.Unvoted, 'Voter has voted');
+        _;
+    }
+
     /**
      * @notice Govern constructor
      * @dev set governToken and initialize all parameters
@@ -176,13 +194,9 @@ contract Govern is IGovern, Ownable {
         uint256 _proposalId,
         address _voter,
         VoteType _vote
-    ) internal isVoting(_proposalId) {
+    ) internal isVoting(_proposalId) deadlineNotReached(_proposalId) notVoted(_proposalId, _voter) {
         ParamProposal storage p = paramProposals[_proposalId];
-        require(block.number < p.voteDeadline, 'Vote deadline reached');
-        require(p.votes[_voter] == VoteType.Unvoted, 'Voter has voted');
-
         p.votes[_voter] = _vote;
-
         emit VoteParam(_proposalId, _voter, _vote);
     }
 
@@ -195,10 +209,9 @@ contract Govern is IGovern, Ownable {
     function internalConfirmParamProposal(uint256 _proposalId, bool _passed)
         internal
         isVoting(_proposalId)
+        deadlinePassed(_proposalId)
     {
         ParamProposal storage p = paramProposals[_proposalId];
-        require(block.number >= p.voteDeadline, 'Vote deadline not reached');
-
         p.status = ProposalStatus.Closed;
         if (_passed) {
             governToken.safeTransfer(p.proposer, p.deposit);
@@ -259,13 +272,9 @@ contract Govern is IGovern, Ownable {
         uint256 _proposalId,
         address _voter,
         VoteType _vote
-    ) internal isVoting(_proposalId) {
+    ) internal isVoting(_proposalId) deadlineNotReached(_proposalId) notVoted(_proposalId, _voter) {
         SidechainProposal storage p = sidechainProposals[_proposalId];
-        require(block.number < p.voteDeadline, 'Vote deadline reached');
-        require(p.votes[_voter] == VoteType.Unvoted, 'Voter has voted');
-
         p.votes[_voter] = _vote;
-
         emit VoteSidechain(_proposalId, _voter, _vote);
     }
 
@@ -278,10 +287,9 @@ contract Govern is IGovern, Ownable {
     function internalConfirmSidechainProposal(uint256 _proposalId, bool _passed)
         internal
         isVoting(_proposalId)
+        deadlinePassed(_proposalId)
     {
         SidechainProposal storage p = sidechainProposals[_proposalId];
-        require(block.number >= p.voteDeadline, 'Vote deadline not reached');
-
         p.status = ProposalStatus.Closed;
         if (_passed) {
             governToken.safeTransfer(p.proposer, p.deposit);
