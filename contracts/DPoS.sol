@@ -130,6 +130,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         _;
     }
 
+    modifier isCandidateInitialized() {
+        require(candidateProfiles[msg.sender].initialized, 'Candidate is not initialized');
+        _;
+    }
+
     /**
      * @notice DPoS constructor
      * @dev will initialize parent contract Govern first
@@ -320,9 +325,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _newRate new commission rate
      * @param _newLockEndTime new lock end time
      */
-    function nonIncreaseCommissionRate(uint256 _newRate, uint256 _newLockEndTime) external {
+    function nonIncreaseCommissionRate(uint256 _newRate, uint256 _newLockEndTime)
+        external
+        isCandidateInitialized
+    {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
-        require(candidate.initialized, 'Candidate is not initialized');
         require(_newRate <= candidate.commissionRate, 'Invalid new rate');
 
         _updateCommissionRate(candidate, _newRate, _newLockEndTime);
@@ -333,9 +340,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _newRate new commission rate
      * @param _newLockEndTime new lock end time
      */
-    function announceIncreaseCommissionRate(uint256 _newRate, uint256 _newLockEndTime) external {
+    function announceIncreaseCommissionRate(uint256 _newRate, uint256 _newLockEndTime)
+        external
+        isCandidateInitialized
+    {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
-        require(candidate.initialized, 'Candidate is not initialized');
         require(candidate.commissionRate < _newRate, 'Invalid new rate');
 
         candidate.announcedRate = _newRate;
@@ -348,9 +357,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     /**
      * @notice Confirm the intent of increasing the commission rate
      */
-    function confirmIncreaseCommissionRate() external {
+    function confirmIncreaseCommissionRate() external isCandidateInitialized {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
-        require(candidate.initialized, 'Candidate is not initialized');
         uint256 advanceNoticePeriod = getUIntValue(uint256(ParamNames.AdvanceNoticePeriod));
         require(
             block.number > candidate.announcementTime.add(advanceNoticePeriod),
@@ -364,9 +372,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @notice update minimal self stake value
      * @param _minSelfStake minimal amount of tokens staked by the validator itself
      */
-    function updateMinSelfStake(uint256 _minSelfStake) external {
+    function updateMinSelfStake(uint256 _minSelfStake) external isCandidateInitialized {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
-        require(candidate.initialized, 'Candidate is not initialized');
         if (_minSelfStake < candidate.minSelfStake) {
             require(candidate.status != DPoSCommon.CandidateStatus.Bonded, 'Candidate is bonded');
             uint256 advanceNoticePeriod = getUIntValue(uint256(ParamNames.AdvanceNoticePeriod));
@@ -401,10 +408,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     /**
      * @notice Candidate claims to become a validator
      */
-    function claimValidator() external {
+    function claimValidator() external isCandidateInitialized {
         address msgSender = msg.sender;
         ValidatorCandidate storage candidate = candidateProfiles[msgSender];
-        require(candidate.initialized, 'Candidate is not initialized');
         require(
             candidate.status == DPoSCommon.CandidateStatus.Unbonded ||
                 candidate.status == DPoSCommon.CandidateStatus.Unbonding
