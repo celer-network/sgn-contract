@@ -125,6 +125,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         _;
     }
 
+    modifier onlyValidator() {
+        require(isValidator(msg.sender), 'msg sender is not a validator');
+        _;
+    }
+
     /**
      * @notice DPoS constructor
      * @dev will initialize parent contract Govern first
@@ -196,11 +201,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _proposalId the id of the parameter proposal
      * @param _vote the type of vote
      */
-    function voteParam(uint256 _proposalId, VoteType _vote) external {
-        address msgSender = msg.sender;
-        require(isValidator(msgSender), 'msg sender is not a validator');
-
-        internalVoteParam(_proposalId, msgSender, _vote);
+    function voteParam(uint256 _proposalId, VoteType _vote) external onlyValidator {
+        internalVoteParam(_proposalId, msg.sender, _vote);
     }
 
     /**
@@ -230,11 +232,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @param _proposalId the id of the sidechain proposal
      * @param _vote the type of vote
      */
-    function voteSidechain(uint256 _proposalId, VoteType _vote) external {
-        address msgSender = msg.sender;
-        require(isValidator(msgSender), 'msg sender is not a validator');
-
-        internalVoteSidechain(_proposalId, msgSender, _vote);
+    function voteSidechain(uint256 _proposalId, VoteType _vote) external onlyValidator {
+        internalVoteSidechain(_proposalId, msg.sender, _vote);
     }
 
     /**
