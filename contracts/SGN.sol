@@ -3,7 +3,6 @@ pragma solidity ^0.5.0;
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import 'openzeppelin-solidity/contracts/token/ERC20/IERC20.sol';
 import 'openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol';
-import 'openzeppelin-solidity/contracts/cryptography/ECDSA.sol';
 import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import './lib/interface/ISGN.sol';
@@ -19,7 +18,6 @@ import './lib/DPoSCommon.sol';
 contract SGN is ISGN, Ownable, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    using ECDSA for bytes32;
 
     IERC20 public celerToken;
     IDPoS public DPoSContract;
