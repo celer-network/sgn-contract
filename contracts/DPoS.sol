@@ -367,6 +367,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         );
 
         _updateCommissionRate(candidate, candidate.announcedRate, candidate.announcedLockEndTime);
+
+        delete _candidate.announcedRate;
+        delete _candidate.announcedLockEndTime;
+        delete _candidate.announcementTime;
     }
 
     /**
@@ -826,10 +830,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
 
         _candidate.commissionRate = _newRate;
         _candidate.rateLockEndTime = _newLockEndTime;
-
-        delete _candidate.announcedRate;
-        delete _candidate.announcedLockEndTime;
-        delete _candidate.announcementTime;
 
         emit UpdateCommissionRate(msg.sender, _newRate, _newLockEndTime);
     }
