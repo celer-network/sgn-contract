@@ -742,7 +742,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             uint256 rateLockEndTime
         )
     {
-        ValidatorCandidate storage c = candidateProfiles[_candidateAddr];
+        ValidatorCandidate memory c = candidateProfiles[_candidateAddr];
 
         initialized = c.initialized;
         minSelfStake = c.minSelfStake;
@@ -772,7 +772,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             uint256[] memory intentProposedTimes
         )
     {
-        Delegator storage d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
+        Delegator memory d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
 
         uint256 len = d.intentEndIndex.sub(d.intentStartIndex);
         intentAmounts = new uint256[](len);
