@@ -569,7 +569,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(validator.status != DPoSCommon.CandidateStatus.Unbonded, 'Validator unbounded');
 
         bytes32 h = keccak256(penaltyRequest.penalty);
-        require(_checkValidatorSigs(h, penaltyRequest.sigs), 'Fail to check validator sigs');
+        require(_checkValidatorSigs(h, penaltyRequest.sigs), 'Validator sigs verification failed');
         require(block.number < penalty.expireTime, 'Penalty expired');
         require(!usedPenaltyNonce[penalty.nonce], 'Used penalty nonce');
         usedPenaltyNonce[penalty.nonce] = true;

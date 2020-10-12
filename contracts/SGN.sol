@@ -101,7 +101,7 @@ contract SGN is ISGN, Ownable, Pausable {
     function redeemReward(bytes calldata _rewardRequest) external whenNotPaused onlyValidSidechain {
         require(
             dPoSContract.validateMultiSigMessage(_rewardRequest),
-            'Fail to check validator sigs'
+            'Validator sigs verification failed'
         );
 
         PbSgn.RewardRequest memory rewardRequest = PbSgn.decRewardRequest(_rewardRequest);

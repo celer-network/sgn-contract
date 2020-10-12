@@ -311,7 +311,7 @@ contract('muti-validator slash tests', async (accounts) => {
     try {
       await dposInstance.slash(request);
     } catch (error) {
-      assert.isAbove(error.message.search('Fail to check validator sigs'), -1);
+      assert.isAbove(error.message.search('Validator sigs verification failed'), -1);
       return;
     }
 
@@ -333,7 +333,7 @@ contract('muti-validator slash tests', async (accounts) => {
     try {
       await dposInstance.slash(request);
     } catch (error) {
-      assert.isAbove(error.message.search('Fail to check validator sigs'), -1);
+      assert.isAbove(error.message.search('Validator sigs verification failed'), -1);
       return;
     }
 
