@@ -20,7 +20,7 @@ contract SGN is ISGN, Ownable, Pausable {
     using SafeERC20 for IERC20;
 
     IERC20 public celerToken;
-    IDPoS public DPoSContract;
+    IDPoS public dPoSContract;
     mapping(address => uint256) public subscriptionDeposits;
     uint256 public servicePool;
     mapping(address => uint256) public redeemedServiceReward;
@@ -31,7 +31,7 @@ contract SGN is ISGN, Ownable, Pausable {
      * @dev Check this before sidechain's operations
      */
     modifier onlyValidSidechain() {
-        require(DPoSContract.isValidDPoS(), 'DPoS is not valid');
+        require(dPoSContract.isValidDPoS(), 'DPoS is not valid');
         _;
     }
 
@@ -43,11 +43,11 @@ contract SGN is ISGN, Ownable, Pausable {
      */
     constructor(address _celerTokenAddress, address _DPoSAddress) public {
         celerToken = IERC20(_celerTokenAddress);
-        DPoSContract = IDPoS(_DPoSAddress);
+        dPoSContract = IDPoS(_DPoSAddress);
     }
 
     /**
-     * @notice Onwer drains one type of tokens when the contract is paused
+     * @notice Owner drains one type of tokens when the contract is paused
      * @dev This is for emergency situations.
      * @param _amount drained token amount
      */
@@ -64,7 +64,7 @@ contract SGN is ISGN, Ownable, Pausable {
     function updateSidechainAddr(bytes calldata _sidechainAddr) external {
         address msgSender = msg.sender;
 
-        (bool initialized, , , uint256 status, , , ) = DPoSContract.getCandidateInfo(msgSender);
+        (bool initialized, , , uint256 status, , , ) = dPoSContract.getCandidateInfo(msgSender);
         require(
             status == uint256(DPoSCommon.CandidateStatus.Unbonded),
             'msg.sender is not unbonded'
@@ -100,7 +100,7 @@ contract SGN is ISGN, Ownable, Pausable {
      */
     function redeemReward(bytes calldata _rewardRequest) external whenNotPaused onlyValidSidechain {
         require(
-            DPoSContract.validateMultiSigMessage(_rewardRequest),
+            dPoSContract.validateMultiSigMessage(_rewardRequest),
             'Fail to check validator sigs'
         );
 
@@ -114,7 +114,7 @@ contract SGN is ISGN, Ownable, Pausable {
         redeemedServiceReward[reward.receiver] = reward.cumulativeServiceReward;
         servicePool = servicePool.sub(newServiceReward);
 
-        DPoSContract.redeemMiningReward(reward.receiver, reward.cumulativeMiningReward);
+        dPoSContract.redeemMiningReward(reward.receiver, reward.cumulativeMiningReward);
         celerToken.safeTransfer(reward.receiver, newServiceReward);
 
         emit RedeemReward(
