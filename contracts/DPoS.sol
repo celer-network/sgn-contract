@@ -126,11 +126,17 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         _;
     }
 
+    /**
+     * @notice Throws if sender is not validator
+     */
     modifier onlyValidator() {
         require(isValidator(msg.sender), 'msg sender is not a validator');
         _;
     }
 
+    /**
+     * @notice Throws if candidate is not initialized
+     */
     modifier isCandidateInitialized() {
         require(candidateProfiles[msg.sender].initialized, 'Candidate is not initialized');
         _;
