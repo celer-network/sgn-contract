@@ -599,25 +599,21 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             );
 
             Delegator storage delegator = validator.delegatorProfiles[penalizedDelegator.account];
+            uint256 _amt;
             if (delegator.delegatedStake >= penalizedDelegator.amt) {
-                _updateDelegatedStake(
-                    validator,
-                    penalty.validatorAddress,
-                    penalizedDelegator.account,
-                    penalizedDelegator.amt,
-                    MathOperation.Sub
-                );
+                _amt = penalizedDelegator.amt;
             } else {
                 uint256 remainingAmt = penalizedDelegator.amt.sub(delegator.delegatedStake);
                 delegator.undelegatingStake = delegator.undelegatingStake.sub(remainingAmt);
-                _updateDelegatedStake(
-                    validator,
-                    penalty.validatorAddress,
-                    penalizedDelegator.account,
-                    delegator.delegatedStake,
-                    MathOperation.Sub
-                );
+                _amt = delegator.delegatedStake;
             }
+            _updateDelegatedStake(
+                validator,
+                penalty.validatorAddress,
+                penalizedDelegator.account,
+                _amt,
+                MathOperation.Sub
+            );
         }
         _validateValidator(penalty.validatorAddress);
 
