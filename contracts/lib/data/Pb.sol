@@ -95,7 +95,7 @@ library Pb {
         // array in memory must be init w/ known length
         // so we have to create a tmp array w/ max possible len first
         uint[] memory tmp = new uint[](len);
-        uint i = 0; // count how many ints are there
+        uint i; // count how many ints are there
         while (buf.idx < end) {
             tmp[i] = decVarint(buf);
             i++;
