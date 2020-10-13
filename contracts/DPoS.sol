@@ -373,9 +373,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
 
         _updateCommissionRate(candidate, candidate.announcedRate, candidate.announcedLockEndTime);
 
-        delete _candidate.announcedRate;
-        delete _candidate.announcedLockEndTime;
-        delete _candidate.announcementTime;
+        delete candidate.announcedRate;
+        delete candidate.announcedLockEndTime;
+        delete candidate.announcementTime;
     }
 
     /**
@@ -777,7 +777,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             uint256[] memory intentProposedTimes
         )
     {
-        Delegator memory d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
+        Delegator storage d = candidateProfiles[_candidateAddr].delegatorProfiles[_delegatorAddr];
 
         uint256 len = d.intentEndIndex.sub(d.intentStartIndex);
         intentAmounts = new uint256[](len);
