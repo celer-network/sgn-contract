@@ -363,9 +363,11 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      */
     function confirmIncreaseCommissionRate() external isCandidateInitialized {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
-        uint256 advanceNoticePeriod = getUIntValue(uint256(ParamNames.AdvanceNoticePeriod));
         require(
-            block.number > candidate.announcementTime.add(advanceNoticePeriod),
+            block.number >
+                candidate.announcementTime.add(
+                    getUIntValue(uint256(ParamNames.AdvanceNoticePeriod))
+                ),
             'Still in notice period'
         );
 
@@ -384,8 +386,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         ValidatorCandidate storage candidate = candidateProfiles[msg.sender];
         if (_minSelfStake < candidate.minSelfStake) {
             require(candidate.status != DPoSCommon.CandidateStatus.Bonded, 'Candidate is bonded');
-            uint256 advanceNoticePeriod = getUIntValue(uint256(ParamNames.AdvanceNoticePeriod));
-            candidate.earliestBondTime = block.number.add(advanceNoticePeriod);
+            candidate.earliestBondTime = block.number.add(
+                getUIntValue(uint256(ParamNames.AdvanceNoticePeriod))
+            );
         }
         candidate.minSelfStake = _minSelfStake;
         emit UpdateMinSelfStake(msg.sender, _minSelfStake);
@@ -425,8 +428,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             'Invalid candidate status'
         );
         require(block.number >= candidate.earliestBondTime, 'Not earliest bond time yet');
-        uint256 minStakeInPool = getUIntValue(uint256(ParamNames.MinStakeInPool));
-        require(candidate.stakingPool >= minStakeInPool, 'Insufficient staking pool');
+        require(
+            candidate.stakingPool >= getUIntValue(uint256(ParamNames.MinStakeInPool)),
+            'Insufficient staking pool'
+        );
         require(
             candidate.delegatorProfiles[msgSender].delegatedStake >= candidate.minSelfStake,
             'Not enough self stake'
@@ -537,8 +542,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         // for all undelegated withdraw intents
         uint256 i;
         for (i = delegator.intentStartIndex; i < delegator.intentEndIndex; i++) {
-            WithdrawIntent storage wi = delegator.withdrawIntents[i];
-            if (isUnbonded || wi.proposedTime.add(slashTimeout) <= block.number) {
+            if (
+                isUnbonded ||
+                delegator.withdrawIntents[i].proposedTime.add(slashTimeout) <= block.number
+            ) {
                 // withdraw intent is undelegated when the validator becomes unbonded or
                 // the slashTimeout for the withdraw intent is up.
                 delete delegator.withdrawIntents[i];
@@ -550,8 +557,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         // for all undelegating withdraw intents
         uint256 undelegatingStakeWithoutSlash = 0;
         for (; i < delegator.intentEndIndex; i++) {
-            WithdrawIntent storage wi = delegator.withdrawIntents[i];
-            undelegatingStakeWithoutSlash = undelegatingStakeWithoutSlash.add(wi.amount);
+            undelegatingStakeWithoutSlash = undelegatingStakeWithoutSlash.add(
+                delegator.withdrawIntents[i].amount
+            );
         }
 
         uint256 withdrawAmt = 0;
@@ -656,8 +664,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @return DPoS is valid or not
      */
     function isValidDPoS() public view returns (bool) {
-        uint256 minValidatorNum = getUIntValue(uint256(ParamNames.MinValidatorNum));
-        return block.number >= dposGoLiveTime && getValidatorNum() >= minValidatorNum;
+        return
+            block.number >= dposGoLiveTime &&
+            getValidatorNum() >= getUIntValue(uint256(ParamNames.MinValidatorNum));
     }
 
     /**
@@ -892,8 +901,9 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
 
         delete validatorSet[_setIndex];
         candidateProfiles[removedValidator].status = DPoSCommon.CandidateStatus.Unbonding;
-        uint256 slashTimeout = getUIntValue(uint256(ParamNames.SlashTimeout));
-        candidateProfiles[removedValidator].unbondTime = block.number.add(slashTimeout);
+        candidateProfiles[removedValidator].unbondTime = block.number.add(
+            getUIntValue(uint256(ParamNames.SlashTimeout))
+        );
         emit ValidatorChange(removedValidator, ValidatorChangeType.Removal);
     }
 
@@ -910,8 +920,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         }
 
         bool lowSelfStake = v.delegatorProfiles[_validatorAddr].delegatedStake < v.minSelfStake;
-        uint256 minStakeInPool = getUIntValue(uint256(ParamNames.MinStakeInPool));
-        bool lowStakingPool = v.stakingPool < minStakeInPool;
+        bool lowStakingPool = v.stakingPool < getUIntValue(uint256(ParamNames.MinStakeInPool));
 
         if (lowSelfStake || lowStakingPool) {
             _removeValidator(_getValidatorIdx(_validatorAddr));
