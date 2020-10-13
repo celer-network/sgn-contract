@@ -65,7 +65,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     /********** Constants **********/
     uint256 constant DECIMALS_MULTIPLIER = 10**18;
     uint256 public constant COMMISSION_RATE_BASE = 10000; // 1 commissionRate means 0.01%
-    IERC20 public celerToken; // todo: use Immutable after migrating to Solidity v0.6.5 or higher
     uint256 public dposGoLiveTime; // used when bootstrapping initial validators
     uint256 public miningPool;
     bool public enableWhitelist;
@@ -178,7 +177,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             _advanceNoticePeriod
         )
     {
-        celerToken = IERC20(_celerTokenAddress);
         dposGoLiveTime = block.number.add(_dposGoLiveTimeout);
         enableSlash = true;
     }
