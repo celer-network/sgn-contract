@@ -223,7 +223,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
         // check Yes votes only now
-        uint256 yesVoteStakes = 0;
+        uint256 yesVoteStakes;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (getParamProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
                 yesVoteStakes = yesVoteStakes.add(candidateProfiles[validatorSet[i]].stakingPool);
@@ -254,7 +254,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
         // check Yes votes only now
-        uint256 yesVoteStakes = 0;
+        uint256 yesVoteStakes;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (getSidechainProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
                 yesVoteStakes = yesVoteStakes.add(candidateProfiles[validatorSet[i]].stakingPool);
@@ -441,7 +441,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             'Not enough self stake'
         );
 
-        uint256 minStakingPoolIndex = 0;
+        uint256 minStakingPoolIndex;
         uint256 minStakingPool = candidateProfiles[validatorSet[0]].stakingPool;
         require(validatorSet[0] != msgSender, 'Already in validator set');
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
@@ -559,14 +559,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         }
         delegator.intentStartIndex = i;
         // for all undelegating withdraw intents
-        uint256 undelegatingStakeWithoutSlash = 0;
+        uint256 undelegatingStakeWithoutSlash;
         for (; i < delegator.intentEndIndex; i++) {
             undelegatingStakeWithoutSlash = undelegatingStakeWithoutSlash.add(
                 delegator.withdrawIntents[i].amount
             );
         }
 
-        uint256 withdrawAmt = 0;
+        uint256 withdrawAmt;
         if (delegator.undelegatingStake > undelegatingStakeWithoutSlash) {
             withdrawAmt = delegator.undelegatingStake.sub(undelegatingStakeWithoutSlash);
             delegator.undelegatingStake = undelegatingStakeWithoutSlash;
@@ -600,7 +600,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(!usedPenaltyNonce[penalty.nonce], 'Used penalty nonce');
         usedPenaltyNonce[penalty.nonce] = true;
 
-        uint256 totalSubAmt = 0;
+        uint256 totalSubAmt;
         for (uint256 i = 0; i < penalty.penalizedDelegators.length; i++) {
             PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
             totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
@@ -629,7 +629,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         }
         _validateValidator(penalty.validatorAddress);
 
-        uint256 totalAddAmt = 0;
+        uint256 totalAddAmt;
         for (uint256 i = 0; i < penalty.beneficiaries.length; i++) {
             PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
             totalAddAmt = totalAddAmt.add(beneficiary.amt);
@@ -786,7 +786,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function getValidatorNum() public view returns (uint256) {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
-        uint256 num = 0;
+        uint256 num;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (validatorSet[i] != address(0)) {
                 num++;
@@ -810,7 +810,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function getTotalValidatorStakingPool() public view returns (uint256) {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
-        uint256 totalValidatorStakingPool = 0;
+        uint256 totalValidatorStakingPool;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             totalValidatorStakingPool = totalValidatorStakingPool.add(
                 candidateProfiles[validatorSet[i]].stakingPool
@@ -942,8 +942,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
 
         bytes32 hash = _h.toEthSignedMessageHash();
         address[] memory addrs = new address[](_sigs.length);
-        uint256 quorumStakingPool = 0;
-        bool hasDuplicatedSig = false;
+        uint256 quorumStakingPool;
+        bool hasDuplicatedSig;
         for (uint256 i = 0; i < _sigs.length; i++) {
             addrs[i] = hash.recover(_sigs[i]);
             if (checkedValidators[addrs[i]]) {
