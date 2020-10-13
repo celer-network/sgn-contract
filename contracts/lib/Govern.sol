@@ -132,9 +132,9 @@ contract Govern is IGovern, Ownable {
      * @param _record the key of this parameter
      * @param _value the new proposed value of this parameter
      */
-    function createParamProposal(uint256 _record, uint256 _value) public {
+    function createParamProposal(uint256 _record, uint256 _value) external {
         ParamProposal storage p = paramProposals[nextParamProposalId];
-        nextParamProposalId = nextParamProposalId.add(1);
+        nextParamProposalId = nextParamProposalId + 1;
         address msgSender = msg.sender;
         uint256 deposit = UIntStorage[uint256(ParamNames.ProposalDeposit)];
 
@@ -148,7 +148,7 @@ contract Govern is IGovern, Ownable {
         governToken.safeTransferFrom(msgSender, address(this), deposit);
 
         emit CreateParamProposal(
-            nextParamProposalId.sub(1),
+            nextParamProposalId - 1,
             msgSender,
             deposit,
             p.voteDeadline,
@@ -214,9 +214,9 @@ contract Govern is IGovern, Ownable {
      * @param _sidechainAddr the sidechain contract address
      * @param _registered the new proposed registration status
      */
-    function createSidechainProposal(address _sidechainAddr, bool _registered) public {
+    function createSidechainProposal(address _sidechainAddr, bool _registered) external {
         SidechainProposal storage p = sidechainProposals[nextSidechainProposalId];
-        nextSidechainProposalId = nextSidechainProposalId.add(1);
+        nextSidechainProposalId = nextSidechainProposalId + 1;
         address msgSender = msg.sender;
         uint256 deposit = UIntStorage[uint256(ParamNames.ProposalDeposit)];
 
@@ -230,7 +230,7 @@ contract Govern is IGovern, Ownable {
         governToken.safeTransferFrom(msgSender, address(this), deposit);
 
         emit CreateSidechainProposal(
-            nextSidechainProposalId.sub(1),
+            nextSidechainProposalId - 1,
             msgSender,
             deposit,
             p.voteDeadline,
