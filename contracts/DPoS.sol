@@ -666,50 +666,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
-     * @notice Check this DPoS contract is valid or not now
-     * @return DPoS is valid or not
-     */
-    function isValidDPoS() public view returns (bool) {
-        return
-            block.number >= dposGoLiveTime &&
-            getValidatorNum() >= getUIntValue(uint256(ParamNames.MinValidatorNum));
-    }
-
-    /**
-     * @notice Check the given address is a validator or not
-     * @param _addr the address to check
-     * @return the given address is a validator or not
-     */
-    function isValidator(address _addr) public view returns (bool) {
-        return candidateProfiles[_addr].status == DPoSCommon.CandidateStatus.Bonded;
-    }
-
-    /**
-     * @notice Check if the contract is in migrating state
-     * @return contract in migrating state or not
-     */
-    function isMigrating() public view returns (bool) {
-        uint256 migrationTime = getUIntValue(uint256(ParamNames.MigrationTime));
-        return migrationTime != 0 && block.number >= migrationTime;
-    }
-
-    /**
-     * @notice Get the number of validators
-     * @return the number of validators
-     */
-    function getValidatorNum() public view returns (uint256) {
-        uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
-
-        uint256 num = 0;
-        for (uint256 i = 0; i < maxValidatorNum; i++) {
-            if (validatorSet[i] != address(0)) {
-                num++;
-            }
-        }
-        return num;
-    }
-
-    /**
      * @notice Get the minimum staking pool of all validators
      * @return the minimum staking pool of all validators
      */
@@ -795,6 +751,50 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
 
         delegatedStake = d.delegatedStake;
         undelegatingStake = d.undelegatingStake;
+    }
+
+    /**
+     * @notice Check this DPoS contract is valid or not now
+     * @return DPoS is valid or not
+     */
+    function isValidDPoS() public view returns (bool) {
+        return
+            block.number >= dposGoLiveTime &&
+            getValidatorNum() >= getUIntValue(uint256(ParamNames.MinValidatorNum));
+    }
+
+    /**
+     * @notice Check the given address is a validator or not
+     * @param _addr the address to check
+     * @return the given address is a validator or not
+     */
+    function isValidator(address _addr) public view returns (bool) {
+        return candidateProfiles[_addr].status == DPoSCommon.CandidateStatus.Bonded;
+    }
+
+    /**
+     * @notice Check if the contract is in migrating state
+     * @return contract in migrating state or not
+     */
+    function isMigrating() public view returns (bool) {
+        uint256 migrationTime = getUIntValue(uint256(ParamNames.MigrationTime));
+        return migrationTime != 0 && block.number >= migrationTime;
+    }
+
+    /**
+     * @notice Get the number of validators
+     * @return the number of validators
+     */
+    function getValidatorNum() public view returns (uint256) {
+        uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
+
+        uint256 num = 0;
+        for (uint256 i = 0; i < maxValidatorNum; i++) {
+            if (validatorSet[i] != address(0)) {
+                num++;
+            }
+        }
+        return num;
     }
 
     /**
