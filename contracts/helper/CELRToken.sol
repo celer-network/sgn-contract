@@ -12,7 +12,7 @@ contract CELRToken is ERC20 {
     string public name = "CelerToken";
     string public symbol = "CELR";
     uint8 public decimals = 18;
-    uint public INITIAL_SUPPLY = 1e28;
+    uint256 constant public INITIAL_SUPPLY = 1e28;
 
     /**
      * @notice Constructor that gives msg.sender all of existing tokens.
