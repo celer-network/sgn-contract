@@ -707,7 +707,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @notice Get the minimum staking pool of all validators
      * @return the minimum staking pool of all validators
      */
-    function getMinStakingPool() public view returns (uint256) {
+    function getMinStakingPool() external view returns (uint256) {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
         uint256 minStakingPool = candidateProfiles[validatorSet[0]].stakingPool;
@@ -735,7 +735,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @return rateLockEndTime commission rate lock end time
      */
     function getCandidateInfo(address _candidateAddr)
-        public
+        external
         view
         returns (
             bool initialized,
@@ -768,7 +768,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
      * @return intentProposedTimes the proposed times of withdraw intents
      */
     function getDelegatorInfo(address _candidateAddr, address _delegatorAddr)
-        public
+        external
         view
         returns (
             uint256 delegatedStake,
