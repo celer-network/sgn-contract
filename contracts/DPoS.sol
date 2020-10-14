@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.17;
 
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import 'openzeppelin-solidity/contracts/token/ERC20/IERC20.sol';
@@ -65,7 +65,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     /********** Constants **********/
     uint256 constant DECIMALS_MULTIPLIER = 10**18;
     uint256 public constant COMMISSION_RATE_BASE = 10000; // 1 commissionRate means 0.01%
-    IERC20 public celerToken; // todo: use Immutable after migrating to Solidity v0.6.5 or higher
     uint256 public dposGoLiveTime; // used when bootstrapping initial validators
     uint256 public miningPool;
     bool public enableWhitelist;
@@ -178,7 +177,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             _advanceNoticePeriod
         )
     {
-        celerToken = IERC20(_celerTokenAddress);
         dposGoLiveTime = block.number.add(_dposGoLiveTimeout);
         enableSlash = true;
     }
@@ -225,7 +223,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
         // check Yes votes only now
-        uint256 yesVoteStakes = 0;
+        uint256 yesVoteStakes;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (getParamProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
                 yesVoteStakes = yesVoteStakes.add(candidateProfiles[validatorSet[i]].stakingPool);
@@ -256,7 +254,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
         // check Yes votes only now
-        uint256 yesVoteStakes = 0;
+        uint256 yesVoteStakes;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             if (getSidechainProposalVote(_proposalId, validatorSet[i]) == VoteType.Yes) {
                 yesVoteStakes = yesVoteStakes.add(candidateProfiles[validatorSet[i]].stakingPool);
@@ -443,7 +441,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             'Not enough self stake'
         );
 
-        uint256 minStakingPoolIndex = 0;
+        uint256 minStakingPoolIndex;
         uint256 minStakingPool = candidateProfiles[validatorSet[0]].stakingPool;
         require(validatorSet[0] != msgSender, 'Already in validator set');
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
@@ -561,14 +559,14 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         }
         delegator.intentStartIndex = i;
         // for all undelegating withdraw intents
-        uint256 undelegatingStakeWithoutSlash = 0;
+        uint256 undelegatingStakeWithoutSlash;
         for (; i < delegator.intentEndIndex; i++) {
             undelegatingStakeWithoutSlash = undelegatingStakeWithoutSlash.add(
                 delegator.withdrawIntents[i].amount
             );
         }
 
-        uint256 withdrawAmt = 0;
+        uint256 withdrawAmt;
         if (delegator.undelegatingStake > undelegatingStakeWithoutSlash) {
             withdrawAmt = delegator.undelegatingStake.sub(undelegatingStakeWithoutSlash);
             delegator.undelegatingStake = undelegatingStakeWithoutSlash;
@@ -602,7 +600,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         require(!usedPenaltyNonce[penalty.nonce], 'Used penalty nonce');
         usedPenaltyNonce[penalty.nonce] = true;
 
-        uint256 totalSubAmt = 0;
+        uint256 totalSubAmt;
         for (uint256 i = 0; i < penalty.penalizedDelegators.length; i++) {
             PbSgn.AccountAmtPair memory penalizedDelegator = penalty.penalizedDelegators[i];
             totalSubAmt = totalSubAmt.add(penalizedDelegator.amt);
@@ -631,7 +629,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         }
         _validateValidator(penalty.validatorAddress);
 
-        uint256 totalAddAmt = 0;
+        uint256 totalAddAmt;
         for (uint256 i = 0; i < penalty.beneficiaries.length; i++) {
             PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
             totalAddAmt = totalAddAmt.add(beneficiary.amt);
@@ -663,50 +661,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         bytes32 h = keccak256(request.msg);
 
         return _checkValidatorSigs(h, request.sigs);
-    }
-
-    /**
-     * @notice Check this DPoS contract is valid or not now
-     * @return DPoS is valid or not
-     */
-    function isValidDPoS() public view returns (bool) {
-        return
-            block.number >= dposGoLiveTime &&
-            getValidatorNum() >= getUIntValue(uint256(ParamNames.MinValidatorNum));
-    }
-
-    /**
-     * @notice Check the given address is a validator or not
-     * @param _addr the address to check
-     * @return the given address is a validator or not
-     */
-    function isValidator(address _addr) public view returns (bool) {
-        return candidateProfiles[_addr].status == DPoSCommon.CandidateStatus.Bonded;
-    }
-
-    /**
-     * @notice Check if the contract is in migrating state
-     * @return contract in migrating state or not
-     */
-    function isMigrating() public view returns (bool) {
-        uint256 migrationTime = getUIntValue(uint256(ParamNames.MigrationTime));
-        return migrationTime != 0 && block.number >= migrationTime;
-    }
-
-    /**
-     * @notice Get the number of validators
-     * @return the number of validators
-     */
-    function getValidatorNum() public view returns (uint256) {
-        uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
-
-        uint256 num = 0;
-        for (uint256 i = 0; i < maxValidatorNum; i++) {
-            if (validatorSet[i] != address(0)) {
-                num++;
-            }
-        }
-        return num;
     }
 
     /**
@@ -798,6 +752,50 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     }
 
     /**
+     * @notice Check this DPoS contract is valid or not now
+     * @return DPoS is valid or not
+     */
+    function isValidDPoS() public view returns (bool) {
+        return
+            block.number >= dposGoLiveTime &&
+            getValidatorNum() >= getUIntValue(uint256(ParamNames.MinValidatorNum));
+    }
+
+    /**
+     * @notice Check the given address is a validator or not
+     * @param _addr the address to check
+     * @return the given address is a validator or not
+     */
+    function isValidator(address _addr) public view returns (bool) {
+        return candidateProfiles[_addr].status == DPoSCommon.CandidateStatus.Bonded;
+    }
+
+    /**
+     * @notice Check if the contract is in migrating state
+     * @return contract in migrating state or not
+     */
+    function isMigrating() public view returns (bool) {
+        uint256 migrationTime = getUIntValue(uint256(ParamNames.MigrationTime));
+        return migrationTime != 0 && block.number >= migrationTime;
+    }
+
+    /**
+     * @notice Get the number of validators
+     * @return the number of validators
+     */
+    function getValidatorNum() public view returns (uint256) {
+        uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
+
+        uint256 num;
+        for (uint256 i = 0; i < maxValidatorNum; i++) {
+            if (validatorSet[i] != address(0)) {
+                num++;
+            }
+        }
+        return num;
+    }
+
+    /**
      * @notice Get minimum amount of stakes for a quorum
      * @return the minimum amount
      */
@@ -812,7 +810,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     function getTotalValidatorStakingPool() public view returns (uint256) {
         uint256 maxValidatorNum = getUIntValue(uint256(ParamNames.MaxValidatorNum));
 
-        uint256 totalValidatorStakingPool = 0;
+        uint256 totalValidatorStakingPool;
         for (uint256 i = 0; i < maxValidatorNum; i++) {
             totalValidatorStakingPool = totalValidatorStakingPool.add(
                 candidateProfiles[validatorSet[i]].stakingPool
@@ -944,8 +942,8 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
 
         bytes32 hash = _h.toEthSignedMessageHash();
         address[] memory addrs = new address[](_sigs.length);
-        uint256 quorumStakingPool = 0;
-        bool hasDuplicatedSig = false;
+        uint256 quorumStakingPool;
+        bool hasDuplicatedSig;
         for (uint256 i = 0; i < _sigs.length; i++) {
             addrs[i] = hash.recover(_sigs[i]);
             if (checkedValidators[addrs[i]]) {

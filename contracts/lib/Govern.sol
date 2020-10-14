@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.17;
 
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import 'openzeppelin-solidity/contracts/token/ERC20/IERC20.sol';
@@ -36,7 +36,7 @@ contract Govern is IGovern, Ownable {
         mapping(address => VoteType) votes;
     }
 
-    IERC20 public governToken;
+    IERC20 public celerToken;
     // parameters
     mapping(uint256 => uint256) public UIntStorage;
     mapping(uint256 => ParamProposal) public paramProposals;
@@ -48,8 +48,8 @@ contract Govern is IGovern, Ownable {
 
     /**
      * @notice Govern constructor
-     * @dev set governToken and initialize all parameters
-     * @param _governTokenAddress address of the governance token
+     * @dev set celerToken and initialize all parameters
+     * @param _celerTokenAddress address of the governance token
      * @param _governProposalDeposit required deposit amount for a governance proposal
      * @param _governVoteTimeout voting timeout for a governance proposal
      * @param _slashTimeout the locking time for funds to be potentially slashed
@@ -59,7 +59,7 @@ contract Govern is IGovern, Ownable {
      * @param _advanceNoticePeriod the time after the announcement and prior to the effective time of an update
      */
     constructor(
-        address _governTokenAddress,
+        address _celerTokenAddress,
         uint256 _governProposalDeposit,
         uint256 _governVoteTimeout,
         uint256 _slashTimeout,
@@ -68,7 +68,7 @@ contract Govern is IGovern, Ownable {
         uint256 _minStakeInPool,
         uint256 _advanceNoticePeriod
     ) public {
-        governToken = IERC20(_governTokenAddress);
+        celerToken = IERC20(_celerTokenAddress);
 
         UIntStorage[uint256(ParamNames.ProposalDeposit)] = _governProposalDeposit;
         UIntStorage[uint256(ParamNames.GovernVoteTimeout)] = _governVoteTimeout;
@@ -145,7 +145,7 @@ contract Govern is IGovern, Ownable {
         p.newValue = _value;
         p.status = ProposalStatus.Voting;
 
-        governToken.safeTransferFrom(msgSender, address(this), deposit);
+        celerToken.safeTransferFrom(msgSender, address(this), deposit);
 
         emit CreateParamProposal(
             nextParamProposalId - 1,
@@ -192,7 +192,7 @@ contract Govern is IGovern, Ownable {
 
         p.status = ProposalStatus.Closed;
         if (_passed) {
-            governToken.safeTransfer(p.proposer, p.deposit);
+            celerToken.safeTransfer(p.proposer, p.deposit);
             UIntStorage[p.record] = p.newValue;
         }
 
@@ -227,7 +227,7 @@ contract Govern is IGovern, Ownable {
         p.registered = _registered;
         p.status = ProposalStatus.Voting;
 
-        governToken.safeTransferFrom(msgSender, address(this), deposit);
+        celerToken.safeTransferFrom(msgSender, address(this), deposit);
 
         emit CreateSidechainProposal(
             nextSidechainProposalId - 1,
@@ -274,7 +274,7 @@ contract Govern is IGovern, Ownable {
 
         p.status = ProposalStatus.Closed;
         if (_passed) {
-            governToken.safeTransfer(p.proposer, p.deposit);
+            celerToken.safeTransfer(p.proposer, p.deposit);
             registeredSidechains[p.sidechainAddr] = p.registered;
         }
 

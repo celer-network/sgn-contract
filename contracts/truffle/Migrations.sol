@@ -1,4 +1,4 @@
-pragma solidity ^0.5.1;
+pragma solidity 0.5.17;
 
 /**
  * @dev Used for Truffle framework. Do not edit.
