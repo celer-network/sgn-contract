@@ -438,21 +438,14 @@
   "ast": {
     "absolutePath": "/home/ubuntu/sgn-contract/contracts/SGN.sol",
     "exportedSymbols": {
-      "SGN": [
-        2908
-      ]
+      "SGN": [2908]
     },
     "id": 2909,
     "nodeType": "SourceUnit",
     "nodes": [
       {
         "id": 2606,
-        "literals": [
-          "solidity",
-          "^",
-          "0.5",
-          ".0"
-        ],
+        "literals": ["solidity", "^", "0.5", ".0"],
         "nodeType": "PragmaDirective",
         "src": "0:23:1"
       },
@@ -623,23 +616,12 @@
             "src": "833:8:1"
           }
         ],
-        "contractDependencies": [
-          5570,
-          5824,
-          6200,
-          6437
-        ],
+        "contractDependencies": [5570, 5824, 6200, 6437],
         "contractKind": "contract",
         "documentation": "@title Sidechain contract of State Guardian Network\n@notice This contract implements the mainchain logic of Celer State Guardian Network sidechain\n@dev specs: https://www.celer.network/docs/celercore/sgn/sidechain.html#mainchain-contracts",
         "fullyImplemented": true,
         "id": 2908,
-        "linearizedBaseContracts": [
-          2908,
-          6200,
-          5824,
-          6437,
-          5570
-        ],
+        "linearizedBaseContracts": [2908, 6200, 5824, 6437, 5570],
         "name": "SGN",
         "nodeType": "ContractDefinition",
         "nodes": [
@@ -1111,10 +1093,7 @@
                       "id": 2656,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "1449:7:1",
                       "typeDescriptions": {
@@ -1277,10 +1256,7 @@
                       "id": 2669,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "1675:7:1",
                       "typeDescriptions": {
@@ -1787,9 +1763,7 @@
               "src": "2855:561:1",
               "statements": [
                 {
-                  "assignments": [
-                    2722
-                  ],
+                  "assignments": [2722],
                   "declarations": [
                     {
                       "constant": false,
@@ -1853,15 +1827,7 @@
                   "src": "2865:30:1"
                 },
                 {
-                  "assignments": [
-                    2727,
-                    null,
-                    null,
-                    2729,
-                    null,
-                    null,
-                    null
-                  ],
+                  "assignments": [2727, null, null, 2729, null, null, null],
                   "declarations": [
                     {
                       "constant": false,
@@ -2142,10 +2108,7 @@
                       "id": 2735,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "3016:7:1",
                       "typeDescriptions": {
@@ -2221,10 +2184,7 @@
                       "id": 2746,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "3153:7:1",
                       "typeDescriptions": {
@@ -2251,9 +2211,7 @@
                   "src": "3153:52:1"
                 },
                 {
-                  "assignments": [
-                    2752
-                  ],
+                  "assignments": [2752],
                   "declarations": [
                     {
                       "constant": false,
@@ -2548,9 +2506,7 @@
               "src": "3674:337:1",
               "statements": [
                 {
-                  "assignments": [
-                    2780
-                  ],
+                  "assignments": [2780],
                   "declarations": [
                     {
                       "constant": false,
@@ -3277,10 +3233,7 @@
                       "id": 2827,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "4419:7:1",
                       "typeDescriptions": {
@@ -3307,9 +3260,7 @@
                   "src": "4419:127:1"
                 },
                 {
-                  "assignments": [
-                    2838
-                  ],
+                  "assignments": [2838],
                   "declarations": [
                     {
                       "constant": false,
@@ -3410,9 +3361,7 @@
                   "src": "4557:103:1"
                 },
                 {
-                  "assignments": [
-                    2847
-                  ],
+                  "assignments": [2847],
                   "declarations": [
                     {
                       "constant": false,
@@ -3529,9 +3478,7 @@
                   "src": "4670:66:1"
                 },
                 {
-                  "assignments": [
-                    2855
-                  ],
+                  "assignments": [2855],
                   "declarations": [
                     {
                       "constant": false,
@@ -4353,21 +4300,14 @@
   "legacyAST": {
     "absolutePath": "/home/ubuntu/sgn-contract/contracts/SGN.sol",
     "exportedSymbols": {
-      "SGN": [
-        2908
-      ]
+      "SGN": [2908]
     },
     "id": 2909,
     "nodeType": "SourceUnit",
     "nodes": [
       {
         "id": 2606,
-        "literals": [
-          "solidity",
-          "^",
-          "0.5",
-          ".0"
-        ],
+        "literals": ["solidity", "^", "0.5", ".0"],
         "nodeType": "PragmaDirective",
         "src": "0:23:1"
       },
@@ -4538,23 +4478,12 @@
             "src": "833:8:1"
           }
         ],
-        "contractDependencies": [
-          5570,
-          5824,
-          6200,
-          6437
-        ],
+        "contractDependencies": [5570, 5824, 6200, 6437],
         "contractKind": "contract",
         "documentation": "@title Sidechain contract of State Guardian Network\n@notice This contract implements the mainchain logic of Celer State Guardian Network sidechain\n@dev specs: https://www.celer.network/docs/celercore/sgn/sidechain.html#mainchain-contracts",
         "fullyImplemented": true,
         "id": 2908,
-        "linearizedBaseContracts": [
-          2908,
-          6200,
-          5824,
-          6437,
-          5570
-        ],
+        "linearizedBaseContracts": [2908, 6200, 5824, 6437, 5570],
         "name": "SGN",
         "nodeType": "ContractDefinition",
         "nodes": [
@@ -5026,10 +4955,7 @@
                       "id": 2656,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "1449:7:1",
                       "typeDescriptions": {
@@ -5192,10 +5118,7 @@
                       "id": 2669,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "1675:7:1",
                       "typeDescriptions": {
@@ -5702,9 +5625,7 @@
               "src": "2855:561:1",
               "statements": [
                 {
-                  "assignments": [
-                    2722
-                  ],
+                  "assignments": [2722],
                   "declarations": [
                     {
                       "constant": false,
@@ -5768,15 +5689,7 @@
                   "src": "2865:30:1"
                 },
                 {
-                  "assignments": [
-                    2727,
-                    null,
-                    null,
-                    2729,
-                    null,
-                    null,
-                    null
-                  ],
+                  "assignments": [2727, null, null, 2729, null, null, null],
                   "declarations": [
                     {
                       "constant": false,
@@ -6057,10 +5970,7 @@
                       "id": 2735,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "3016:7:1",
                       "typeDescriptions": {
@@ -6136,10 +6046,7 @@
                       "id": 2746,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "3153:7:1",
                       "typeDescriptions": {
@@ -6166,9 +6073,7 @@
                   "src": "3153:52:1"
                 },
                 {
-                  "assignments": [
-                    2752
-                  ],
+                  "assignments": [2752],
                   "declarations": [
                     {
                       "constant": false,
@@ -6463,9 +6368,7 @@
               "src": "3674:337:1",
               "statements": [
                 {
-                  "assignments": [
-                    2780
-                  ],
+                  "assignments": [2780],
                   "declarations": [
                     {
                       "constant": false,
@@ -7192,10 +7095,7 @@
                       "id": 2827,
                       "name": "require",
                       "nodeType": "Identifier",
-                      "overloadedDeclarations": [
-                        7159,
-                        7160
-                      ],
+                      "overloadedDeclarations": [7159, 7160],
                       "referencedDeclaration": 7160,
                       "src": "4419:7:1",
                       "typeDescriptions": {
@@ -7222,9 +7122,7 @@
                   "src": "4419:127:1"
                 },
                 {
-                  "assignments": [
-                    2838
-                  ],
+                  "assignments": [2838],
                   "declarations": [
                     {
                       "constant": false,
@@ -7325,9 +7223,7 @@
                   "src": "4557:103:1"
                 },
                 {
-                  "assignments": [
-                    2847
-                  ],
+                  "assignments": [2847],
                   "declarations": [
                     {
                       "constant": false,
@@ -7444,9 +7340,7 @@
                   "src": "4670:66:1"
                 },
                 {
-                  "assignments": [
-                    2855
-                  ],
+                  "assignments": [2855],
                   "declarations": [
                     {
                       "constant": false,
@@ -8405,8 +8299,8 @@
         }
       },
       "links": {},
-      "address": "0xb622b9C96A3544fb35A9D8a1F8d8D0635eec7f59",
-      "transactionHash": "0x13412405758f319126245868b270bdf595e009df23f40eefa878c1256484fa26"
+      "address": "0xa3edd71bcc627601fc7973cdb32fd7aea7d80213",
+      "transactionHash": "0x2356330f022b398baa82931412cb1fb4bd293108cb008275660cf70986641e3e"
     }
   },
   "schemaVersion": "3.2.3",
