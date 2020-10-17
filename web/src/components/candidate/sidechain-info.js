@@ -16,9 +16,7 @@ const columns = [
     title: 'Delegated Stake',
     dataIndex: 'delegatedStake',
     sorter: (a, b) => {
-      return web3.utils
-        .toBN(a.delegatedStake)
-        .cmp(web3.utils.toBN(b.delegatedStake));
+      return web3.utils.toBN(a.delegatedStake).cmp(web3.utils.toBN(b.delegatedStake));
     },
     sortOrder: 'descend',
     render: text => {
@@ -43,6 +41,7 @@ class SidechainInfo extends React.Component {
         const { result } = res.data;
 
         this.setState({
+          ...result,
           commissionRate: result.commission_rate,
           stakingPool: result.staking_pool
         });
@@ -55,9 +54,7 @@ class SidechainInfo extends React.Component {
           return;
         }
 
-        message.warning(
-          'Please config gateway url in setting to load sidechain info correctly'
-        );
+        message.warning('Please config gateway url in setting to load sidechain info correctly');
       });
 
     axios
@@ -80,41 +77,25 @@ class SidechainInfo extends React.Component {
           return;
         }
 
-        message.warning(
-          'Please config gateway url in setting to load sidechain info correctly'
-        );
+        message.warning('Please config gateway url in setting to load sidechain info correctly');
       });
   }
 
   render() {
-    const {
-      commissionRate,
-      stakingPool,
-      delegators,
-      description = {}
-    } = this.state;
+    const { commissionRate, stakingPool, delegators, description = {} } = this.state;
     return (
       <Row>
         <Col span={12}>
-          <Statistic
-            title="Commission Rate"
-            value={`${commissionRate * 100} %`}
-          />
+          <Statistic title="Commission Rate" value={`${commissionRate * 100} %`} />
         </Col>
         <Col span={12}>
-          <Statistic
-            title="Staking Pool"
-            value={formatCelrValue(stakingPool)}
-          />
+          <Statistic title="Staking Pool" value={formatCelrValue(stakingPool)} />
         </Col>
         <Col span={12}>
           <Statistic title="Website" value={description.website || 'N/A'} />
         </Col>
         <Col span={12}>
-          <Statistic
-            title="Contact"
-            value={description.security_contact || 'N/A'}
-          />
+          <Statistic title="Contact" value={description.security_contact || 'N/A'} />
         </Col>
 
         <Col span={24}>
