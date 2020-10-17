@@ -13,6 +13,7 @@ contract('single-validator slash tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
   const RECEIVER = accounts[3];
+  const SENDER = accounts[4];
 
   let celerToken;
   let dposInstance;
@@ -92,13 +93,12 @@ contract('single-validator slash tests', async (accounts) => {
         validatorAddr: [CANDIDATE],
         delegatorAddrs: [CANDIDATE, DELEGATOR],
         delegatorAmts: [5, 10],
-        beneficiaryAddrs: [consts.ZERO_ADDR, RECEIVER],
-        beneficiaryAmts: [7, 8],
+        beneficiaryAddrs: [consts.ZERO_ADDR, RECEIVER, consts.ONE_ADDR],
+        beneficiaryAmts: [7, 6, 2],
         signers: [CANDIDATE]
       });
-      const tx = await dposInstance.slash(request);
-      const newMiningPool = await dposInstance.miningPool();
-      const newTokenAmt = await celerToken.balanceOf(RECEIVER);
+
+      const tx = await dposInstance.slash(request, {from: SENDER});
 
       assert.equal(tx.logs[0].event, 'Slash');
       assert.equal(tx.logs[0].args.validator, CANDIDATE);
@@ -110,8 +110,12 @@ contract('single-validator slash tests', async (accounts) => {
       assert.equal(tx.logs[2].args.delegator, DELEGATOR);
       assert.equal(tx.logs[2].args.amount, 10);
 
+      const newMiningPool = await dposInstance.miningPool();
+      const newTokenAmt = await celerToken.balanceOf(RECEIVER);
+      const senderAmt = await celerToken.balanceOf(SENDER);
       assert.equal(newMiningPool.toString(), oldMiningPool.addn(7).toString());
-      assert.equal(newTokenAmt.toString(), oldTokenAmt.addn(8).toString());
+      assert.equal(newTokenAmt.toString(), oldTokenAmt.addn(6).toString());
+      assert.equal(senderAmt.toString(), "2");
     });
 
     it('should fail to slash with same request twice', async () => {
