@@ -634,7 +634,6 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         for (uint256 i = 0; i < penalty.beneficiaries.length; i++) {
             PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
             totalAddAmt = totalAddAmt.add(beneficiary.amt);
-            emit Compensate(beneficiary.account, beneficiary.amt);
 
             if (beneficiary.account == address(0)) {
                 // address(0) stands for miningPool
@@ -642,8 +641,10 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
             } else if (beneficiary.account == address(1)) {
                 // address(1) means beneficiary is msg sender
                 celerToken.safeTransfer(msg.sender, beneficiary.amt);
+                emit Compensate(msg.sender, beneficiary.amt);
             } else {
                 celerToken.safeTransfer(beneficiary.account, beneficiary.amt);
+                emit Compensate(beneficiary.account, beneficiary.amt);
             }
         }
 
