@@ -65,6 +65,7 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
     /********** Constants **********/
     uint256 constant DECIMALS_MULTIPLIER = 10**18;
     uint256 public constant COMMISSION_RATE_BASE = 10000; // 1 commissionRate means 0.01%
+
     uint256 public dposGoLiveTime; // used when bootstrapping initial validators
     uint256 public miningPool;
     bool public enableWhitelist;
@@ -633,13 +634,17 @@ contract DPoS is IDPoS, Ownable, Pausable, WhitelistedRole, Govern {
         for (uint256 i = 0; i < penalty.beneficiaries.length; i++) {
             PbSgn.AccountAmtPair memory beneficiary = penalty.beneficiaries[i];
             totalAddAmt = totalAddAmt.add(beneficiary.amt);
-            emit Compensate(beneficiary.account, beneficiary.amt);
 
             if (beneficiary.account == address(0)) {
                 // address(0) stands for miningPool
                 miningPool = miningPool.add(beneficiary.amt);
+            } else if (beneficiary.account == address(1)) {
+                // address(1) means beneficiary is msg sender
+                celerToken.safeTransfer(msg.sender, beneficiary.amt);
+                emit Compensate(msg.sender, beneficiary.amt);
             } else {
                 celerToken.safeTransfer(beneficiary.account, beneficiary.amt);
+                emit Compensate(beneficiary.account, beneficiary.amt);
             }
         }
 
