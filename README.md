@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/celer-network/sgn-contract/tree/master.svg?style=svg)](https://circleci.com/gh/celer-network/sgn-contract/tree/master)
 
-Mainchain smart contracts for [Celer state guardian network (SGN)](https://www.celer.network/docs/celercore/sgn/architecture.html)
+Mainchain smart contracts for [Celer State Guardian Network (SGN)](https://www.celer.network/docs/celercore/sgn/architecture.html)
 
 ## Test locally
 
