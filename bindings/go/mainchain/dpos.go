@@ -154,7 +154,7 @@ func bindDPoS(address common.Address, caller bind.ContractCaller, transactor bin
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_DPoS *DPoSRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+func (_DPoS *DPoSRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
 	return _DPoS.Contract.DPoSCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -173,7 +173,7 @@ func (_DPoS *DPoSRaw) Transact(opts *bind.TransactOpts, method string, params ..
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_DPoS *DPoSCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+func (_DPoS *DPoSCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
 	return _DPoS.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -192,17 +192,12 @@ func (_DPoS *DPoSTransactorRaw) Transact(opts *bind.TransactOpts, method string,
 //
 // Solidity: function COMMISSION_RATE_BASE() view returns(uint256)
 func (_DPoS *DPoSCaller) COMMISSIONRATEBASE(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "COMMISSION_RATE_BASE")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "COMMISSION_RATE_BASE")
+	return *ret0, err
 }
 
 // COMMISSIONRATEBASE is a free data retrieval call binding the contract method 0xbee8380e.
@@ -223,17 +218,12 @@ func (_DPoS *DPoSCallerSession) COMMISSIONRATEBASE() (*big.Int, error) {
 //
 // Solidity: function UIntStorage(uint256 ) view returns(uint256)
 func (_DPoS *DPoSCaller) UIntStorage(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "UIntStorage", arg0)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "UIntStorage", arg0)
+	return *ret0, err
 }
 
 // UIntStorage is a free data retrieval call binding the contract method 0x64ed600a.
@@ -254,17 +244,12 @@ func (_DPoS *DPoSCallerSession) UIntStorage(arg0 *big.Int) (*big.Int, error) {
 //
 // Solidity: function celerToken() view returns(address)
 func (_DPoS *DPoSCaller) CelerToken(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "celerToken")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "celerToken")
+	return *ret0, err
 }
 
 // CelerToken is a free data retrieval call binding the contract method 0xc6c21e9d.
@@ -285,17 +270,12 @@ func (_DPoS *DPoSCallerSession) CelerToken() (common.Address, error) {
 //
 // Solidity: function checkedValidators(address ) view returns(bool)
 func (_DPoS *DPoSCaller) CheckedValidators(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "checkedValidators", arg0)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "checkedValidators", arg0)
+	return *ret0, err
 }
 
 // CheckedValidators is a free data retrieval call binding the contract method 0x3702db39.
@@ -316,17 +296,12 @@ func (_DPoS *DPoSCallerSession) CheckedValidators(arg0 common.Address) (bool, er
 //
 // Solidity: function dposGoLiveTime() view returns(uint256)
 func (_DPoS *DPoSCaller) DposGoLiveTime(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "dposGoLiveTime")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "dposGoLiveTime")
+	return *ret0, err
 }
 
 // DposGoLiveTime is a free data retrieval call binding the contract method 0x39c9563e.
@@ -347,17 +322,12 @@ func (_DPoS *DPoSCallerSession) DposGoLiveTime() (*big.Int, error) {
 //
 // Solidity: function enableSlash() view returns(bool)
 func (_DPoS *DPoSCaller) EnableSlash(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "enableSlash")
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "enableSlash")
+	return *ret0, err
 }
 
 // EnableSlash is a free data retrieval call binding the contract method 0x7a3ba4ad.
@@ -378,17 +348,12 @@ func (_DPoS *DPoSCallerSession) EnableSlash() (bool, error) {
 //
 // Solidity: function enableWhitelist() view returns(bool)
 func (_DPoS *DPoSCaller) EnableWhitelist(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "enableWhitelist")
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "enableWhitelist")
+	return *ret0, err
 }
 
 // EnableWhitelist is a free data retrieval call binding the contract method 0xcdfb2b4e.
@@ -417,10 +382,7 @@ func (_DPoS *DPoSCaller) GetCandidateInfo(opts *bind.CallOpts, _candidateAddr co
 	CommissionRate  *big.Int
 	RateLockEndTime *big.Int
 }, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getCandidateInfo", _candidateAddr)
-
-	outstruct := new(struct {
+	ret := new(struct {
 		Initialized     bool
 		MinSelfStake    *big.Int
 		StakingPool     *big.Int
@@ -429,17 +391,9 @@ func (_DPoS *DPoSCaller) GetCandidateInfo(opts *bind.CallOpts, _candidateAddr co
 		CommissionRate  *big.Int
 		RateLockEndTime *big.Int
 	})
-
-	outstruct.Initialized = out[0].(bool)
-	outstruct.MinSelfStake = out[1].(*big.Int)
-	outstruct.StakingPool = out[2].(*big.Int)
-	outstruct.Status = out[3].(*big.Int)
-	outstruct.UnbondTime = out[4].(*big.Int)
-	outstruct.CommissionRate = out[5].(*big.Int)
-	outstruct.RateLockEndTime = out[6].(*big.Int)
-
-	return *outstruct, err
-
+	out := ret
+	err := _DPoS.contract.Call(opts, out, "getCandidateInfo", _candidateAddr)
+	return *ret, err
 }
 
 // GetCandidateInfo is a free data retrieval call binding the contract method 0x28bde1e1.
@@ -481,23 +435,15 @@ func (_DPoS *DPoSCaller) GetDelegatorInfo(opts *bind.CallOpts, _candidateAddr co
 	IntentAmounts       []*big.Int
 	IntentProposedTimes []*big.Int
 }, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getDelegatorInfo", _candidateAddr, _delegatorAddr)
-
-	outstruct := new(struct {
+	ret := new(struct {
 		DelegatedStake      *big.Int
 		UndelegatingStake   *big.Int
 		IntentAmounts       []*big.Int
 		IntentProposedTimes []*big.Int
 	})
-
-	outstruct.DelegatedStake = out[0].(*big.Int)
-	outstruct.UndelegatingStake = out[1].(*big.Int)
-	outstruct.IntentAmounts = out[2].([]*big.Int)
-	outstruct.IntentProposedTimes = out[3].([]*big.Int)
-
-	return *outstruct, err
-
+	out := ret
+	err := _DPoS.contract.Call(opts, out, "getDelegatorInfo", _candidateAddr, _delegatorAddr)
+	return *ret, err
 }
 
 // GetDelegatorInfo is a free data retrieval call binding the contract method 0xeecefef8.
@@ -528,17 +474,12 @@ func (_DPoS *DPoSCallerSession) GetDelegatorInfo(_candidateAddr common.Address, 
 //
 // Solidity: function getMinQuorumStakingPool() view returns(uint256)
 func (_DPoS *DPoSCaller) GetMinQuorumStakingPool(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getMinQuorumStakingPool")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "getMinQuorumStakingPool")
+	return *ret0, err
 }
 
 // GetMinQuorumStakingPool is a free data retrieval call binding the contract method 0xa3e814b9.
@@ -559,17 +500,12 @@ func (_DPoS *DPoSCallerSession) GetMinQuorumStakingPool() (*big.Int, error) {
 //
 // Solidity: function getMinStakingPool() view returns(uint256)
 func (_DPoS *DPoSCaller) GetMinStakingPool(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getMinStakingPool")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "getMinStakingPool")
+	return *ret0, err
 }
 
 // GetMinStakingPool is a free data retrieval call binding the contract method 0x8e9472a3.
@@ -590,17 +526,12 @@ func (_DPoS *DPoSCallerSession) GetMinStakingPool() (*big.Int, error) {
 //
 // Solidity: function getParamProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSCaller) GetParamProposalVote(opts *bind.CallOpts, _proposalId *big.Int, _voter common.Address) (uint8, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getParamProposalVote", _proposalId, _voter)
-
-	if err != nil {
-		return *new(uint8), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
-
-	return out0, err
-
+	var (
+		ret0 = new(uint8)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "getParamProposalVote", _proposalId, _voter)
+	return *ret0, err
 }
 
 // GetParamProposalVote is a free data retrieval call binding the contract method 0x581c53c5.
@@ -621,17 +552,12 @@ func (_DPoS *DPoSCallerSession) GetParamProposalVote(_proposalId *big.Int, _vote
 //
 // Solidity: function getSidechainProposalVote(uint256 _proposalId, address _voter) view returns(uint8)
 func (_DPoS *DPoSCaller) GetSidechainProposalVote(opts *bind.CallOpts, _proposalId *big.Int, _voter common.Address) (uint8, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getSidechainProposalVote", _proposalId, _voter)
-
-	if err != nil {
-		return *new(uint8), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
-
-	return out0, err
-
+	var (
+		ret0 = new(uint8)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "getSidechainProposalVote", _proposalId, _voter)
+	return *ret0, err
 }
 
 // GetSidechainProposalVote is a free data retrieval call binding the contract method 0x8515b0e2.
@@ -652,17 +578,12 @@ func (_DPoS *DPoSCallerSession) GetSidechainProposalVote(_proposalId *big.Int, _
 //
 // Solidity: function getTotalValidatorStakingPool() view returns(uint256)
 func (_DPoS *DPoSCaller) GetTotalValidatorStakingPool(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getTotalValidatorStakingPool")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "getTotalValidatorStakingPool")
+	return *ret0, err
 }
 
 // GetTotalValidatorStakingPool is a free data retrieval call binding the contract method 0x89ed7939.
@@ -683,17 +604,12 @@ func (_DPoS *DPoSCallerSession) GetTotalValidatorStakingPool() (*big.Int, error)
 //
 // Solidity: function getUIntValue(uint256 _record) view returns(uint256)
 func (_DPoS *DPoSCaller) GetUIntValue(opts *bind.CallOpts, _record *big.Int) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getUIntValue", _record)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "getUIntValue", _record)
+	return *ret0, err
 }
 
 // GetUIntValue is a free data retrieval call binding the contract method 0x64c66395.
@@ -714,17 +630,12 @@ func (_DPoS *DPoSCallerSession) GetUIntValue(_record *big.Int) (*big.Int, error)
 //
 // Solidity: function getValidatorNum() view returns(uint256)
 func (_DPoS *DPoSCaller) GetValidatorNum(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "getValidatorNum")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "getValidatorNum")
+	return *ret0, err
 }
 
 // GetValidatorNum is a free data retrieval call binding the contract method 0x1cfe4f0b.
@@ -745,17 +656,12 @@ func (_DPoS *DPoSCallerSession) GetValidatorNum() (*big.Int, error) {
 //
 // Solidity: function isMigrating() view returns(bool)
 func (_DPoS *DPoSCaller) IsMigrating(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isMigrating")
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isMigrating")
+	return *ret0, err
 }
 
 // IsMigrating is a free data retrieval call binding the contract method 0xf05e777d.
@@ -776,17 +682,12 @@ func (_DPoS *DPoSCallerSession) IsMigrating() (bool, error) {
 //
 // Solidity: function isOwner() view returns(bool)
 func (_DPoS *DPoSCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isOwner")
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isOwner")
+	return *ret0, err
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
@@ -807,17 +708,12 @@ func (_DPoS *DPoSCallerSession) IsOwner() (bool, error) {
 //
 // Solidity: function isPauser(address account) view returns(bool)
 func (_DPoS *DPoSCaller) IsPauser(opts *bind.CallOpts, account common.Address) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isPauser", account)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isPauser", account)
+	return *ret0, err
 }
 
 // IsPauser is a free data retrieval call binding the contract method 0x46fbf68e.
@@ -838,17 +734,12 @@ func (_DPoS *DPoSCallerSession) IsPauser(account common.Address) (bool, error) {
 //
 // Solidity: function isSidechainRegistered(address _sidechainAddr) view returns(bool)
 func (_DPoS *DPoSCaller) IsSidechainRegistered(opts *bind.CallOpts, _sidechainAddr common.Address) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isSidechainRegistered", _sidechainAddr)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isSidechainRegistered", _sidechainAddr)
+	return *ret0, err
 }
 
 // IsSidechainRegistered is a free data retrieval call binding the contract method 0x325820b3.
@@ -869,17 +760,12 @@ func (_DPoS *DPoSCallerSession) IsSidechainRegistered(_sidechainAddr common.Addr
 //
 // Solidity: function isValidDPoS() view returns(bool)
 func (_DPoS *DPoSCaller) IsValidDPoS(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isValidDPoS")
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isValidDPoS")
+	return *ret0, err
 }
 
 // IsValidDPoS is a free data retrieval call binding the contract method 0xeab2ed8c.
@@ -900,17 +786,12 @@ func (_DPoS *DPoSCallerSession) IsValidDPoS() (bool, error) {
 //
 // Solidity: function isValidator(address _addr) view returns(bool)
 func (_DPoS *DPoSCaller) IsValidator(opts *bind.CallOpts, _addr common.Address) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isValidator", _addr)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isValidator", _addr)
+	return *ret0, err
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
@@ -931,17 +812,12 @@ func (_DPoS *DPoSCallerSession) IsValidator(_addr common.Address) (bool, error) 
 //
 // Solidity: function isWhitelistAdmin(address account) view returns(bool)
 func (_DPoS *DPoSCaller) IsWhitelistAdmin(opts *bind.CallOpts, account common.Address) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isWhitelistAdmin", account)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isWhitelistAdmin", account)
+	return *ret0, err
 }
 
 // IsWhitelistAdmin is a free data retrieval call binding the contract method 0xbb5f747b.
@@ -962,17 +838,12 @@ func (_DPoS *DPoSCallerSession) IsWhitelistAdmin(account common.Address) (bool, 
 //
 // Solidity: function isWhitelisted(address account) view returns(bool)
 func (_DPoS *DPoSCaller) IsWhitelisted(opts *bind.CallOpts, account common.Address) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "isWhitelisted", account)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "isWhitelisted", account)
+	return *ret0, err
 }
 
 // IsWhitelisted is a free data retrieval call binding the contract method 0x3af32abf.
@@ -993,17 +864,12 @@ func (_DPoS *DPoSCallerSession) IsWhitelisted(account common.Address) (bool, err
 //
 // Solidity: function miningPool() view returns(uint256)
 func (_DPoS *DPoSCaller) MiningPool(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "miningPool")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "miningPool")
+	return *ret0, err
 }
 
 // MiningPool is a free data retrieval call binding the contract method 0x73397597.
@@ -1024,17 +890,12 @@ func (_DPoS *DPoSCallerSession) MiningPool() (*big.Int, error) {
 //
 // Solidity: function nextParamProposalId() view returns(uint256)
 func (_DPoS *DPoSCaller) NextParamProposalId(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "nextParamProposalId")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "nextParamProposalId")
+	return *ret0, err
 }
 
 // NextParamProposalId is a free data retrieval call binding the contract method 0x22da7927.
@@ -1055,17 +916,12 @@ func (_DPoS *DPoSCallerSession) NextParamProposalId() (*big.Int, error) {
 //
 // Solidity: function nextSidechainProposalId() view returns(uint256)
 func (_DPoS *DPoSCaller) NextSidechainProposalId(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "nextSidechainProposalId")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "nextSidechainProposalId")
+	return *ret0, err
 }
 
 // NextSidechainProposalId is a free data retrieval call binding the contract method 0x2bf0fe59.
@@ -1086,17 +942,12 @@ func (_DPoS *DPoSCallerSession) NextSidechainProposalId() (*big.Int, error) {
 //
 // Solidity: function owner() view returns(address)
 func (_DPoS *DPoSCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "owner")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "owner")
+	return *ret0, err
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -1124,10 +975,7 @@ func (_DPoS *DPoSCaller) ParamProposals(opts *bind.CallOpts, arg0 *big.Int) (str
 	NewValue     *big.Int
 	Status       uint8
 }, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "paramProposals", arg0)
-
-	outstruct := new(struct {
+	ret := new(struct {
 		Proposer     common.Address
 		Deposit      *big.Int
 		VoteDeadline *big.Int
@@ -1135,16 +983,9 @@ func (_DPoS *DPoSCaller) ParamProposals(opts *bind.CallOpts, arg0 *big.Int) (str
 		NewValue     *big.Int
 		Status       uint8
 	})
-
-	outstruct.Proposer = out[0].(common.Address)
-	outstruct.Deposit = out[1].(*big.Int)
-	outstruct.VoteDeadline = out[2].(*big.Int)
-	outstruct.Record = out[3].(*big.Int)
-	outstruct.NewValue = out[4].(*big.Int)
-	outstruct.Status = out[5].(uint8)
-
-	return *outstruct, err
-
+	out := ret
+	err := _DPoS.contract.Call(opts, out, "paramProposals", arg0)
+	return *ret, err
 }
 
 // ParamProposals is a free data retrieval call binding the contract method 0x7e5fb8f3.
@@ -1179,17 +1020,12 @@ func (_DPoS *DPoSCallerSession) ParamProposals(arg0 *big.Int) (struct {
 //
 // Solidity: function paused() view returns(bool)
 func (_DPoS *DPoSCaller) Paused(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "paused")
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "paused")
+	return *ret0, err
 }
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
@@ -1210,17 +1046,12 @@ func (_DPoS *DPoSCallerSession) Paused() (bool, error) {
 //
 // Solidity: function redeemedMiningReward(address ) view returns(uint256)
 func (_DPoS *DPoSCaller) RedeemedMiningReward(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "redeemedMiningReward", arg0)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "redeemedMiningReward", arg0)
+	return *ret0, err
 }
 
 // RedeemedMiningReward is a free data retrieval call binding the contract method 0x87e53fef.
@@ -1241,17 +1072,12 @@ func (_DPoS *DPoSCallerSession) RedeemedMiningReward(arg0 common.Address) (*big.
 //
 // Solidity: function registeredSidechains(address ) view returns(bool)
 func (_DPoS *DPoSCaller) RegisteredSidechains(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "registeredSidechains", arg0)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "registeredSidechains", arg0)
+	return *ret0, err
 }
 
 // RegisteredSidechains is a free data retrieval call binding the contract method 0x49444b71.
@@ -1279,10 +1105,7 @@ func (_DPoS *DPoSCaller) SidechainProposals(opts *bind.CallOpts, arg0 *big.Int) 
 	Registered    bool
 	Status        uint8
 }, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "sidechainProposals", arg0)
-
-	outstruct := new(struct {
+	ret := new(struct {
 		Proposer      common.Address
 		Deposit       *big.Int
 		VoteDeadline  *big.Int
@@ -1290,16 +1113,9 @@ func (_DPoS *DPoSCaller) SidechainProposals(opts *bind.CallOpts, arg0 *big.Int) 
 		Registered    bool
 		Status        uint8
 	})
-
-	outstruct.Proposer = out[0].(common.Address)
-	outstruct.Deposit = out[1].(*big.Int)
-	outstruct.VoteDeadline = out[2].(*big.Int)
-	outstruct.SidechainAddr = out[3].(common.Address)
-	outstruct.Registered = out[4].(bool)
-	outstruct.Status = out[5].(uint8)
-
-	return *outstruct, err
-
+	out := ret
+	err := _DPoS.contract.Call(opts, out, "sidechainProposals", arg0)
+	return *ret, err
 }
 
 // SidechainProposals is a free data retrieval call binding the contract method 0xe97b7452.
@@ -1334,17 +1150,12 @@ func (_DPoS *DPoSCallerSession) SidechainProposals(arg0 *big.Int) (struct {
 //
 // Solidity: function usedPenaltyNonce(uint256 ) view returns(bool)
 func (_DPoS *DPoSCaller) UsedPenaltyNonce(opts *bind.CallOpts, arg0 *big.Int) (bool, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "usedPenaltyNonce", arg0)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "usedPenaltyNonce", arg0)
+	return *ret0, err
 }
 
 // UsedPenaltyNonce is a free data retrieval call binding the contract method 0xfb878749.
@@ -1365,17 +1176,12 @@ func (_DPoS *DPoSCallerSession) UsedPenaltyNonce(arg0 *big.Int) (bool, error) {
 //
 // Solidity: function validatorSet(uint256 ) view returns(address)
 func (_DPoS *DPoSCaller) ValidatorSet(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
-	var out []interface{}
-	err := _DPoS.contract.Call(opts, &out, "validatorSet", arg0)
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _DPoS.contract.Call(opts, out, "validatorSet", arg0)
+	return *ret0, err
 }
 
 // ValidatorSet is a free data retrieval call binding the contract method 0xe64808f3.
