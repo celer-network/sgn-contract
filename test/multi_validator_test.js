@@ -1,8 +1,3 @@
-const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
-const sha3 = web3.utils.keccak256;
-
-const protoChainFactory = require('./helper/protoChainFactory');
 const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
@@ -24,6 +19,7 @@ contract('multiple validators tests', async (accounts) => {
 
   let celerToken;
   let dposInstance;
+  let sgnInstance;
 
   beforeEach(async () => {
     celerToken = await CELRToken.new();
@@ -47,7 +43,7 @@ contract('multiple validators tests', async (accounts) => {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
       await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
     }
-    const delegatorbalance = '100000000000000000000' // 100 CELR
+    const delegatorbalance = '100000000000000000000'; // 100 CELR
     await celerToken.transfer(DELEGATOR, delegatorbalance);
     await celerToken.approve(dposInstance.address, delegatorbalance, {from: DELEGATOR});
 
@@ -116,12 +112,12 @@ contract('multiple validators tests', async (accounts) => {
     });
 
     it('should confirmUnbondedCandidate after unbondTime', async () => {
-      const res = await dposInstance.getCandidateInfo(VALIDATORS[0])
-      assert.equal(res.status.toNumber(), consts.STATUS_UNBONDING)
+      const res = await dposInstance.getCandidateInfo(VALIDATORS[0]);
+      assert.equal(res.status.toNumber(), consts.STATUS_UNBONDING);
 
       let pass = false;
       try {
-        await dposInstance.confirmUnbondedCandidate(VALIDATORS[0])
+        await dposInstance.confirmUnbondedCandidate(VALIDATORS[0]);
       } catch (e) {
         assert.isAbove(e.message.search('revert'), -1);
         pass = true;
@@ -131,14 +127,14 @@ contract('multiple validators tests', async (accounts) => {
       }
 
       await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
-      const tx = await dposInstance.confirmUnbondedCandidate(VALIDATORS[0])
+      const tx = await dposInstance.confirmUnbondedCandidate(VALIDATORS[0]);
 
       const {event, args} = tx.logs[0];
       assert.equal(event, 'CandidateUnbonded');
       assert.equal(args.candidate, VALIDATORS[0]);
     });
 
-    it('should replace validator that has min stakes with the unbonding validtor', async () => {
+    it('should replace validator that has min stakes with the unbonding validator', async () => {
       await dposInstance.intendWithdraw(VALIDATORS[3], consts.ONE_CELR, {from: DELEGATOR});
 
       const tx = await dposInstance.claimValidator({from: VALIDATORS[0]});
@@ -149,6 +145,5 @@ contract('multiple validators tests', async (accounts) => {
       assert.equal(tx.logs[1].args.ethAddr, VALIDATORS[0]);
       assert.equal(tx.logs[1].args.changeType, consts.TYPE_VALIDATOR_ADD);
     });
-
   });
 });

@@ -2,7 +2,6 @@ const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 const sha3 = web3.utils.keccak256;
 
-const protoChainFactory = require('./helper/protoChainFactory');
 const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
@@ -11,18 +10,11 @@ const consts = require('./constants.js');
 
 contract('subscribe tests', async (accounts) => {
   const CANDIDATE = accounts[1];
-  const DELEGATOR = accounts[2];
   const SUBSCRIBER = accounts[3];
 
   let celerToken;
   let dposInstance;
   let sgnInstance;
-  let getRewardRequestBytes;
-
-  before(async () => {
-    const protoChainInstance = await protoChainFactory();
-    getRewardRequestBytes = protoChainInstance.getRewardRequestBytes;
-  });
 
   beforeEach(async () => {
     celerToken = await CELRToken.new();

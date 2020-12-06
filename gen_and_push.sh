@@ -35,15 +35,15 @@ update_genfiles() {
 # append a new commit with generated files to current PR
 commit_and_push() {
   git add genfiles/
-  git commit -m "Update genfiles by build bot" -m "$TRUFFLE_VER"
+  git add bindings/
+  git commit -m "Update genfiles and bindings by build bot" -m "$TRUFFLE_VER"
   # gh_token is an env in CI project setting
   git push https://${GH_TOKEN}@github.com/celer-network/sgn-contract.git $BRANCH &>/dev/null
 }
 
 # $1 is contract abi/bin name, $2 is go pkg name
 abigen_files() {
-  # mkdir -p $2
-  ../node_modules/.bin/abigen -abi ../genfiles/$1.abi -bin ../genfiles/$1.bin -pkg $2 -type $1 -out $2/$3.go
+  ./node_modules/.bin/abigen -abi ./genfiles/$1.abi -bin ./genfiles/$1.bin -pkg $3 -type $1 -out $2/$3/$4.go
 }
 
 # send a PR to gobinding repo
@@ -51,26 +51,10 @@ sync_go_binding() {
   echo "sync go binding ..."
   PR_COMMIT_ID=$(git rev-parse --short HEAD)
   echo sgn-contract PR Head Commit: $PR_COMMIT_ID
-  REPO=https://${GH_TOKEN}@github.com/celer-network/sgn.git
-  git clone $REPO sgn
-  pushd sgn
-  git checkout develop # based on develop branch of sgn repo
-  git fetch
-  echo "checkout branch $BRANCH"
-  git checkout $BRANCH || git checkout -b $BRANCH
   git status
   echo "abigen files ..."
-  abigen_files DPoS mainchain dpos
-  abigen_files SGN mainchain sgn
-  if [[ $(git status --porcelain) ]]; then
-    echo "syncing go binding on branch $BRANCH"
-    git add .
-    git status
-    git commit -m "Sync go binding based on sgn-contract PR $PRID" -m "sgn-contract commit: $PR_COMMIT_ID"
-    git push origin $BRANCH
-  fi
-  popd
-  rm -rf sgn
+  abigen_files DPoS bindings/go mainchain dpos
+  abigen_files SGN bindings/go mainchain sgn
 }
 
 echo "update go binding ..."

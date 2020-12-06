@@ -1,11 +1,9 @@
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
-const sha3 = web3.utils.keccak256;
 
 const protoChainFactory = require('./helper/protoChainFactory');
 const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
-const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
@@ -80,7 +78,7 @@ contract('governance tests', async (accounts) => {
 
   describe('after someone createParamProposal successfully', async () => {
     const proposalId = 0;
-    const migrationStartTime = 10
+    const migrationStartTime = 10;
 
     beforeEach(async () => {
       await dposInstance.createParamProposal(consts.ENUM_MIGRATION_TIME, migrationStartTime);
@@ -252,7 +250,10 @@ contract('governance tests', async (accounts) => {
   // sidechain governance tests
   it('should createSidechainProposal successfully', async () => {
     const newRegistrationStatus = true;
-    const tx = await dposInstance.createSidechainProposal(NEW_SIDECHAIN_ADDR, newRegistrationStatus);
+    const tx = await dposInstance.createSidechainProposal(
+      NEW_SIDECHAIN_ADDR,
+      newRegistrationStatus
+    );
     const block = await web3.eth.getBlock('latest');
     const {event, args} = tx.logs[0];
 
