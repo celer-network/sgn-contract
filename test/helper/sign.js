@@ -1,34 +1,32 @@
 // Sign helper for this issue: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/1622
 // Copied from openzeppelin-solidity(v2.2.0)/test/helpers/sign.js
 
-const REAL_SIGNATURE_SIZE = 2 * 65; // 65 bytes in hexadecimal string legnth
+const REAL_SIGNATURE_SIZE = 2 * 65; // 65 bytes in hexadecimal string length
 const PADDED_SIGNATURE_SIZE = 2 * 96; // 96 bytes in hexadecimal string length
 
 const DUMMY_SIGNATURE = `0x${web3.utils.padLeft('', REAL_SIGNATURE_SIZE)}`;
 
 function toEthSignedMessageHash(messageHex) {
-    const messageBuffer = Buffer.from(messageHex.substring(2), 'hex');
-    const prefix = Buffer.from(
-        `\u0019Ethereum Signed Message:\n${messageBuffer.length}`
-    );
-    return web3.utils.sha3(Buffer.concat([prefix, messageBuffer]));
+  const messageBuffer = Buffer.from(messageHex.substring(2), 'hex');
+  const prefix = Buffer.from(`\u0019Ethereum Signed Message:\n${messageBuffer.length}`);
+  return web3.utils.sha3(Buffer.concat([prefix, messageBuffer]));
 }
 
 function fixSignature(signature) {
-    // in geth its always 27/28, in ganache its 0/1. Change to 27/28 to prevent
-    // signature malleability if version is 0/1
-    // see https://github.com/ethereum/go-ethereum/blob/v1.8.23/internal/ethapi/api.go#L465
-    let v = parseInt(signature.slice(130, 132), 16);
-    if (v < 27) {
-        v += 27;
-    }
-    const vHex = v.toString(16);
-    return signature.slice(0, 130) + vHex;
+  // in geth its always 27/28, in ganache its 0/1. Change to 27/28 to prevent
+  // signature malleability if version is 0/1
+  // see https://github.com/ethereum/go-ethereum/blob/v1.8.23/internal/ethapi/api.go#L465
+  let v = parseInt(signature.slice(130, 132), 16);
+  if (v < 27) {
+    v += 27;
+  }
+  const vHex = v.toString(16);
+  return signature.slice(0, 130) + vHex;
 }
 
 // signs message in node (ganache auto-applies "Ethereum Signed Message" prefix)
 async function signMessage(signer, messageHex = '0x') {
-    return fixSignature(await web3.eth.sign(messageHex, signer));
+  return fixSignature(await web3.eth.sign(messageHex, signer));
 }
 
 /**
@@ -40,37 +38,31 @@ async function signMessage(signer, messageHex = '0x') {
  * @param methodName string
  * @param methodArgs any[]
  */
-const getSignFor = (contract, signer) => (
-    redeemer,
-    methodName,
-    methodArgs = []
-) => {
-    const parts = [contract.address, redeemer];
+const getSignFor = (contract, signer) => (redeemer, methodName, methodArgs = []) => {
+  const parts = [contract.address, redeemer];
 
-    // if we have a method, add it to the parts that we're signing
-    if (methodName) {
-        if (methodArgs.length > 0) {
-            parts.push(
-                contract.contract.methods[methodName](
-                    ...methodArgs.concat([DUMMY_SIGNATURE])
-                )
-                    .encodeABI()
-                    .slice(0, -1 * PADDED_SIGNATURE_SIZE)
-            );
-        } else {
-            const abi = contract.abi.find(abi => abi.name === methodName);
-            parts.push(abi.signature);
-        }
+  // if we have a method, add it to the parts that we're signing
+  if (methodName) {
+    if (methodArgs.length > 0) {
+      parts.push(
+        contract.contract.methods[methodName](...methodArgs.concat([DUMMY_SIGNATURE]))
+          .encodeABI()
+          .slice(0, -1 * PADDED_SIGNATURE_SIZE)
+      );
+    } else {
+      const abi = contract.abi.find((abi) => abi.name === methodName);
+      parts.push(abi.signature);
     }
+  }
 
-    // return the signature of the "Ethereum Signed Message" hash of the hash of `parts`
-    const messageHex = web3.utils.soliditySha3(...parts);
-    return signMessage(signer, messageHex);
+  // return the signature of the "Ethereum Signed Message" hash of the hash of `parts`
+  const messageHex = web3.utils.soliditySha3(...parts);
+  return signMessage(signer, messageHex);
 };
 
 module.exports = {
-    signMessage,
-    toEthSignedMessageHash,
-    fixSignature,
-    getSignFor
+  signMessage,
+  toEthSignedMessageHash,
+  fixSignature,
+  getSignFor
 };

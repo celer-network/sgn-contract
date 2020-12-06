@@ -9,7 +9,7 @@ const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
-// basic tests with a single valdiator candidate and a single delegator
+// basic tests with a single validator candidate and a single delegator
 contract('basic tests', async (accounts) => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
@@ -180,7 +180,9 @@ contract('basic tests', async (accounts) => {
     });
 
     it('should delegate to candidate by a delegator successfully', async () => {
-      const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
+      const tx = await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {
+        from: DELEGATOR
+      });
       const {event, args} = tx.logs[1];
 
       assert.equal(event, 'Delegate');
@@ -251,10 +253,7 @@ contract('basic tests', async (accounts) => {
         try {
           await dposInstance.withdrawFromUnbondedCandidate(CANDIDATE, 1, {from: DELEGATOR});
         } catch (error) {
-          assert.isAbove(
-            error.message.search('Amount is smaller than minimum requirement'),
-            -1
-          );
+          assert.isAbove(error.message.search('Amount is smaller than minimum requirement'), -1);
           return;
         }
         assert.fail('should have thrown before');
@@ -319,10 +318,7 @@ contract('basic tests', async (accounts) => {
 
           it('should fail withdrawFromUnbondedCandidate', async () => {
             try {
-              await dposInstance.withdrawFromUnbondedCandidate(
-                CANDIDATE,
-                consts.DELEGATOR_STAKE
-              );
+              await dposInstance.withdrawFromUnbondedCandidate(CANDIDATE, consts.DELEGATOR_STAKE);
             } catch (error) {
               assert.isAbove(error.message.search('invalid status'), -1);
               return;
@@ -398,7 +394,9 @@ contract('basic tests', async (accounts) => {
 
           it('should increase min self stake successfully', async () => {
             const higherMinSelfStake = (parseInt(consts.MIN_SELF_STAKE) + 1000000).toString();
-            const tx = await dposInstance.updateMinSelfStake(higherMinSelfStake, {from: CANDIDATE});
+            const tx = await dposInstance.updateMinSelfStake(higherMinSelfStake, {
+              from: CANDIDATE
+            });
             assert.equal(tx.logs[0].event, 'UpdateMinSelfStake');
             assert.equal(tx.logs[0].args.candidate, CANDIDATE);
             assert.equal(tx.logs[0].args.minSelfStake, higherMinSelfStake);
@@ -502,7 +500,7 @@ contract('basic tests', async (accounts) => {
             });
 
             it('should only confirm withdrawal partial amount due to slash', async () => {
-              slashAmt = parseInt(consts.DELEGATOR_STAKE) - parseInt(consts.ONE_CELR)
+              const slashAmt = parseInt(consts.DELEGATOR_STAKE) - parseInt(consts.ONE_CELR);
               await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
               const request = await getPenaltyRequestBytes({
                 nonce: 1,
@@ -517,7 +515,7 @@ contract('basic tests', async (accounts) => {
               await dposInstance.slash(request);
 
               await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
-              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
               assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
               assert.equal(tx.logs[0].args.delegator, DELEGATOR);
               assert.equal(tx.logs[0].args.candidate, CANDIDATE);
@@ -525,7 +523,7 @@ contract('basic tests', async (accounts) => {
             });
 
             it('should confirm withdrawal zero amt due to all stakes being slashed', async () => {
-              slashAmt = parseInt(consts.DELEGATOR_STAKE)
+              const slashAmt = parseInt(consts.DELEGATOR_STAKE);
               await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
               const request = await getPenaltyRequestBytes({
                 nonce: 1,
@@ -540,7 +538,7 @@ contract('basic tests', async (accounts) => {
               await dposInstance.slash(request);
 
               await Timetravel.advanceBlocks(consts.SLASH_TIMEOUT);
-              tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
+              const tx = await dposInstance.confirmWithdraw(CANDIDATE, {from: DELEGATOR});
               assert.equal(tx.logs[0].event, 'ConfirmWithdraw');
               assert.equal(tx.logs[0].args.delegator, DELEGATOR);
               assert.equal(tx.logs[0].args.candidate, CANDIDATE);

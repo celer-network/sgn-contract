@@ -1,11 +1,6 @@
-const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
-const sha3 = web3.utils.keccak256;
-
 const protoChainFactory = require('./helper/protoChainFactory');
 const Timetravel = require('./helper/timetravel');
 const DPoS = artifacts.require('DPoS');
-const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
@@ -115,7 +110,7 @@ contract('single-validator slash tests', async (accounts) => {
       const senderAmt = await celerToken.balanceOf(SENDER);
       assert.equal(newMiningPool.toString(), oldMiningPool.addn(7).toString());
       assert.equal(newTokenAmt.toString(), oldTokenAmt.addn(6).toString());
-      assert.equal(senderAmt.toString(), "2");
+      assert.equal(senderAmt.toString(), '2');
     });
 
     it('should fail to slash with same request twice', async () => {
@@ -163,7 +158,7 @@ contract('single-validator slash tests', async (accounts) => {
       assert.fail('should have thrown before');
     });
 
-    it("should fail to slash if amount sums don't match", async () => {
+    it(`should fail to slash if amount sums don't match`, async () => {
       const request = await getPenaltyRequestBytes({
         nonce: 1,
         expireTime: 1000000,
@@ -185,8 +180,8 @@ contract('single-validator slash tests', async (accounts) => {
       assert.fail('should have thrown before');
     });
 
-    it("should fail to slash more than one's stake", async () => {
-      slashAmt = parseInt(consts.DELEGATOR_STAKE) + parseInt(consts.ONE_CELR)
+    it(`should fail to slash more than one's stake`, async () => {
+      const slashAmt = parseInt(consts.DELEGATOR_STAKE) + parseInt(consts.ONE_CELR);
       const request = await getPenaltyRequestBytes({
         nonce: 10,
         expireTime: 1000000,

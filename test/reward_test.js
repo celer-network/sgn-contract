@@ -11,7 +11,6 @@ const consts = require('./constants.js');
 
 contract('reward tests', async (accounts) => {
   const CANDIDATE = accounts[1];
-  const DELEGATOR = accounts[2];
   const SUBSCRIBER = accounts[3];
   const RECEIVER = accounts[4];
   const LARGER_LOCK_END_TIME = 100000;
@@ -157,7 +156,7 @@ contract('reward tests', async (accounts) => {
   });
 
   it('should announce increase commission rate successfully', async () => {
-    let higherRate = consts.COMMISSION_RATE + 10;
+    const higherRate = consts.COMMISSION_RATE + 10;
     const tx = await dposInstance.announceIncreaseCommissionRate(higherRate, LARGER_LOCK_END_TIME, {
       from: CANDIDATE
     });
@@ -170,7 +169,7 @@ contract('reward tests', async (accounts) => {
   });
 
   describe('after announceIncreaseCommissionRate', async () => {
-    let higherRate = consts.COMMISSION_RATE + 10;
+    const higherRate = consts.COMMISSION_RATE + 10;
 
     beforeEach(async () => {
       await dposInstance.announceIncreaseCommissionRate(higherRate, LARGER_LOCK_END_TIME, {

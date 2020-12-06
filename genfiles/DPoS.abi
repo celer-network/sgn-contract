@@ -1,1142 +1,10 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_celerTokenAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_governProposalDeposit",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_governVoteTimeout",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_slashTimeout",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minValidatorNum",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxValidatorNum",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minStakeInPool",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_advanceNoticePeriod",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_dposGoLiveTimeout",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      }
-    ],
-    "name": "CandidateUnbonded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "announcedRate",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "announcedLockEndTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "CommissionRateAnnouncement",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "indemnitee",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "Compensate",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "passed",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "record",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "ConfirmParamProposal",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "passed",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "sidechainAddr",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "registered",
-        "type": "bool"
-      }
-    ],
-    "name": "ConfirmSidechainProposal",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "delegator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "ConfirmWithdraw",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "proposer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "deposit",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "voteDeadline",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "record",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "CreateParamProposal",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "proposer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "deposit",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "voteDeadline",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "sidechainAddr",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "registered",
-        "type": "bool"
-      }
-    ],
-    "name": "CreateSidechainProposal",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "delegator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newStake",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "stakingPool",
-        "type": "uint256"
-      }
-    ],
-    "name": "Delegate",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "minSelfStake",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "commissionRate",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rateLockEndTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "InitializeCandidate",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "delegator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "withdrawAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposedTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "IntendWithdraw",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "contributor",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "contribution",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "miningPoolSize",
-        "type": "uint256"
-      }
-    ],
-    "name": "MiningPoolContribution",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Paused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "PauserAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "PauserRemoved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "receiver",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "reward",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "miningPool",
-        "type": "uint256"
-      }
-    ],
-    "name": "RedeemMiningReward",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "validator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "delegator",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "Slash",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Unpaused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newRate",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newLockEndTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "UpdateCommissionRate",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "delegator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "delegatorStake",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "candidatePool",
-        "type": "uint256"
-      }
-    ],
-    "name": "UpdateDelegatedStake",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "minSelfStake",
-        "type": "uint256"
-      }
-    ],
-    "name": "UpdateMinSelfStake",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ethAddr",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "enum IDPoS.ValidatorChangeType",
-        "name": "changeType",
-        "type": "uint8"
-      }
-    ],
-    "name": "ValidatorChange",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "enum IGovern.VoteType",
-        "name": "voteType",
-        "type": "uint8"
-      }
-    ],
-    "name": "VoteParam",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "enum IGovern.VoteType",
-        "name": "voteType",
-        "type": "uint8"
-      }
-    ],
-    "name": "VoteSidechain",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "WhitelistAdminAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "WhitelistAdminRemoved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "WhitelistedAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "WhitelistedRemoved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "delegator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "candidate",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "WithdrawFromUnbondedCandidate",
-    "type": "event"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "COMMISSION_RATE_BASE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "UIntStorage",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "addPauser",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "addWhitelistAdmin",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "addWhitelisted",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "celerToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "checkedValidators",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_record",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_value",
-        "type": "uint256"
-      }
-    ],
-    "name": "createParamProposal",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_sidechainAddr",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "_registered",
-        "type": "bool"
-      }
-    ],
-    "name": "createSidechainProposal",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "dposGoLiveTime",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "enableSlash",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "enableWhitelist",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_proposalId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_voter",
-        "type": "address"
-      }
-    ],
-    "name": "getParamProposalVote",
-    "outputs": [
-      {
-        "internalType": "enum IGovern.VoteType",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_proposalId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_voter",
-        "type": "address"
-      }
-    ],
-    "name": "getSidechainProposalVote",
-    "outputs": [
-      {
-        "internalType": "enum IGovern.VoteType",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_record",
-        "type": "uint256"
-      }
-    ],
-    "name": "getUIntValue",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "isOwner",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "isPauser",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_sidechainAddr",
-        "type": "address"
-      }
-    ],
-    "name": "isSidechainRegistered",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "isWhitelistAdmin",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "isWhitelisted",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "miningPool",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [],
     "name": "nextParamProposalId",
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "",
         "type": "uint256"
       }
@@ -1151,7 +19,274 @@
     "name": "nextSidechainProposalId",
     "outputs": [
       {
-        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_record",
+        "type": "uint256"
+      },
+      {
+        "name": "_value",
+        "type": "uint256"
+      }
+    ],
+    "name": "createParamProposal",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_sidechainAddr",
+        "type": "address"
+      }
+    ],
+    "name": "isSidechainRegistered",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "checkedValidators",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "dposGoLiveTime",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "registeredSidechains",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "governToken",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_proposalId",
+        "type": "uint256"
+      },
+      {
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "getParamProposalVote",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_record",
+        "type": "uint256"
+      }
+    ],
+    "name": "getUIntValue",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "UIntStorage",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "miningPool",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "paramProposals",
+    "outputs": [
+      {
+        "name": "proposer",
+        "type": "address"
+      },
+      {
+        "name": "deposit",
+        "type": "uint256"
+      },
+      {
+        "name": "voteDeadline",
+        "type": "uint256"
+      },
+      {
+        "name": "record",
+        "type": "uint256"
+      },
+      {
+        "name": "newValue",
+        "type": "uint256"
+      },
+      {
+        "name": "status",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_proposalId",
+        "type": "uint256"
+      },
+      {
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "getSidechainProposalVote",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "redeemedMiningReward",
+    "outputs": [
+      {
         "name": "",
         "type": "uint256"
       }
@@ -1166,7 +301,6 @@
     "name": "owner",
     "outputs": [
       {
-        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -1177,66 +311,10 @@
   },
   {
     "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "paramProposals",
+    "inputs": [],
+    "name": "isOwner",
     "outputs": [
       {
-        "internalType": "address",
-        "name": "proposer",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "deposit",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "voteDeadline",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "record",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      },
-      {
-        "internalType": "enum IGovern.ProposalStatus",
-        "name": "status",
-        "type": "uint8"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "paused",
-    "outputs": [
-      {
-        "internalType": "bool",
         "name": "",
         "type": "bool"
       }
@@ -1246,31 +324,9 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "redeemedMiningReward",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
         "name": "_addr",
         "type": "address"
       }
@@ -1283,19 +339,26 @@
   },
   {
     "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "registeredSidechains",
+    "inputs": [],
+    "name": "COMMISSION_RATE_BASE",
     "outputs": [
       {
-        "internalType": "bool",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "celerToken",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
       }
     ],
     "payable": false,
@@ -1306,48 +369,15 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
-        "name": "account",
+        "name": "_sidechainAddr",
         "type": "address"
+      },
+      {
+        "name": "_registered",
+        "type": "bool"
       }
     ],
-    "name": "removeWhitelisted",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "renouncePauser",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "renounceWhitelistAdmin",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "renounceWhitelisted",
+    "name": "createSidechainProposal",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -1357,7 +387,25 @@
     "constant": true,
     "inputs": [
       {
-        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "validatorSet",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
         "name": "",
         "type": "uint256"
       }
@@ -1365,32 +413,26 @@
     "name": "sidechainProposals",
     "outputs": [
       {
-        "internalType": "address",
         "name": "proposer",
         "type": "address"
       },
       {
-        "internalType": "uint256",
         "name": "deposit",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
         "name": "voteDeadline",
         "type": "uint256"
       },
       {
-        "internalType": "address",
         "name": "sidechainAddr",
         "type": "address"
       },
       {
-        "internalType": "bool",
         "name": "registered",
         "type": "bool"
       },
       {
-        "internalType": "enum IGovern.ProposalStatus",
         "name": "status",
         "type": "uint8"
       }
@@ -1403,7 +445,6 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
         "name": "newOwner",
         "type": "address"
       }
@@ -1415,19 +456,9 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [],
-    "name": "unpause",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "",
         "type": "uint256"
       }
@@ -1435,7 +466,6 @@
     "name": "usedPenaltyNonce",
     "outputs": [
       {
-        "internalType": "bool",
         "name": "",
         "type": "bool"
       }
@@ -1445,81 +475,526 @@
     "type": "function"
   },
   {
-    "constant": true,
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
+        "name": "_celerTokenAddress",
+        "type": "address"
+      },
+      {
+        "name": "_governProposalDeposit",
+        "type": "uint256"
+      },
+      {
+        "name": "_governVoteTimeout",
+        "type": "uint256"
+      },
+      {
+        "name": "_blameTimeout",
+        "type": "uint256"
+      },
+      {
+        "name": "_minValidatorNum",
+        "type": "uint256"
+      },
+      {
+        "name": "_maxValidatorNum",
+        "type": "uint256"
+      },
+      {
+        "name": "_minStakeInPool",
+        "type": "uint256"
+      },
+      {
+        "name": "_increaseRateWaitTime",
+        "type": "uint256"
+      },
+      {
+        "name": "_dposGoLiveTimeout",
         "type": "uint256"
       }
     ],
-    "name": "validatorSet",
-    "outputs": [
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
       {
-        "internalType": "address",
-        "name": "",
+        "indexed": true,
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "newOwner",
         "type": "address"
       }
     ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
+    "name": "OwnershipTransferred",
+    "type": "event"
   },
   {
-    "constant": false,
+    "anonymous": false,
     "inputs": [
       {
-        "internalType": "bool",
-        "name": "_enable",
-        "type": "bool"
-      }
-    ],
-    "name": "updateEnableWhitelist",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
       {
-        "internalType": "bool",
-        "name": "_enable",
-        "type": "bool"
-      }
-    ],
-    "name": "updateEnableSlash",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
+        "indexed": false,
+        "name": "proposer",
+        "type": "address"
+      },
       {
-        "internalType": "uint256",
-        "name": "_amount",
+        "indexed": false,
+        "name": "deposit",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "voteDeadline",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "record",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "newValue",
         "type": "uint256"
       }
     ],
-    "name": "drainToken",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "name": "CreateParamProposal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "voteType",
+        "type": "uint8"
+      }
+    ],
+    "name": "VoteParam",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "passed",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "name": "record",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "newValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "ConfirmParamProposal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "proposer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "deposit",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "voteDeadline",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "sidechainAddr",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "registered",
+        "type": "bool"
+      }
+    ],
+    "name": "CreateSidechainProposal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "voteType",
+        "type": "uint8"
+      }
+    ],
+    "name": "VoteSidechain",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "passed",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "name": "sidechainAddr",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "registered",
+        "type": "bool"
+      }
+    ],
+    "name": "ConfirmSidechainProposal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "minSelfStake",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "commissionRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "rateLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "InitializeCandidate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "announcedRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "announcedLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "CommissionRateAnnouncement",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "newRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "newLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdateCommissionRate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "delegator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "newStake",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "stakingPool",
+        "type": "uint256"
+      }
+    ],
+    "name": "Delegate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "ethAddr",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "changeType",
+        "type": "uint8"
+      }
+    ],
+    "name": "ValidatorChange",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "delegator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawFromUnbondedCandidate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "delegator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "withdrawAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "proposedTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "IntendWithdraw",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "delegator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ConfirmWithdraw",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "validator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "delegator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Punish",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "indemnitee",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Indemnify",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "CandidateUnbonded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "reward",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "miningPool",
+        "type": "uint256"
+      }
+    ],
+    "name": "RedeemMiningReward",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "contributor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "contribution",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "miningPoolSize",
+        "type": "uint256"
+      }
+    ],
+    "name": "MiningPoolContribution",
+    "type": "event"
   },
   {
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_proposalId",
         "type": "uint256"
       },
       {
-        "internalType": "enum IGovern.VoteType",
         "name": "_vote",
         "type": "uint8"
       }
@@ -1534,7 +1009,6 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_proposalId",
         "type": "uint256"
       }
@@ -1549,12 +1023,10 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_proposalId",
         "type": "uint256"
       },
       {
-        "internalType": "enum IGovern.VoteType",
         "name": "_vote",
         "type": "uint8"
       }
@@ -1569,7 +1041,6 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_proposalId",
         "type": "uint256"
       }
@@ -1584,7 +1055,6 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       }
@@ -1599,12 +1069,10 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
         "name": "_receiver",
         "type": "address"
       },
       {
-        "internalType": "uint256",
         "name": "_cumulativeReward",
         "type": "uint256"
       }
@@ -1619,17 +1087,14 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_minSelfStake",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
         "name": "_commissionRate",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
         "name": "_rateLockEndTime",
         "type": "uint256"
       }
@@ -1644,12 +1109,10 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_newRate",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
         "name": "_newLockEndTime",
         "type": "uint256"
       }
@@ -1664,12 +1127,10 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
         "name": "_newRate",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
         "name": "_newLockEndTime",
         "type": "uint256"
       }
@@ -1693,27 +1154,10 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_minSelfStake",
-        "type": "uint256"
-      }
-    ],
-    "name": "updateMinSelfStake",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_candidateAddr",
         "type": "address"
       },
       {
-        "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       }
@@ -1737,7 +1181,6 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
         "name": "_candidateAddr",
         "type": "address"
       }
@@ -1752,12 +1195,10 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
         "name": "_candidateAddr",
         "type": "address"
       },
       {
-        "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       }
@@ -1772,12 +1213,10 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
         "name": "_candidateAddr",
         "type": "address"
       },
       {
-        "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       }
@@ -1792,7 +1231,6 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "address",
         "name": "_candidateAddr",
         "type": "address"
       }
@@ -1807,12 +1245,11 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "bytes",
         "name": "_penaltyRequest",
         "type": "bytes"
       }
     ],
-    "name": "slash",
+    "name": "punish",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -1822,7 +1259,6 @@
     "constant": false,
     "inputs": [
       {
-        "internalType": "bytes",
         "name": "_request",
         "type": "bytes"
       }
@@ -1830,7 +1266,6 @@
     "name": "validateMultiSigMessage",
     "outputs": [
       {
-        "internalType": "bool",
         "name": "",
         "type": "bool"
       }
@@ -1842,117 +1277,9 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "getMinStakingPool",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_candidateAddr",
-        "type": "address"
-      }
-    ],
-    "name": "getCandidateInfo",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "initialized",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "minSelfStake",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stakingPool",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "status",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "unbondTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "commissionRate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "rateLockEndTime",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_candidateAddr",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_delegatorAddr",
-        "type": "address"
-      }
-    ],
-    "name": "getDelegatorInfo",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "delegatedStake",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "undelegatingStake",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "intentAmounts",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "intentProposedTimes",
-        "type": "uint256[]"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
     "name": "isValidDPoS",
     "outputs": [
       {
-        "internalType": "bool",
         "name": "",
         "type": "bool"
       }
@@ -1965,7 +1292,6 @@
     "constant": true,
     "inputs": [
       {
-        "internalType": "address",
         "name": "_addr",
         "type": "address"
       }
@@ -1973,22 +1299,6 @@
     "name": "isValidator",
     "outputs": [
       {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "isMigrating",
-    "outputs": [
-      {
-        "internalType": "bool",
         "name": "",
         "type": "bool"
       }
@@ -2003,9 +1313,100 @@
     "name": "getValidatorNum",
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinStakingPool",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_candidateAddr",
+        "type": "address"
+      }
+    ],
+    "name": "getCandidateInfo",
+    "outputs": [
+      {
+        "name": "initialized",
+        "type": "bool"
+      },
+      {
+        "name": "minSelfStake",
+        "type": "uint256"
+      },
+      {
+        "name": "stakingPool",
+        "type": "uint256"
+      },
+      {
+        "name": "status",
+        "type": "uint256"
+      },
+      {
+        "name": "unbondTime",
+        "type": "uint256"
+      },
+      {
+        "name": "commissionRate",
+        "type": "uint256"
+      },
+      {
+        "name": "rateLockEndTime",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_candidateAddr",
+        "type": "address"
+      },
+      {
+        "name": "_delegatorAddr",
+        "type": "address"
+      }
+    ],
+    "name": "getDelegatorInfo",
+    "outputs": [
+      {
+        "name": "delegatedStake",
+        "type": "uint256"
+      },
+      {
+        "name": "undelegatingStake",
+        "type": "uint256"
+      },
+      {
+        "name": "intentAmounts",
+        "type": "uint256[]"
+      },
+      {
+        "name": "intentProposedTimes",
+        "type": "uint256[]"
       }
     ],
     "payable": false,
@@ -2018,7 +1419,6 @@
     "name": "getMinQuorumStakingPool",
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "",
         "type": "uint256"
       }
@@ -2033,7 +1433,6 @@
     "name": "getTotalValidatorStakingPool",
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "",
         "type": "uint256"
       }
