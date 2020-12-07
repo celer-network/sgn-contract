@@ -53,8 +53,8 @@ sync_go_binding() {
   echo sgn-contract PR Head Commit: $PR_COMMIT_ID
   git status
   echo "abigen files ..."
-  abigen_files DPoS bindings/go mainchain dpos
-  abigen_files SGN bindings/go mainchain sgn
+  abigen_files DPoS bindings/go sgncontracts dpos
+  abigen_files SGN bindings/go sgncontracts sgn
 }
 
 echo "update go binding ..."
