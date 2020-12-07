@@ -43,6 +43,7 @@ commit_and_push() {
 
 # $1 is contract abi/bin name, $2 is go pkg name
 abigen_files() {
+  mkdir -p $2/$3
   ./node_modules/.bin/abigen -abi ./genfiles/$1.abi -bin ./genfiles/$1.bin -pkg $3 -type $1 -out $2/$3/$4.go
 }
 
@@ -53,8 +54,8 @@ sync_go_binding() {
   echo sgn-contract PR Head Commit: $PR_COMMIT_ID
   git status
   echo "abigen files ..."
-  abigen_files DPoS bindings/go mainchain dpos
-  abigen_files SGN bindings/go mainchain sgn
+  abigen_files DPoS bindings/go sgncontracts dpos
+  abigen_files SGN bindings/go sgncontracts sgn
 }
 
 echo "update go binding ..."
