@@ -43,7 +43,7 @@ jobs:
       - run:
           name: update genfiles and sync go bindings if PR
           command: |
-            if [ -n "${CIRCLE_PULL_REQUEST##*/}" ]; then
+            if [[ ! -z $CIRCLE_PULL_REQUEST ]]; then
               bash ./gen_and_push.sh "${CIRCLE_PULL_REQUEST##*/}" "$CIRCLE_BRANCH"
             fi
       - save_cache:

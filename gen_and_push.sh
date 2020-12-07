@@ -43,6 +43,7 @@ commit_and_push() {
 
 # $1 is contract abi/bin name, $2 is go pkg name
 abigen_files() {
+  mkdir -p $2/$3
   ./node_modules/.bin/abigen -abi ./genfiles/$1.abi -bin ./genfiles/$1.bin -pkg $3 -type $1 -out $2/$3/$4.go
 }
 
