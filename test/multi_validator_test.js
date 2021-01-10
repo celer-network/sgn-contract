@@ -53,7 +53,6 @@ contract('multiple validators tests', async accounts => {
     await celerToken.approve(dposInstance.address, delegatorbalance, { from: DELEGATOR });
 
     if (firstRun) {
-      console.log('test');
       fs.writeFileSync(GAS_USED_LOG, '********** Gas Used in multi validator Tests **********\n\n');
       fs.appendFileSync(GAS_USED_LOG, '***** Function Calls Gas Used *****\n');
     }
