@@ -1,0 +1,8 @@
+********** Gas Used in reward Tests **********
+
+***** Function Calls Gas Used *****
+contributeToMiningPool(): 71722
+nonIncreaseCommissionRate(): 32743
+announceIncreaseCommissionRate(): 85231
+confirmIncreaseCommissionRate(): 27104
+subscribe(): 103811

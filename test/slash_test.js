@@ -1,10 +1,14 @@
+const fs = require('fs');
 const protoChainFactory = require('./helper/protoChainFactory');
 const Timetravel = require('./helper/timetravel');
+const utilities = require('./helper/utilities');
 const DPoS = artifacts.require('DPoS');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
-contract('single-validator slash tests', async (accounts) => {
+const GAS_USED_LOG = 'gas_used_logs/slash.txt';
+
+contract('single-validator slash tests', async accounts => {
   const CANDIDATE = accounts[1];
   const DELEGATOR = accounts[2];
   const RECEIVER = accounts[3];
@@ -17,6 +21,8 @@ contract('single-validator slash tests', async (accounts) => {
   before(async () => {
     const protoChainInstance = await protoChainFactory();
     getPenaltyRequestBytes = protoChainInstance.getPenaltyRequestBytes;
+    fs.writeFileSync(GAS_USED_LOG, '********** Gas Used in slash Tests **********\n\n');
+    fs.appendFileSync(GAS_USED_LOG, '***** Function Calls Gas Used *****\n');
   });
 
   beforeEach(async () => {
@@ -36,22 +42,22 @@ contract('single-validator slash tests', async (accounts) => {
 
     for (let i = 1; i < 4; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
-      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, { from: accounts[i] });
     }
 
     await dposInstance.initializeCandidate(
       consts.MIN_SELF_STAKE,
       consts.COMMISSION_RATE,
       consts.RATE_LOCK_END_TIME,
-      {from: CANDIDATE}
+      { from: CANDIDATE }
     );
   });
 
   describe('after candidate is bonded and DPoS goes live', async () => {
     beforeEach(async () => {
-      await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, {from: CANDIDATE});
-      await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, {from: DELEGATOR});
-      await dposInstance.claimValidator({from: CANDIDATE});
+      await dposInstance.delegate(CANDIDATE, consts.CANDIDATE_STAKE, { from: CANDIDATE });
+      await dposInstance.delegate(CANDIDATE, consts.DELEGATOR_STAKE, { from: DELEGATOR });
+      await dposInstance.claimValidator({ from: CANDIDATE });
       await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
     });
 
@@ -93,7 +99,7 @@ contract('single-validator slash tests', async (accounts) => {
         signers: [CANDIDATE]
       });
 
-      const tx = await dposInstance.slash(request, {from: SENDER});
+      const tx = await dposInstance.slash(request, { from: SENDER });
 
       assert.equal(tx.logs[0].event, 'Slash');
       assert.equal(tx.logs[0].args.validator, CANDIDATE);
@@ -104,6 +110,8 @@ contract('single-validator slash tests', async (accounts) => {
       assert.equal(tx.logs[2].args.validator, CANDIDATE);
       assert.equal(tx.logs[2].args.delegator, DELEGATOR);
       assert.equal(tx.logs[2].args.amount, 10);
+
+      fs.appendFileSync(GAS_USED_LOG, 'slash(): ' + utilities.getCallGasUsed(tx) + '\n');
 
       const newMiningPool = await dposInstance.miningPool();
       const newTokenAmt = await celerToken.balanceOf(RECEIVER);
@@ -204,7 +212,7 @@ contract('single-validator slash tests', async (accounts) => {
   });
 });
 
-contract('muti-validator slash tests', async (accounts) => {
+contract('muti-validator slash tests', async accounts => {
   const VALIDATORS = [accounts[1], accounts[2], accounts[3], accounts[4]];
   const NON_VALIDATOR = accounts[5];
   const SELF_STAKE = '6000000000000000000';
@@ -235,7 +243,7 @@ contract('muti-validator slash tests', async (accounts) => {
 
     for (let i = 1; i < 6; i++) {
       await celerToken.transfer(accounts[i], consts.TEN_CELR);
-      await celerToken.approve(dposInstance.address, consts.TEN_CELR, {from: accounts[i]});
+      await celerToken.approve(dposInstance.address, consts.TEN_CELR, { from: accounts[i] });
     }
 
     for (let i = 0; i < VALIDATORS.length; i++) {
@@ -244,12 +252,12 @@ contract('muti-validator slash tests', async (accounts) => {
         consts.MIN_SELF_STAKE,
         consts.COMMISSION_RATE,
         consts.RATE_LOCK_END_TIME,
-        {from: VALIDATORS[i]}
+        { from: VALIDATORS[i] }
       );
-      await dposInstance.delegate(VALIDATORS[i], SELF_STAKE, {from: VALIDATORS[i]});
+      await dposInstance.delegate(VALIDATORS[i], SELF_STAKE, { from: VALIDATORS[i] });
 
       // validators claimValidator
-      await dposInstance.claimValidator({from: VALIDATORS[i]});
+      await dposInstance.claimValidator({ from: VALIDATORS[i] });
     }
 
     await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
@@ -358,6 +366,11 @@ contract('muti-validator slash tests', async (accounts) => {
     assert.equal(tx.logs[0].args.delegator, VALIDATORS[0]);
     assert.equal(tx.logs[0].args.amount, 10);
 
+    fs.appendFileSync(
+      GAS_USED_LOG,
+      'slash() multi validators: ' + utilities.getCallGasUsed(tx) + '\n'
+    );
+
     request = await getPenaltyRequestBytes({
       nonce: 2,
       expireTime: 1000000,
@@ -399,7 +412,14 @@ contract('muti-validator slash tests', async (accounts) => {
     assert.equal(tx.logs[2].args.ethAddr, VALIDATORS[0]);
     assert.equal(tx.logs[2].args.changeType, consts.TYPE_VALIDATOR_REMOVAL);
 
-    await dposInstance.intendWithdraw(VALIDATORS[0], consts.TWO_CELR, {from: VALIDATORS[0]});
+    fs.appendFileSync(
+      GAS_USED_LOG,
+      'slash() multi validators for unbonding candiadte and undelegating stake: ' +
+        utilities.getCallGasUsed(tx) +
+        '\n'
+    );
+
+    await dposInstance.intendWithdraw(VALIDATORS[0], consts.TWO_CELR, { from: VALIDATORS[0] });
     request = await getPenaltyRequestBytes({
       nonce: 3,
       expireTime: 1000000,

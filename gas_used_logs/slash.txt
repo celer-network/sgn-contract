@@ -1,0 +1,6 @@
+********** Gas Used in slash Tests **********
+
+***** Function Calls Gas Used *****
+slash(): 236218
+slash() multi validators: 184217
+slash() multi validators for unbonding candiadte and undelegating stake: 206949

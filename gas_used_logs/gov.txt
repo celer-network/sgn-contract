@@ -1,0 +1,11 @@
+********** Gas Used in gov Tests **********
+
+***** Function Calls Gas Used *****
+createParamProposal(): 196100
+createSidechainProposal(): 156349
+voteParam(): 47997
+confirmParamProposal() (reject proposal case): 85838
+confirmParamProposal() (accept proposal case): 108053
+voteSidechain(): 48057
+confirmSidechainProposal() (reject proposal case): 85154
+confirmSidechainProposal() (accept proposal case): 107440

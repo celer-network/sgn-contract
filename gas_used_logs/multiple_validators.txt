@@ -1,0 +1,25 @@
+********** Gas Used in multi validator Tests **********
+
+***** Function Calls Gas Used *****
+initializeCandidate() validator 0: 107338
+delegate() validator 0: 113410
+claimValidator() validator 0: 93549
+initializeCandidate() validator 1: 107338
+delegate() validator 1: 98410
+claimValidator() validator 1: 95330
+initializeCandidate() validator 2: 107338
+delegate() validator 2: 98410
+claimValidator() validator 2: 95330
+initializeCandidate() validator 3: 107338
+delegate() validator 3: 98410
+claimValidator() validator 3: 95330
+initializeCandidate() validator 4: 107338
+delegate() validator 4: 98410
+claimValidator() validator 4: 95330
+initializeCandidate() validator 5: 107338
+delegate() validator 5: 98410
+claimValidator() validator 5: 95330
+initializeCandidate() validator 6: 107338
+delegate() validator 6: 98410
+claimValidator() validator 6: 95330
+confirmUnbondedCandidate(): 17746
