@@ -6,3 +6,5 @@ nonIncreaseCommissionRate(): 32743
 announceIncreaseCommissionRate(): 85231
 confirmIncreaseCommissionRate(): 27104
 subscribe(): 103811
+contributeToMiningPool(): 56722
+redeemReward(): 178308

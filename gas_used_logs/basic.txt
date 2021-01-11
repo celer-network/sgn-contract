@@ -2,7 +2,7 @@
 
 ***** Deploy Gas Used *****
 DPoS Deploy Gas: 5060104
-SGN Deploy Gas: 1477850
+SGN Deploy Gas: 1477874
 ***** Function Calls Gas Used *****
 registerSidechain(): 43522
 initializeCandidate(): 107338

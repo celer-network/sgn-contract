@@ -250,7 +250,7 @@ contract('reward tests', async accounts => {
   });
 
   describe('after candidate is bonded and DPoS goes live', async () => {
-    const firstSubscribe = true;
+    let firstSubscribe = true;
     beforeEach(async () => {
       await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, { from: CANDIDATE });
       await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, { from: CANDIDATE });
