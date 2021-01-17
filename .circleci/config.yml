@@ -39,7 +39,7 @@ jobs:
             GANACHE_PID=$!
             npm run test
             kill -9 $GANACHE_PID
-            # git checkout -- gas_used_logs/  # discard changes generated during ci tests in gas_used_logs/
+            git checkout -- gas_used_logs/  # discard changes generated during ci tests in gas_used_logs/
       - run:
           name: update genfiles and sync go bindings if PR
           command: |

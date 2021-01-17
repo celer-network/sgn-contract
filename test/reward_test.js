@@ -1,15 +1,19 @@
+const fs = require('fs');
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 const sha3 = web3.utils.keccak256;
 
 const protoChainFactory = require('./helper/protoChainFactory');
 const Timetravel = require('./helper/timetravel');
+const utilities = require('./helper/utilities');
 const DPoS = artifacts.require('DPoS');
 const SGN = artifacts.require('SGN');
 const CELRToken = artifacts.require('CELRToken');
 const consts = require('./constants.js');
 
-contract('reward tests', async (accounts) => {
+contract('reward tests', async accounts => {
+  const GAS_USED_LOG = 'gas_used_logs/reward.txt';
+
   const CANDIDATE = accounts[1];
   const SUBSCRIBER = accounts[3];
   const RECEIVER = accounts[4];
@@ -23,6 +27,8 @@ contract('reward tests', async (accounts) => {
   before(async () => {
     const protoChainInstance = await protoChainFactory();
     getRewardRequestBytes = protoChainInstance.getRewardRequestBytes;
+    fs.writeFileSync(GAS_USED_LOG, '********** Gas Used in reward Tests **********\n\n');
+    fs.appendFileSync(GAS_USED_LOG, '***** Function Calls Gas Used *****\n');
   });
 
   beforeEach(async () => {
@@ -52,10 +58,10 @@ contract('reward tests', async (accounts) => {
       consts.MIN_SELF_STAKE,
       consts.COMMISSION_RATE,
       consts.RATE_LOCK_END_TIME,
-      {from: CANDIDATE}
+      { from: CANDIDATE }
     );
     const sidechainAddr = sha3(CANDIDATE);
-    await sgnInstance.updateSidechainAddr(sidechainAddr, {from: CANDIDATE});
+    await sgnInstance.updateSidechainAddr(sidechainAddr, { from: CANDIDATE });
   });
 
   it('should fail to contribute to mining pool when paused', async () => {
@@ -76,27 +82,37 @@ contract('reward tests', async (accounts) => {
     const contribution = 100;
     await celerToken.approve(dposInstance.address, contribution);
     const tx = await dposInstance.contributeToMiningPool(contribution);
-    const {event, args} = tx.logs[0];
+    const { event, args } = tx.logs[0];
 
     assert.equal(event, 'MiningPoolContribution');
     assert.equal(args.contributor, accounts[0]);
     assert.equal(args.contribution, contribution);
     // previous miningPoolSize is 0
     assert.equal(args.miningPoolSize, contribution);
+
+    fs.appendFileSync(
+      GAS_USED_LOG,
+      'contributeToMiningPool(): ' + utilities.getCallGasUsed(tx) + '\n'
+    );
   });
 
   it('should increase the commission rate lock end time successfully', async () => {
     const tx = await dposInstance.nonIncreaseCommissionRate(
       consts.COMMISSION_RATE,
       LARGER_LOCK_END_TIME,
-      {from: CANDIDATE}
+      { from: CANDIDATE }
     );
-    const {event, args} = tx.logs[0];
+    const { event, args } = tx.logs[0];
 
     assert.equal(event, 'UpdateCommissionRate');
     assert.equal(args.candidate, CANDIDATE);
     assert.equal(args.newRate, consts.COMMISSION_RATE);
     assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+
+    fs.appendFileSync(
+      GAS_USED_LOG,
+      'nonIncreaseCommissionRate(): ' + utilities.getCallGasUsed(tx) + '\n'
+    );
   });
 
   it('should fail to update the commission rate lock end time to an outdated block number', async () => {
@@ -160,12 +176,17 @@ contract('reward tests', async (accounts) => {
     const tx = await dposInstance.announceIncreaseCommissionRate(higherRate, LARGER_LOCK_END_TIME, {
       from: CANDIDATE
     });
-    const {event, args} = tx.logs[0];
+    const { event, args } = tx.logs[0];
 
     assert.equal(event, 'CommissionRateAnnouncement');
     assert.equal(args.candidate, CANDIDATE);
     assert.equal(args.announcedRate, higherRate);
     assert.equal(args.announcedLockEndTime, LARGER_LOCK_END_TIME);
+
+    fs.appendFileSync(
+      GAS_USED_LOG,
+      'announceIncreaseCommissionRate(): ' + utilities.getCallGasUsed(tx) + '\n'
+    );
   });
 
   describe('after announceIncreaseCommissionRate', async () => {
@@ -179,7 +200,7 @@ contract('reward tests', async (accounts) => {
 
     it('should fail to confirmIncreaseCommissionRate before new rate can take effect', async () => {
       try {
-        await dposInstance.confirmIncreaseCommissionRate({from: CANDIDATE});
+        await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
       } catch (error) {
         assert.isAbove(error.message.search('Still in notice period'), -1);
         return;
@@ -202,7 +223,7 @@ contract('reward tests', async (accounts) => {
       await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
 
       try {
-        await dposInstance.confirmIncreaseCommissionRate({from: CANDIDATE});
+        await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
       } catch (error) {
         assert.isAbove(error.message.search('Commission rate is locked'), -1);
         return;
@@ -213,26 +234,37 @@ contract('reward tests', async (accounts) => {
 
     it('should confirmIncreaseCommissionRate successfully after new rate takes effect ', async () => {
       await Timetravel.advanceBlocks(consts.ADVANCE_NOTICE_PERIOD);
-      const tx = await dposInstance.confirmIncreaseCommissionRate({from: CANDIDATE});
-      const {event, args} = tx.logs[0];
+      const tx = await dposInstance.confirmIncreaseCommissionRate({ from: CANDIDATE });
+      const { event, args } = tx.logs[0];
 
       assert.equal(event, 'UpdateCommissionRate');
       assert.equal(args.candidate, CANDIDATE);
       assert.equal(args.newRate, higherRate);
       assert.equal(args.newLockEndTime, LARGER_LOCK_END_TIME);
+
+      fs.appendFileSync(
+        GAS_USED_LOG,
+        'confirmIncreaseCommissionRate(): ' + utilities.getCallGasUsed(tx) + '\n'
+      );
     });
   });
 
   describe('after candidate is bonded and DPoS goes live', async () => {
+    let firstSubscribe = true;
     beforeEach(async () => {
-      await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, {from: CANDIDATE});
-      await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, {from: CANDIDATE});
-      await dposInstance.claimValidator({from: CANDIDATE});
+      await celerToken.approve(dposInstance.address, consts.MIN_STAKING_POOL, { from: CANDIDATE });
+      await dposInstance.delegate(CANDIDATE, consts.MIN_STAKING_POOL, { from: CANDIDATE });
+      await dposInstance.claimValidator({ from: CANDIDATE });
       await Timetravel.advanceBlocks(consts.DPOS_GO_LIVE_TIMEOUT);
 
       // submit subscription fees
-      await celerToken.approve(sgnInstance.address, consts.SUB_FEE, {from: SUBSCRIBER});
-      await sgnInstance.subscribe(consts.SUB_FEE, {from: SUBSCRIBER});
+      await celerToken.approve(sgnInstance.address, consts.SUB_FEE, { from: SUBSCRIBER });
+      const tx = await sgnInstance.subscribe(consts.SUB_FEE, { from: SUBSCRIBER });
+
+      if (firstSubscribe) {
+        fs.appendFileSync(GAS_USED_LOG, 'subscribe(): ' + utilities.getCallGasUsed(tx) + '\n');
+        firstSubscribe = false;
+      }
     });
 
     it('should fail to redeem reward when paused', async () => {
@@ -258,7 +290,11 @@ contract('reward tests', async (accounts) => {
       // contribute to mining pool
       const contribution = 100;
       await celerToken.approve(dposInstance.address, contribution);
-      await dposInstance.contributeToMiningPool(contribution);
+      let tx = await dposInstance.contributeToMiningPool(contribution);
+      fs.appendFileSync(
+        GAS_USED_LOG,
+        'contributeToMiningPool(): ' + utilities.getCallGasUsed(tx) + '\n'
+      );
 
       const receiver = RECEIVER;
       const miningReward = 40;
@@ -269,7 +305,7 @@ contract('reward tests', async (accounts) => {
         cumulativeServiceReward: serviceReward,
         signers: [CANDIDATE]
       });
-      const tx = await sgnInstance.redeemReward(rewardRequest);
+      tx = await sgnInstance.redeemReward(rewardRequest);
 
       assert.equal(tx.logs[0].event, 'RedeemReward');
       assert.equal(tx.logs[0].args.receiver, receiver);
@@ -278,6 +314,7 @@ contract('reward tests', async (accounts) => {
       assert.equal(tx.logs[0].args.servicePool, consts.SUB_FEE - serviceReward);
 
       // TODO: add checks for RedeemMiningReward event (hash is the only way to validate it)
+      fs.appendFileSync(GAS_USED_LOG, 'redeemReward(): ' + utilities.getCallGasUsed(tx) + '\n');
     });
 
     it('should fail to redeem reward more than amount in mining pool', async () => {

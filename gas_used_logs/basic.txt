@@ -1,0 +1,17 @@
+********** Gas Used in basic Tests **********
+
+***** Deploy Gas Used *****
+DPoS Deploy Gas: 5060104
+SGN Deploy Gas: 1477874
+***** Function Calls Gas Used *****
+registerSidechain(): 43522
+initializeCandidate(): 107338
+updateSidechainAddr(): 79714
+delegate(): 113410
+withdrawFromUnbondedCandidate(): 28827
+claimValidator(): 93549
+updateMinSelfStake(): 29864
+intendWithdraw(): 150326
+confirmWithdraw() before withdrawTimeout: 32688
+first confirmWithdraw() after withdrawTimeout: 41930
+second confirmWithdraw() after withdrawTimeout: 29833

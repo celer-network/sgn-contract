@@ -1,5 +1,5 @@
 function toHexString(byteArray) {
-  return Array.from(byteArray, function (byte) {
+  return Array.from(byteArray, function(byte) {
     return ('0' + (byte & 0xff).toString(16)).slice(-2);
   }).join('');
 }
@@ -22,4 +22,13 @@ function uint2bytes(x) {
   return toByteArray(x.toString(16));
 }
 
-module.exports = {toHexString, uint2bytes};
+function getCallGasUsed(tx) {
+  return tx.receipt.gasUsed;
+}
+
+async function getDeployGasUsed(instance) {
+  const receipt = await web3.eth.getTransactionReceipt(instance.transactionHash);
+  return receipt.gasUsed;
+}
+
+module.exports = { toHexString, uint2bytes, getCallGasUsed, getDeployGasUsed };
