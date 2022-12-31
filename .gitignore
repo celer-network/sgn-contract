@@ -102,3 +102,4 @@ ENV/
 # my gitignore
 node_modules/
 .vscode/
+.git/
