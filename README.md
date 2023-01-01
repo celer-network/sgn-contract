@@ -47,3 +47,4 @@ npx truffle migrate
 ```sh
 cp build/contracts/CELRToken.json build/contracts/DPoS.json build/contracts/SGN.json <path-to-sgn-explorer-repo>/src/contracts
 ```
+test
